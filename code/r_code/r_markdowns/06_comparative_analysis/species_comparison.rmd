@@ -1,0 +1,967 @@
+---
+title: "Ptychodera Cisreg Development: pairwise species comparisons"
+author: "Alberto Perez-Posada"
+date: "4/22/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will do a comparison of the transcriptomes during development of Ptychodera, Amphixous, and Purple Sea Urchin.
+
+For this, we will use a solution of custom R functions and wrappers that we have named "comparABle" (kudos to @agilgal for the name!).
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+require(data.table)
+require(stringr)
+require(tidytree)
+require(ggtree)
+require(rvcheck)
+require(treeio)
+require(dendextend)
+require(phangorn)
+require(phytools)
+require(ComplexHeatmap)
+require(foreach)
+require(doParallel)
+require(colorspace)
+library(topGO)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load Data
+
+We will first load the data of our three species:
+
+```{r dataload_spp}
+# Ptychodera analyses
+load("outputs/rda/deseq2.rda")
+# Amphioxus reanalysis
+load("outputs/rda/blan_reanalysis.rda")
+# Purple Sea Urchin reanalysis
+load("outputs/rda/spur_reanalysis.rda")
+```
+
+We will follow by loading all the gene family data that we need. This is the gene/gfam lookup table (extracted from the OrthoXML output file from OMA) and the respective table to transform the gene indexes into the actual gene id of every species. 
+
+```{r dataload_gfams}
+gfams_intid_gene_intid.tsv <- 
+  read.delim2(
+    file = "outputs/comparative/oma/gfams_intid_gene_intid.tsv",
+    header = TRUE,
+    col.names = c("gfam_intid","intid")
+  )
+
+gene_intid_id <- read.delim2(
+  file = "outputs/comparative/oma/intid_id.tsv",
+  header = FALSE,
+  col.names = c("intid","id")
+)
+
+gene_gfam <- 
+  gfams_intid_gene_intid.tsv[,c(2,1)]
+
+gene_gfam$id <-
+  translate_ids(x = gene_gfam$intid, dict = gene_intid_id)
+
+gene_gfam <- gene_gfam[,c(3,2)]
+
+gene_gfam$id <- sub("\\.p[1-9]+","",gene_gfam$id)
+gene_gfam$gfam_intid <- as.character(gene_gfam$gfam_intid)
+```
+
+This `gene_gfam` file will be used later on as proxy to compare developmental stages.
+
+```{r gene_gfam}
+head(gene_gfam)
+```
+
+```{r dataload_1to1}
+oma_pfla_blan <- read.delim2("outputs/comparative/oma/1to1_orthologs/1to1_pfla_brala.tsv", header = FALSE)
+oma_pfla_blan$V2 <- gsub(" ","",oma_pfla_blan$V2)
+oma_pfla_spur <- read.delim2("outputs/comparative/oma/1to1_orthologs/1to1_pfla_spur.tsv", header = FALSE)
+oma_pfla_spur$V2 <- gsub(" ","",oma_pfla_spur$V2)
+```
+
+```{r geneage prep}
+load("outputs/rda/geneage.rda")
+```
+
+For more functional annotation, we will use the COG functional categories and the GO terms of Ptychodera.
+
+```{r gos and cogs prep}
+pfla_cogs <- read.table(
+  "outputs/functional_annotation/COGs/pfla_cogs.tsv",
+  col.names = c("id","cog")
+)
+
+# GO terms
+pfla_id2go <- 
+  readMappings(
+    "outputs/functional_annotation/go_blast2go/GO_annotation.txt"
+  )
+```
+
+## Ptychodera and Amphioxus
+
+We will first compare the transcriptomes and stage-specific clusters of Ptychodera and Amphioxus. For this, we will define a number of objects that will enter into our custom wrapper function `comparABle`. The most important of them being:
+
+ - Objects **a** and **b** are the expression profile datasets (gene x condition/stage/etc) of species A and B.
+ - Object **o** is a 1-to-1 orthologue association file between genes of species A and B (e.g. BLAST reciprocal best hits, OMA 1:1 orthologues, ...)
+ - Object **f** is a "gene family"/orthogroup file associating genes from species A and B to "gene families"
+ - Objects **ma**, **mb** are a gene classification system. For each species a and b, a file associating genes to gene moules (e.g. k-means clusters, hierarchical clusters, WGCNA modules, etc.)
+ - Object **g** is a gene age file for the gene families, and the genes, of each species.
+
+In addition, we will also pass it a list of gene ontologies, a COG functional category association file, and a list of gene ages that are shared between species A and B.
+
+```{r pfla_blan dataprep}
+# Expression data
+a = pfla_rna_counts
+b = blan_counts
+
+# Samples for rowmeans_by repl
+a_samples = levels(condition_x)
+b_samples = unique(sub("_.$", "", colnames(b)))
+
+# Family/orthology data
+o = unique(oma_pfla_blan)
+f = gene_gfam[grep("TCONS|BRALA",gene_gfam$id),]
+
+# Module/Cluster information
+ma = data.frame(
+  id = rownames(pfla_rna_dev),
+  module = pfla_rna_dev$cID
+)
+
+mb = blan_cl
+colnames(mb) <- c("id","module")
+
+# Gene Age
+ga = pfla_age[,c(1,3)]
+colnames(ga) = c("id","age")
+
+# COG
+cog_a <- pfla_cogs
+
+# GOs
+a_universe = rownames(vsd_allgen)
+a_id2go = pfla_id2go
+
+# Common Evo Nodes
+common_evo_nodes = unique(ga$age)[!(unique(ga$age) %in% c("Ambu","Hemich","Pfla_specif"))]
+```
+
+Below we will run the comparABle wrapper. Briefly, what this wrapper does is:
+
+ - Normalise the expression datasets
+ - Associate the datasets using the association file of 1-to-1 orthologues
+ - Perform a principal component analysis with the merge of the two datasets
+ - Perform pairwise correlations and distance metrics between conditions (in our case, developmental stages) of datasets to see their relationships of similarity. By default: Pearson Correlation, Spearman Correlation, and Jensen-Shannon Divergence.
+ - Identify the genes showcasing highes values of correlations across a number of pre-determined conditions (in our case, stages), and perform Gene Age and Gene Ontology enrichment analysis
+ - Perform a co-occurrence analysis in the merge of the two datasets (pairwise correlations, hierarchical clustering, and bootstrapping with downsampling)
+ - Perform Orthology Overlap analysis (hypergeometric and binomial) in pairwise correlations between gene sets (==stage-specific clusters) of each species.
+ - Identify the genes of the gene families that appear significantly enriched across pairs of gene sets, and perform Gene Age, Gene Ontology, and Functional Category enrichment analyses.
+ 
+ This can take some time.
+
+```{r pfla_blan comparABle}
+PFLA_BLAN_COMPARISON <- comparABle(
+  a_name = "P.flava",
+  b_name = "B.lanceolatum",
+  a = a,
+  b = b,
+  o = o,
+  f = f,
+  ma = ma,
+  mb = mb,
+  ga = ga,
+  gb = gb,
+  cog_a = cog_a,
+  cog_b = cog_b,
+  across_a = c("05_MG","06_MG","07_LG","08_To"),
+  across_b = c("10_27h","11_36h","12_50h","13_60h"),
+  a_samples = a_samples,
+  b_samples = b_samples,
+  highlyvariable = TRUE,
+  cooc_p = 0.05,
+  cooc_h = c(0.70,0.95),
+  cooc_cor_method = "pearson",
+  a_universe = a_universe,
+  a_id2go = a_id2go,
+  common_evo_nodes = common_evo_nodes,
+  sep = ",\ "
+)
+```
+
+After running this we can start exploring the comparisons. First we will tidy up the pairwise correlation data and add names to the rows and columns of the jensen-shannon distance matrix.
+
+```{r correlations}
+colnames(PFLA_BLAN_COMPARISON$pairwise_correlations$js) <-
+  unique(sub("_.$", "", colnames(b)))
+
+rownames(PFLA_BLAN_COMPARISON$pairwise_correlations$js) <-
+  rownames(PFLA_BLAN_COMPARISON$pairwise_correlations$pe)
+```
+
+Here are the heatmaps of pairwise correlations between Ptychodera and Amphioxus.
+
+```{r corr_heatmaps, fig.width = 10, fig.height = 3.5}
+h1 <- Heatmap(PFLA_BLAN_COMPARISON$pairwise_correlations$pe,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "Pearson", col = sequential_hcl(10,"BluYl", rev = TRUE))
+h2 <- Heatmap(PFLA_BLAN_COMPARISON$pairwise_correlations$sp,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "Spearman", col = sequential_hcl(10,"YlOrRd", rev = TRUE))
+h3 <- Heatmap(PFLA_BLAN_COMPARISON$pairwise_correlations$js,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "JSD", col = brewer.pal(10,"RdBu"))
+h_list <- h1+h2+h3
+draw(h_list, auto_adjust = FALSE)
+```
+
+Here is the average expression profile of genes highly correlated in gastrulation/neurulation between Ptychodera an Amphioxus:
+
+```{r pfla_blan plots}
+# Common genes, highly correlated
+par(mfrow = c(1,2))
+boxplot(
+  main = "P.flava",
+  PFLA_BLAN_COMPARISON$high_corr_genes$table[,3:6],
+  col = viridis::inferno(7)[3:7],
+  xlab = "stage",
+  ylab = "scaled expression"
+)
+boxplot(
+  main = "B.lanceolatum",
+  PFLA_BLAN_COMPARISON$high_corr_genes$table[,7:10],
+  col = viridis::magma(7)[3:7],
+  xlab = "stage",
+  ylab = "scaled expression"
+)
+par(mfrow = c(1,1))
+```
+
+And a quick scatter plot of the enriched GO terms:
+
+```{r hicor_genes_GOs}
+# GO terms
+#' turn this into a GGplot, same for the whole plethora of
+#' enriched GO terms
+plot(
+  x =
+    PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$Significant /
+    PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$Expected,
+  y =
+    -log(
+      as.numeric(
+        PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$classicFisher
+      )
+    ),
+  xlab = "FC no. Obs/Exp genes",
+  ylab = "-logpvalue"
+)
+text(
+  x =
+    PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$Significant /
+    PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$Expected,
+  y =
+    -log(
+      as.numeric(
+        PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$classicFisher
+      )
+    ),
+  labels = PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOtable$a$Term,
+  pos = 4,
+  offset = 0.5,
+  cex = 0.6
+)
+```
+
+We also have a look at the gene age enrichment analysis of these highly-correlated genes in gastrulation
+
+```{r hicor_genes_age}
+# Age of highly cor genes
+par(mfrow = c(1,2))
+barplot(
+  as.numeric(c(PFLA_BLAN_COMPARISON$high_corr_genes$age$enrichment[1,1:5])),
+  col = brewer.pal(5, "Spectral"),
+  main = "gene Age Enrichment"
+  )
+
+barplot(
+  as.numeric(c(PFLA_BLAN_COMPARISON$high_corr_genes$age$AgeperModule[1,1:5])),
+  col = brewer.pal(5, "Spectral"),
+  main = "Genes per Age per Gene Module"
+  )
+par(mfrow = c(1,1))
+```
+
+Here is the co-occurrence analysis showcasing the Amphioxus stages most similar to Ptychodera gastrulation are the stages corresponding to neurulation. 
+
+```{r cooc, fig.width = 7, fig.height = 6}
+Heatmap(
+  name = "co-occurrence",
+  PFLA_BLAN_COMPARISON$coocurrence_analysis$cooccurrence,
+  cluster_rows = PFLA_BLAN_COMPARISON$coocurrence_analysis$tree,
+  cluster_columns = PFLA_BLAN_COMPARISON$coocurrence_analysis$tree,
+  col = sequential_hcl(10,"YlOrRd", rev = TRUE)
+)
+```
+
+Here the orthology overlap strategy showcasing similarities at the gene family usage between hemichordate larval stages and amphioxus post-gastrulation development
+
+```{r orthology_overlap_strategy, fig.width = 11.5, fig.height = 4}
+pf_avg_hm+
+PFLA_BLAN_COMPARISON$plots$orthology_overlap_binomial_hm+
+PFLA_BLAN_COMPARISON$plots$orthology_overlap_hypgeom_hm
+```
+
+Here is a quick overview of the stats of the hypergeometric and binomial tests for pairwise comparisons:
+
+```{r}
+head(PFLA_BLAN_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$stats)
+```
+
+These is a quick overview at the number of genes in enriched gene families between pairs of comparisons:
+
+```{r top fams}
+# Group by module and summarize
+commongenes <- PFLA_BLAN_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$table_a_common %>%
+  group_by(module) %>%
+  summarize(
+    numgenes = n(),
+    genes = paste(ifelse(n() > 3, paste0(paste(head(id, 3), collapse = ",")," ..."), paste(id, collapse = ", ")), collapse = ", ")
+  )
+
+# Rename columns
+colnames(commongenes) <- c("module", "numgenes", "genes")
+
+commongenes
+```
+
+And here the combination of gene age and functional categories enrichment:
+
+```{r keygenes commonfams age, fig.width = 9, fig.height = 5}
+PFLA_BLAN_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$
+    age_a_common$heatmap +
+PFLA_BLAN_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$
+    cog_a_comon$heatmap
+```
+
+And here the gene ontology enrichment of enriched gene families between pairs of modules.
+
+```{r}
+# Add a new column with the name of the original data frame
+keygenes_commonfams_GO <- 
+  bind_rows(
+    PFLA_BLAN_COMPARISON$orthology_overlap_modules$
+      genes_in_common_fams$commonfams$go_a_common$GOtable, 
+    .id = "pair_gfams"
+    )
+
+# Rename the new column
+colnames(keygenes_commonfams_GO)[1] <- "pair_gfams"
+
+keygenes_commonfams_GO$logp <- 
+  -log10(as.numeric(keygenes_commonfams_GO$classicFisher))
+
+keygenes_commonfams_GO$logp[is.na(keygenes_commonfams_GO$logp)] <- 
+  max(keygenes_commonfams_GO$logp, na.rm = T)
+
+keygenes_commonfams_GO$obsexp <- 
+  as.numeric(keygenes_commonfams_GO$Significant/keygenes_commonfams_GO$Expected)
+
+keygenes_commonfams_GO <- 
+  keygenes_commonfams_GO[
+    order(
+      keygenes_commonfams_GO$pair_gfams,
+      keygenes_commonfams_GO$Term
+      ),
+    ]
+
+keygenes_commonfams_GO$Term <- 
+  factor(
+    keygenes_commonfams_GO$Term, 
+    levels = unique(keygenes_commonfams_GO$Term)
+    )
+```
+
+The GO plot here:
+
+```{r pfla_blan_keygenescommonfams GOterms_plot, fig.width = 10, fig.height = 50}
+gg <- keygenes_commonfams_GO  %>% 
+  ggplot(
+    aes(x=pair_gfams, y = Term, size = Significant, color = logp)
+    ) + geom_point() +
+  theme_bw() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8 )
+    )+ 
+  theme(
+    axis.text.y.left = element_text(hjust = 1, size = 8 ),
+    legend.title=element_text(size=8 ),
+    legend.text=element_text(size=8 )
+    )+ 
+  scale_size_continuous(
+    name = "Genes affected",
+    range = c(2,6)
+    ) + scale_color_viridis("-log10(P-value)") +
+  xlab("")+ylab("")
+
+gg
+```
+
+## Ptychodera and Purple Sea Urchin
+
+We will proceed the same as before using sea urchin in this case. Again, we define all the data necessary for the comparABle wrapper:
+
+```{r pfla_spur dataprep}
+# Expression data
+a = pfla_rna_counts
+b = spur_vsd
+
+# Samples for rowmeans_by repl
+a_samples = levels(condition_x)
+b_samples = unique(sub("_.$", "", colnames(b)))
+
+# Family/orthology data
+o = unique(oma_pfla_spur)
+f = gene_gfam[grep("TCONS|STRPU",gene_gfam$id),]
+
+# Module/Cluster information
+ma = data.frame(
+  id = rownames(pfla_rna_dev),
+  module = pfla_rna_dev$cID
+)
+
+mb = spur_cl
+colnames(mb) <- c("id","module")
+
+# Gene Age
+ga = pfla_age[,c(1,3)]
+colnames(ga) = c("id","age")
+
+# COG
+cog_a <- pfla_cogs
+
+# GOs
+a_universe = rownames(vsd_allgen)
+a_id2go = pfla_id2go
+
+# Common Evo Nodes
+common_evo_nodes = unique(ga$age)[!(unique(ga$age) %in% c("Hemich","Pfla_specif"))]
+```
+
+And we run comparABle:
+
+```{r pfla_spur comparABle, fig.width = 7, fig.height = 6}
+PFLA_SPUR_COMPARISON <- comparABle(
+  a_name = "P.flava",
+  b_name = "S.purpuratus",
+  a = a,
+  b = b,
+  o = o,
+  f = f,
+  ma = ma,
+  mb = mb,
+  ga = ga,
+  gb = gb,
+  cog_a = cog_a,
+  cog_b = cog_b,
+  across_a = c("05_MG","06_MG","07_LG","08_To"),
+  across_b = c("04_EG_30h","05_MG_40h","06_LG_48h","07_Pri_56h"),
+  a_samples = a_samples,
+  b_samples = b_samples,
+  highlyvariable = TRUE,
+  cooc_p = 0.05,
+  cooc_h = c(0.70,0.95),
+  cooc_cor_method = "pearson",
+  a_universe = a_universe,
+  a_id2go = a_id2go,
+  common_evo_nodes = common_evo_nodes,
+  sep = ",\ "
+)
+```
+
+Like before, first we will tidy up the pairwise correlation data and add names to the rows and columns of the jensen-shannon distance matrix.
+
+```{r }
+colnames(PFLA_SPUR_COMPARISON$pairwise_correlations$js) <-
+  colnames(PFLA_SPUR_COMPARISON$pairwise_correlations$pe)
+
+rownames(PFLA_SPUR_COMPARISON$pairwise_correlations$js) <-
+  rownames(PFLA_SPUR_COMPARISON$pairwise_correlations$pe)
+```
+
+The heatmaps of pairwise correlations and jensen-shannon divergence between Ptychodera and Sea Urchin:
+
+```{r , fig.width = 10, fig.height = 3.5}
+h1 <- Heatmap(PFLA_SPUR_COMPARISON$pairwise_correlations$pe,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "Pearson", col = sequential_hcl(10,"BluYl", rev = TRUE))
+h2 <- Heatmap(PFLA_SPUR_COMPARISON$pairwise_correlations$sp,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "Spearman", col = sequential_hcl(10,"YlOrRd", rev = TRUE))
+h3 <- Heatmap(PFLA_SPUR_COMPARISON$pairwise_correlations$js,cluster_rows = F, cluster_columns = F, show_row_names = TRUE, name = "JSD", col = brewer.pal(10,"RdBu"))
+h_list <- h1+h2+h3
+draw(h_list, auto_adjust = FALSE)
+```
+
+The average expression profile between genes highly correlated at gastrulation between species:
+
+```{r pfla_spur plots}
+# Common genes, highly correlated
+par(mfrow = c(1,2))
+boxplot(
+  main = "P.flava",
+  PFLA_SPUR_COMPARISON$high_corr_genes$table[,3:6],
+  col = viridis::inferno(7)[3:7],
+  xlab = "stage",
+  ylab = "scaled expression"
+)
+boxplot(
+  main = "B.lanceolatum",
+  PFLA_SPUR_COMPARISON$high_corr_genes$table[,7:10],
+  col = viridis::magma(7)[3:7],
+  xlab = "stage",
+  ylab = "scaled expression"
+)
+par(mfrow = c(1,1))
+```
+
+The GO term enrichment of these genes:
+
+```{r}
+# GO terms
+#' turn this into a GGplot, same for the whole plethora of
+#' enriched GO terms
+plot(
+  x =
+    PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$Significant /
+    PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$Expected,
+  y =
+    -log(
+      as.numeric(
+        PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$classicFisher
+      )
+    ),
+  xlab = "FC no. Obs/Exp genes",
+  ylab = "-logpvalue"
+)
+text(
+  x =
+    PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$Significant /
+    PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$Expected,
+  y =
+    -log(
+      as.numeric(
+        PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$classicFisher
+      )
+    ),
+  labels = PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOtable$a$Term,
+  pos = 4,
+  offset = 0.5,
+  cex = 0.6
+)
+```
+
+The gene age of the genes highly correlated in gastrulation between species:
+
+```{r }
+# Age of highly cor genes
+par(mfrow = c(1,2))
+barplot(
+  as.numeric(c(PFLA_SPUR_COMPARISON$high_corr_genes$age$enrichment[1,1:6])),
+  col = brewer.pal(6, "Spectral"),
+  main = "gene Age Enrichment"
+  )
+
+barplot(
+  as.numeric(c(PFLA_SPUR_COMPARISON$high_corr_genes$age$AgeperModule[1,1:6])),
+  col = brewer.pal(6, "Spectral"),
+  main = "Genes per Age per Gene Module"
+  )
+par(mfrow = c(1,1))
+```
+
+And the co-ocurrence matrix shocasing ptychodera gastrulation is similar to sea urchin gastrulation as well as similarities between larval stages
+
+```{r , fig.width = 7, fig.height = 6}
+Heatmap(
+  name = "co-occurrence",
+  PFLA_SPUR_COMPARISON$coocurrence_analysis$cooccurrence,
+  cluster_rows = PFLA_SPUR_COMPARISON$coocurrence_analysis$tree,
+  cluster_columns = PFLA_SPUR_COMPARISON$coocurrence_analysis$tree,
+  col = sequential_hcl(10,"YlOrRd", rev = TRUE)
+)
+```
+
+Below the orthology overlap strategy showcasing similarities at the gene family usage between species:
+
+```{r , fig.width = 11.5, fig.height = 4}
+pf_avg_hm+
+PFLA_SPUR_COMPARISON$plots$orthology_overlap_binomial_hm+
+PFLA_SPUR_COMPARISON$plots$orthology_overlap_hypgeom_hm
+```
+
+An overview of the stats of these tests:
+
+```{r}
+head(PFLA_SPUR_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$stats)
+```
+
+A look at the number of genes belonging to enriched gene families between comparisons
+
+```{r}
+# Group by module and summarize
+commongenes <- PFLA_SPUR_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$table_a_common %>%
+  group_by(module) %>%
+  summarize(
+    numgenes = n(),
+    genes = paste(ifelse(n() > 3, paste0(paste(head(id, 3), collapse = ",")," ..."), paste(id, collapse = ", ")), collapse = ", ")
+  )
+
+# Rename columns
+colnames(commongenes) <- c("module", "numgenes", "genes")
+
+commongenes
+```
+
+The gene age enrichment and functional category enrichment of these genes:
+
+```{r , fig.width = 9, fig.height = 5}
+PFLA_SPUR_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$
+    age_a_common$heatmap +
+PFLA_SPUR_COMPARISON$orthology_overlap_modules$
+  genes_in_common_fams$commonfams$
+    cog_a_comon$heatmap
+```
+
+And the GO terms of these genes:
+
+```{r}
+# Add a new column with the name of the original data frame
+keygenes_commonfams_GO <- 
+  bind_rows(
+    PFLA_SPUR_COMPARISON$orthology_overlap_modules$
+      genes_in_common_fams$commonfams$go_a_common$GOtable, 
+    .id = "pair_gfams"
+    )
+
+# Rename the new column
+colnames(keygenes_commonfams_GO)[1] <- "pair_gfams"
+
+keygenes_commonfams_GO$logp <- 
+  -log10(as.numeric(keygenes_commonfams_GO$classicFisher))
+
+keygenes_commonfams_GO$logp[is.na(keygenes_commonfams_GO$logp)] <- 
+  max(keygenes_commonfams_GO$logp, na.rm = T)
+
+keygenes_commonfams_GO$obsexp <- 
+  as.numeric(keygenes_commonfams_GO$Significant/keygenes_commonfams_GO$Expected)
+
+keygenes_commonfams_GO <- 
+  keygenes_commonfams_GO[
+    order(
+      keygenes_commonfams_GO$pair_gfams,
+      keygenes_commonfams_GO$Term
+      ),
+    ]
+
+keygenes_commonfams_GO$Term <- 
+  factor(
+    keygenes_commonfams_GO$Term, 
+    levels = unique(keygenes_commonfams_GO$Term)
+    )
+```
+
+The plot of the GO enrichment analysis:
+
+```{r pfla_spur_keygenescommonfams GOterms_plot, fig.width = 10, fig.height = 50}
+gg <- keygenes_commonfams_GO  %>% 
+  ggplot(
+    aes(x=pair_gfams, y = Term, size = Significant, color = logp)
+    ) + geom_point() +
+  theme_bw() + 
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8 )
+    )+ 
+  theme(
+    axis.text.y.left = element_text(hjust = 1, size = 8 ),
+    legend.title=element_text(size=8 ),
+    legend.text=element_text(size=8 )
+    )+ 
+  scale_size_continuous(
+    name = "Genes affected",
+    range = c(2,6)
+    ) + scale_color_viridis("-log10(P-value)") +
+  xlab("")+ylab("")
+
+gg
+```
+
+
+## Comparison of Transcription Factor profiles throughout development
+
+We will load the TF data to explore commonalities across the three species
+
+```{r}
+# General
+load("outputs/rda/TF_annotation.rda")
+# ptychodera
+load("outputs/rda/tf_analysis.rda")
+# amphioxus
+load("outputs/rda/tf_analysis_blan.rda")
+# sea urchin
+load("outputs/rda/tf_analysis_spur.rda")
+```
+
+We will plot all the TF barplots together in one grid
+
+```{r ,fig.width = 12, fig.height = 12}
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+
+
+ggarrange(
+  pfla_tfs_ngenes_plot,
+  spur_tfs_ngenes_plot,
+  blan_tfs_ngenes_plot,
+  pfla_tfs_expgenes_plot,
+  spur_tfs_expgenes_plot,
+  blan_tfs_expgenes_plot,
+  pfla_tf_EXPNGEN_plot,
+  spur_tf_EXPNGEN_plot,
+  blan_tf_EXPNGEN_plot,
+  ncol=3,
+  nrow=3,
+  common.legend=T
+)
+```
+
+And we will also concatenate the TF class prominence tables of all species to see how similar these stages are across species at the TF program level.
+
+```{r}
+all_devstages_topclasses_EXPNGEN <-
+  cbind(
+    pfla_tf_EXPNGEN,
+    spur_tf_EXPNGEN,
+    blan_tf_EXPNGEN
+  )
+
+colnames(all_devstages_topclasses_EXPNGEN)[1:16] <-
+  sub(
+    "^X",
+    "Pfla_",
+    colnames(all_devstages_topclasses_EXPNGEN)[1:16]
+  )
+
+colnames(all_devstages_topclasses_EXPNGEN)[17:33] <-
+  sub(
+    "^X",
+    "Spur_",
+    colnames(all_devstages_topclasses_EXPNGEN)[17:33]
+  )
+
+colnames(all_devstages_topclasses_EXPNGEN)[34:45] <-
+  sub(
+    "^X",
+    "Blan_",
+    colnames(all_devstages_topclasses_EXPNGEN)[34:45]
+  )
+```
+
+The plot:
+
+```{r, fig.width = 10, fig.height = 10}
+barplot_cluster(
+  t(all_devstages_topclasses_EXPNGEN),
+  dist_method = "manhattan",
+  clu_method = "complete",
+  bar_colors = topclasses_col
+)
+```
+
+Quick co-occurrence analysis at the TF level betwewn ptychodera and amphioxus:
+
+```{r, fig.height = 7, fig.width = 4}
+pfla_blan_commontfs <-
+  PFLA_BLAN_COMPARISON$merged_data$ab_o[ # From the comparABle object: get the merge of blan & pfla datasets
+    rownames(PFLA_BLAN_COMPARISON$merged_data$ab_o) %in% # only the genes that
+      PFLA_BLAN_COMPARISON$input[[3]][ # are one-to-one orthologs (3rd element of the input object), but specifically those that
+        (
+          PFLA_BLAN_COMPARISON$input[[3]]$a %in% pfla_tfs$id | # are TFs either in Ptychodera
+          PFLA_BLAN_COMPARISON$input[[3]]$b %in% blan_tfs$id   # or in Amphioxus
+          ),1
+        ],
+  ]
+
+pfla_blan_commontfs_cooc <- 
+  treeFromEnsembleClustering(
+    pfla_blan_commontfs,
+    vargenes = rownames(pfla_blan_commontfs),
+    n = 500,
+    p = 0.3,
+    h = c(0.9)
+  )
+
+plot(pfla_blan_commontfs_cooc$tree)
+```
+
+And between ptychodera and sea urchin:
+
+```{r, fig.height = 7, fig.width = 4}
+pfla_spur_commontfs <-
+  PFLA_SPUR_COMPARISON$merged_data$ab_o[ # From the comparABle object: get the merge of spur & pfla datasets
+    rownames(PFLA_SPUR_COMPARISON$merged_data$ab_o) %in% # only the genes that
+      PFLA_SPUR_COMPARISON$input[[3]][ # are one-to-one orthologs (3rd element of the input object), but specifically those that
+        (
+          PFLA_SPUR_COMPARISON$input[[3]]$a %in% pfla_tfs$id | # are TFs either in Ptychodera
+          PFLA_SPUR_COMPARISON$input[[3]]$b %in% spur_tfs$id   # or in Sea urchin
+          ),1
+        ],
+  ]
+
+pfla_spur_commontfs_cooc <- 
+  treeFromEnsembleClustering(
+    pfla_spur_commontfs,
+    vargenes = rownames(pfla_spur_commontfs),
+    n = 500,
+    p = 0.3,
+    h = c(0.9)
+  )
+
+plot(pfla_spur_commontfs_cooc$tree)
+```
+
+## Well-known networks of development from deuterostomes in Ptychodera 
+
+We will load the graph analysis data to plot the networks of different deuterostomes>
+
+```{r}
+library(igraph)
+load("outputs/rda/graph_analysis.rda")
+```
+
+### Endomesodermal kernel
+
+The Ptychodera homologs of the endomesodermal kernel described in Sea Urchins, expressed and interacting in the Late Gastrula network:
+
+```{r}
+# Load orthologs of endomesodermal kernel
+genes_endomesod <- 
+  read.table(
+    "outputs/functional_annotation/grn_homologs/genes_endo_mesoderm.tsv",
+    col.names = c("id","gene")
+    )
+
+# Create induced subgraph
+endomesod_graph <-
+  induced_subgraph(
+    pfla_LG_graph2,
+    vids = V(pfla_LG_graph2)[V(pfla_LG_graph2)$name %in% genes_endomesod$id],
+    impl = "copy_and_delete"
+  )
+
+V(endomesod_graph)$col[V(endomesod_graph)$col==""] <- "gray"
+
+V(endomesod_graph)$genename <- translate_ids(x = V(endomesod_graph)$name, dict = genes_endomesod)
+
+## direct genes involved
+set.seed(123)
+plot(
+  endomesod_graph,
+  vertex.color = V(endomesod_graph)$col,
+  vertex.label = V(endomesod_graph)$genename,
+  edge.width = (E(endomesod_graph)$width*2)^2,
+  edge.arrow.size = 0.3,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(endomesod_graph),
+  main = "Endomesoderm Kernel Graph"
+  )
+
+```
+
+
+### Axial mesoderm kernel
+
+The Ptychodera homologs of the axial mesoderm kernel described in Chordates, expressed and interacting in the Late Gastrula network:
+
+```{r}
+# Load orthologs of axial mesoderm kernel
+genes_axmesod <- read.table("outputs/functional_annotation/grn_homologs/genes_axial_mesoderm.tsv", col.names=c("id","gene"))
+
+
+# Create induced subgraph
+axmesod_graph <-
+  induced_subgraph(
+    pfla_LG_graph2,
+    vids = V(pfla_LG_graph2)[V(pfla_LG_graph2)$name %in% genes_axmesod$id],
+    impl = "copy_and_delete"
+  )
+
+V(axmesod_graph)$col[V(axmesod_graph)$col==""] <- "gray"
+
+V(axmesod_graph)$genename <- translate_ids(x = V(axmesod_graph)$name, dict = genes_axmesod)
+
+## direct genes involved
+set.seed(123)
+plot(
+  axmesod_graph,
+  vertex.color = V(axmesod_graph)$col,
+  vertex.label = V(axmesod_graph)$genename,
+  edge.width = (E(axmesod_graph)$width*2)^3,
+  edge.arrow.size = 0.3,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_lgl(axmesod_graph),
+  main = "Axial Mesoderm Kernel Graph"
+  )
+```
+
+## Saving the data
+
+We will save these two objects for further analysis and reference:
+
+```{r save}
+save(
+  PFLA_BLAN_COMPARISON,
+  PFLA_SPUR_COMPARISON,
+  all_devstages_topclasses_EXPNGEN,
+  endomesod_graph,
+  axmesod_graph,
+  file = "outputs/rda/species_comparison.rda"
+)
+```

@@ -1,0 +1,403 @@
+---
+title: "Ptychodera Cisreg Development: Re-analysis of Amphioxus"
+author: "Alberto Perez-Posada"
+date: "4/22/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will do a re-analysis of the transcriptome of *Branchiostoma lanceolatum* (Marletaz et al., 2018).
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load data
+
+We will load a sample table with all the information of each developmental transcriptome, in a similar way we did with Ptychodera.
+
+```{r}
+samplesdir <- 
+  "outputs/comparative/reanalysis/blan/kallisto/abundances/"
+
+sampleTable <- 
+  read.table(
+    "outputs/comparative/reanalysis/blan/kallisto/abundances/table_runs_samples_blan_RNA_2.tsv",
+    header=F
+  )
+
+sampleTable <- 
+  merge(
+    sampleTable,
+    as.data.frame(c(list.dirs(samplesdir,full.names = F)[-1])),
+    by=1
+    )
+
+colnames(sampleTable) <- c("sample","condition","batch")
+
+sampleTable$batch <- 
+  factor(sampleTable$batch, levels = unique(sort(sampleTable$batch)))
+
+sampleTable$condition <- factor(sampleTable$condition)
+
+rownames(sampleTable) <- sampleTable[,1]
+sampleTable$sample <- NULL
+
+blan_condition_x <- sampleTable$condition
+```
+
+We will also load a dictionary between the gene ids of our mapping and the gene ids of the proteome used in comparative analyses (OMA, Orthofinder). This will be useful later in the future.
+
+```{r load_dict}
+bl_brala <- read.table("outputs/comparative/oma/dicts/BRALA.dct", col.names = c("value","key"))[,c(2,1)]
+```
+
+## Tximport
+
+We load the transcriptome mapping from kallisto here using the data of the sample table:
+
+```{r tximport}
+library(tximport)
+files <- 
+  list.files(samplesdir, "h5",recursive = T, full.names = T)
+
+names(files) <- 
+  list.dirs(samplesdir,full.names = F)[-c(1,28)]
+
+blan_txi.kallisto <- 
+  tximport(files, type = "kallisto", txOut = TRUE)
+```
+
+## DGE using DESeq2
+
+Load the transcriptome counts in a DESeq2 object:
+
+```{r deseq_object}
+blan_ddsTxi <- 
+  DESeqDataSetFromTximport(
+    blan_txi.kallisto, 
+    colData = sampleTable,
+    design = ~ batch + condition
+    )
+```
+
+Relevel the factor to first developmental stage.
+
+```{r relevel}
+#differential expression analysis
+blan_ddsTxi$condition <- 
+  relevel(blan_ddsTxi$condition, ref = c("01_32cells"))
+```
+
+We estimate the size factors and keep the genes with more than 10 counts throughout the whole dataset. After this we do the actual DGE analysis using Likelihood-Ratio Test as the method because this is time-series data.
+
+```{r DGE}
+dds_blan <- estimateSizeFactors(blan_ddsTxi)
+
+nc_blan <- counts(dds_blan, normalized=TRUE)
+filter <- rowSums(nc_blan >= 10) >= 2
+dds_blan <- dds_blan[filter,]
+rownames(dds_blan) <- gsub("_..*","", rownames(dds_blan))
+
+dds_blan <- 
+  DESeq(
+    dds_blan,
+    parallel = T,
+    BPPARAM = BiocParallel::MulticoreParam(12),
+    test = "LRT",
+    reduced = ~batch
+    )
+```
+
+We extract the results
+
+```{r}
+res_blan <- results(dds_blan)
+res_blan
+```
+
+And we keep the significant results (p.adj < 0.1)
+
+```{r}
+cutoff = 0.1 # try 0.05?
+signif_blan <- subset(res_blan, padj<cutoff)
+signif_blan <- signif_blan[order(signif_blan$padj),]
+```
+
+We extract the variance-transformed data.
+
+```{r datat ransform}
+# raw counts
+blan_counts <- as.data.frame(counts(dds_blan))
+colnames(blan_counts) <- 
+  paste(sampleTable$condition,sampleTable$batch,sep="_")
+blan_counts <- blan_counts[,order(colnames(blan_counts))]
+
+# vs-data
+blan_vsd <- as.data.frame(assay(vst(dds_blan)))
+colnames(blan_vsd) <- 
+  paste(sampleTable$condition,sampleTable$batch,sep="_")
+blan_vsd <- blan_vsd[,order(colnames(blan_vsd))]
+
+#vs-data of stage-specific genes
+rna_blan <- blan_vsd[rownames(blan_vsd) %in% rownames(signif_blan),]
+```
+
+We calculate rows by replicates:
+
+```{r rowmeans_repl}
+RNA_blan <- 
+  data.frame(
+    base::sapply(
+      levels(blan_condition_x),
+      rowMeans_by_repl,rna_blan
+      )
+  )
+
+colnames(RNA_blan) <- sub("^X","",colnames(RNA_blan))
+
+```
+
+## Correlation Plot
+
+```{r cor}
+blan_cor <- 
+  Heatmap(
+    cor(blan_vsd, method = "spearman"),
+    name="Amphioxus\n(Spearman)",
+    cluster_rows = F,
+    cluster_columns = F,
+    col = colorRampPalette(rev(brewer.pal(7,"RdYlBu")))(100)
+  )
+
+draw(blan_cor)
+```
+
+## PCA plots
+
+```{r PCA}
+par(mfrow = c(1,2))
+plotPCA(as.matrix(rna_blan), col=rainbow(20), cex=0.75,main="Genes diff. regulated\nduring development\n(separate replicates)") #fix colors
+plotPCA(as.matrix(RNA_blan),col=viridis::viridis(12),cex=0.75,main="Genes diff. regulated\nduring development\n(merged replicates)")
+par(mfrow = c(1,1))
+```
+
+## Clustering using hierarchical clustering
+
+We will group the stage-specific expressed genes in groups of stage-specific coexpression using hierarchical clustering.
+
+```{r heatmap}
+blan_hc <- hclust(dist(t(scale(t(RNA_blan)))), method = "ward.D2")
+plot(blan_hc,cex=0.3)
+abline(50,0,col="red")
+
+RNA_blan$clusterID <- cutree(blan_hc, h=50)
+unique(RNA_blan$clusterID)
+```
+
+Based on visual inspection, we assign new cluster names to give them new ordering:
+
+```{r newcl}
+blan_newcl <- 
+  read.table(
+    file = "outputs/comparative/reanalysis/blan/blan_newcl.tsv",
+    header = FALSE,
+    col.names = c("clusterID","newcl")
+  )
+
+RNA_blan$newcl <-
+  translate_ids(
+    x = RNA_blan$clusterID,
+    dict = blan_newcl
+  )
+
+#We do not need the original hierachical cluster ids anymore
+RNA_blan$clusterID <- NULL
+
+```
+
+And a final Heatmap for visualisation:
+
+```{r, fig.width = 4, fig.height = 7.5}
+set.seed(1234)
+RNA_blan_viz <- RNA_blan[sample(nrow(RNA_blan),1000),]
+
+bl_col_annot <- 
+  rowAnnotation(
+    sample = factor(RNA_blan$newcl),
+    show_annotation_name = FALSE
+    )
+
+blan_heat <- 
+  Heatmap(
+    t(scale(t(RNA_blan_viz[,1:12]))),
+    name = "gene exp",
+    # left_annotation= bl_col_annot,
+    row_split=RNA_blan_viz$newcl,
+    show_row_names = F,
+    cluster_rows=F,
+    cluster_columns=F,
+    row_title=NULL,
+    left_annotation = 
+      rowAnnotation(
+        cluster = anno_block(
+          gp = gpar(col=NA,fill=NA),
+          labels = unique(sort(RNA_blan_viz$newcl)), 
+          labels_gp = gpar(col = "black", cex=0.7),
+          labels_just = "right",
+          labels_offset = unit(1, "npc"),
+          labels_rot=0
+          )
+        ),
+  column_names_side="top",
+  col = colorRampPalette(c("#9250c1","#e6ecf4","#007b66"))(20)
+)
+
+draw(blan_heat)
+```
+
+And the average expression profile of the different clusters of stage-specific genes:
+
+```{r avg_profiles}
+blan_cl_avgs <-
+  aggregate(
+    t(scale(t(RNA_blan[, 1:12]))),
+    by = list(cluster = RNA_blan$newcl),
+    FUN = mean
+  )[, -1]
+
+blan_cl_colors <- 
+  colorRampPalette(colors=brewer.pal(11,"Spectral"))(25)
+
+plot(
+  0,
+  xlim = c(1, 12),
+  ylim = c(-2, 3),
+  type = "n",
+  main = "Average Expression Profile of\nStage-Specific Gene Clusters",
+  xlab = "stage of development",
+  ylab = "z-score Expression"
+)
+for (i in 1:nrow(blan_cl_avgs)) {
+  lines(c(1:12),
+        blan_cl_avgs[i,],
+        type = "l",
+        col = blan_cl_colors[i],
+        lwd = 2
+  )
+}
+legend(
+  x = 1,
+  y = 3,
+  legend = rownames(blan_cl_avgs),
+  fill = blan_cl_colors,
+  ncol = 5,
+  cex = 0.6
+)
+```
+
+```{r blan_avg_heat, fig.width = 3, fig.height = 5}
+blan_heat_avg <- 
+  Heatmap(
+    blan_cl_avgs,
+    name = "gene exp",
+    show_row_names = F,
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    col = colorRampPalette(c("#9250c1","#e6ecf4","#007b66"))(20)
+  )
+
+draw(blan_heat_avg)
+```
+
+
+## Save the data
+
+We finally translate the gene ids to the same ones used in OMA:
+
+```{r translate_ids}
+rownames(blan_counts) <- translate_ids(x = rownames(blan_counts), dict = bl_brala, return.missing = TRUE)
+rownames(blan_vsd) <- translate_ids(x = rownames(blan_vsd), dict = bl_brala, return.missing = TRUE)
+rownames(rna_blan) <- translate_ids(x = rownames(rna_blan), dict = bl_brala, return.missing = TRUE)
+rownames(RNA_blan) <- translate_ids(x = rownames(RNA_blan), dict = bl_brala, return.missing = TRUE)
+```
+
+And we create a table of gene <-> cluster for later use in our comparative analyses:
+
+```{r blan_cl}
+blan_cl <- 
+  data.frame(
+    id = rownames(RNA_blan),
+    cID = RNA_blan$newcl
+  )
+```
+
+And we save the data for TF analysis and for pairwise comparisons:
+
+```{r save}
+save(
+  blan_counts,
+  blan_vsd,
+  rna_blan,
+  RNA_blan,
+  blan_cl,
+  blan_cl_avgs,
+  bl_brala,
+  file = "outputs/rda/blan_reanalysis.rda"
+)
+```
+
+```{r save table_cl, echo  = FALSE, eval = FALSE}
+write.table(
+  blan_cl,
+  paste(
+    "/home/ska/aperpos/Def_Pfla/outputs/oma/20210821_OMA.2.4.1_ECHI_HEMI/20210823_results/", # change path
+    fcha(),
+    "_bl_dev_cl.tsv",
+    sep = ""
+  ),
+  row.names = F,
+  quote = F,
+  sep = "\t",
+  col.names = F
+)
+```

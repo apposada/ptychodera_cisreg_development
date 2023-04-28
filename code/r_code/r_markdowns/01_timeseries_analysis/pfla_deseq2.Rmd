@@ -1,0 +1,434 @@
+---
+title: "Ptychodera Cisreg Development: Differential Gene Expression Analysis"
+author: "Alberto Perez-Posada"
+date: "3/24/2023"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+
+## About
+
+
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(ComplexHeatmap)
+library(circlize)
+library(topGO)
+```
+
+## Load functions
+
+```{r load_functions, message=FALSE, warning=FALSE}
+#from @Rich Scriven https://stackoverflow.com/questions/26045478/source-r-scripts-in-different-folders
+sourceFolder <- function(folder, recursive = FALSE, ...) 
+{ 
+    files <- list.files(folder, pattern = "[.][rR]$", 
+                        full.names = TRUE, recursive = recursive)
+    if (!length(files))
+        stop(simpleError(sprintf('No R files in folder "%s"', folder)))
+    src <- invisible(lapply(files, source, ...))
+    message(sprintf('%s files sourced from folder "%s"', length(src), folder))
+}
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+
+## Data Load
+
+We will load the normalised counts for DESeq2:
+
+```{r load data}
+load("outputs/rda/normalised_counts.rda")
+```
+
+## Correlation plots
+
+We can explore the structure of our data by doing correlation as well as dimensionality reduction.
+
+```{r spearman}
+rna_counts_sp <- 
+  cor(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      tbl = pfla_rna_counts
+    )
+  )
+```
+
+To summarise our data, we will calculate the arithmetic mean across columns that are replicates from the same developmental stage using a custom function. Thus we end up with:
+
+```{r heatmap sp}
+pf_sp_hm <-
+  Heatmap(
+    rna_counts_sp,
+    name="Spearman",
+    top_annotation=devstages_ha_columns(),
+    left_annotation=devstages_ha_rows(),
+    cluster_rows = F,
+    cluster_columns = F,
+    show_row_names=F,
+    show_column_names=F,
+    col=colorRampPalette(rev(brewer.pal(7,"RdYlBu")))(100)
+  )
+
+draw(pf_sp_hm)
+```
+
+## DESeq2 analysis
+
+We will import the RUV-normalised counts to DESeq2 following the design matrix we generated before.
+
+```{r deseqdataset}
+dds <- 
+  DESeqDataSetFromMatrix(
+    countData = pfla_rna_counts,
+    colData = pData(set2),
+    design = ~ W_1 + condition_x
+    )
+
+dds <- estimateSizeFactors(dds)
+
+nc <- counts(dds, normalized=TRUE)
+
+filter <- rowSums(nc >= 10) >= 2
+
+dds <- dds[filter,]
+```
+
+Estimation of factor sizes and the dispersion
+
+```{r estimations}
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersions(dds)
+```
+
+The likelihood-ratio test is the proper one for time-series analysis.
+
+```{r LRT test}
+dds <- 
+  nbinomLRT(
+    dds,
+    reduced=as.formula("~ W_1"),
+    maxit=500
+    )
+```
+
+And the results:
+
+```{r results}
+res <- results(dds)
+
+round(data.frame(res)[1:10,],3)
+```
+
+We will apply a cutoff to keep genes with a p-value < 0.05 (likelihood ratio test) as significant.
+
+```{r signif}
+cutoff=0.05
+
+res_signif <- 
+  subset(res, padj < cutoff )
+
+head(apply(res_signif,2,round,digits=3))
+```
+
+To proceed with data visualisation and clustering analysis, we will use the variance-stabilised transform of this data.
+
+```{r vst}
+# Variance-stabilised transformation
+vsd <- vst(dds)
+
+# Assay with all genes
+vsd_allgen <- 
+  as.data.frame(
+    assay(vsd)
+    )
+
+# Assay with only significant genes
+vsd_signif <- 
+  as.data.frame(
+    assay(
+      vsd[rownames(vsd) %in% rownames(res_signif),]
+      )
+    )
+
+```
+
+To summarise our data, we will calculate the arithmetic mean across columns that are replicates from the same developmental stage using a custom function. Thus we end up with:
+
+```{r rowmeans_byrepl}
+pfla_rna_all <-
+    as.data.frame(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      tbl = vsd_allgen # all genes
+      )
+  )
+
+rownames(pfla_rna_all) <- rownames(vsd_allgen)
+
+pfla_rna_dev <-
+  data.frame(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      tbl = vsd_signif # significantly regulated throughout develompent
+      )
+  )
+
+rownames(pfla_rna_dev) <- rownames(vsd_signif)
+
+pfla_rna_dev[1:5,1:5]
+
+```
+
+We can cluster our data to detect patterns of gene expression during development.
+
+```{r hcluster}
+
+pfla_rna_dev_hc <- 
+  hclust(
+    dist(t(scale(t(pfla_rna_dev)))),
+    method = "ward.D2"
+  )
+
+```
+
+We pick a threshold to cut around distance "50".
+
+```{r plot hcluster}
+
+plot(pfla_rna_dev_hc,cex=0.3)
+
+cutoff = 50
+abline(cutoff, 0, col="red")
+
+```
+
+And we proceed to binning the genes in clusters:
+
+```{r cID}
+pfla_rna_dev$clusterID <-
+  cutree(pfla_rna_dev_hc, h = cutoff)
+
+unique(pfla_rna_dev$clusterID)
+```
+
+We manually rearranged these clusters and provided new IDs.
+
+```{r}
+
+hclu_names <- 
+  read.table(
+    "assets/rna_dev_hcluster_name_equiv.tsv",
+    header = F, 
+    col.names = c("clusterID","cID"),
+    colClasses = c("numeric","character")
+  )
+
+pfla_rna_dev$cID <-
+  hclu_names$cID[
+    match(
+      pfla_rna_dev$clusterID,
+      as.integer(hclu_names$clusterID)
+      )
+    ]
+
+#remove old numbering
+pfla_rna_dev$clusterID <- NULL
+```
+
+We will subsample this gigantic dataset to retrieve a few genes per cluster in order to see their dynamics during development.
+
+```{r}
+set.seed(2)
+
+pfla_rna_dev_viz <- 
+  pfla_rna_dev[
+    sample(
+      nrow(pfla_rna_dev),
+      200
+    ),
+  ]
+```
+
+Lorem Ipsum
+
+```{r heatmap, fig.width = 4, fig.height = 7.5, warning=FALSE}
+pf_hm <- 
+  Heatmap(
+    t(scale(t(pfla_rna_dev_viz[,1:16]))),
+    name = "gene exp",
+    top_annotation=devstages_ha_columns(),
+    row_split=pfla_rna_dev_viz$cID,
+    show_row_names = F,
+    show_column_names=F,
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    row_title = NULL,
+    col=app_pal1,
+    use_raster = F
+  )
+
+draw(pf_hm)
+```
+
+A tidier visualisation of the clusters that we will use throughout the manuscript. This is achieved averaging the expression profile of all genes of each clusters.
+
+```{r}
+
+pfla_rna_dev_avg <-
+  data.frame(
+    aggregate(
+      t(scale(t(pfla_rna_dev[,1:16]))),
+      by = list(cluster = pfla_rna_dev$cID),
+      FUN = mean
+    )[-1],
+    row.names = sort(unique(pfla_rna_dev$cID))
+  )
+
+```
+
+Lorem Ipsum
+
+```{r heatmap_avg, fig.width = 4, fig.height = 5}
+pf_avg_hm <-
+  Heatmap(
+    name="avg exp\nz-score",
+    as.matrix(quantile_normalisation(pfla_rna_dev_avg)),
+    show_row_names = TRUE,
+    row_names_side = "left",
+    show_column_names = F,
+    cluster_rows=F,
+    cluster_columns=F,
+    top_annotation=devstages_ha_columns(),
+    column_names_side="top",
+    row_title = NULL,
+    col=cividis(7)
+  )
+
+draw(pf_avg_hm)
+```
+
+## Gene Ontology Analysis of stage-specific gene clusters
+
+After this, we do Gene Ontology using a custom wrapper function:
+
+```{r, warning = FALSE, message = FALSE}
+library(topGO)
+
+#gene universe
+gene_universe <- allgenes
+
+# gene-GO mappings
+pfla_id_GO <-
+  readMappings(
+    "outputs/functional_annotation/go_blast2go/GO_annotation.txt"
+  )
+
+#list of genes of interest
+pfla_clusters_list <- list()
+
+for (i in unique(pfla_rna_dev$cID)) {
+  pfla_clusters_list[[i]] <- 
+    rownames(pfla_rna_dev)[pfla_rna_dev$cID == i]
+}
+
+names(pfla_clusters_list) <- unique(pfla_rna_dev$cID)
+
+pfla_GOs <- getGOs(
+  genelist = pfla_clusters_list,
+  gene_universe = gene_universe,
+  gene2GO = pfla_id_GO
+)
+
+```
+
+## Saving the data
+
+Saving the data for follow-up analyses
+
+```{r}
+save(
+  #counts
+  pfla_rna_counts,
+  condition_x,
+  #DESeq2 results
+  dds,
+  res,
+  res_signif,
+  #VST data
+  vsd_allgen,
+  vsd_signif,
+  pfla_rna_all,
+  #stage-specific gene expression dataset
+  pfla_rna_dev,
+  pfla_rna_dev_viz,
+  pfla_rna_dev_avg,
+  #Heatmaps
+  pf_sp_hm,
+  pf_hm,
+  pf_avg_hm,
+  #GO analysis
+  pfla_GOs,
+  #Output file
+  file = "outputs/rda/deseq2.rda"
+)
+
+```
+
+A smaller version of this output with just the counts and the stage-specific clusters:
+
+```{r}
+save(
+  allgenes,
+  # counts
+  pfla_rna_counts,
+  condition_x,
+  #VST data
+  pfla_rna_all,
+  #stage-specific gene expression dataset
+  pfla_rna_dev,
+  pfla_rna_dev_avg,
+  #Heatmaps
+  pf_hm,
+  pf_avg_hm,
+  #GO analysis
+  pfla_GOs,
+  #Output file
+  file = "outputs/rda/stage_specific_clusters.rda"
+)
+
+```

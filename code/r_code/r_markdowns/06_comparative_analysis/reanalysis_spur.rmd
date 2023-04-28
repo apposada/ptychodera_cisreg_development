@@ -1,0 +1,433 @@
+---
+title: "Ptychodera Cisreg Development: Re-analysis of Purple Sea Urchin"
+author: "Alberto Perez-Posada"
+date: "4/22/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will do a re-analysis of the transcriptome of *Strongylocentrotus purpuratus* (Tu et al., 2013).
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(edgeR)
+library(RUVSeq)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load data and Data preparation
+
+Just like with Ptychodera, we run a preliminary DESeq2 design to retrieve the non-normalized count matrix
+
+```{r sampletable}
+samplesdir_RNA_spur <- 
+  "outputs/comparative/reanalysis/spur/abundances/"
+
+sampleTable <- 
+  read.table(
+    "outputs/comparative/reanalysis/spur/sample_table.tsv",
+    header=F)[,c(1,1,2,3)]
+
+colnames(sampleTable) <- 
+  c("name","dir","condition","batch")
+
+sampleTable$batch <- factor(sampleTable$batch)
+numsamples_RNA_spur <- nrow(sampleTable)
+```
+
+We will also load a dictionary between the gene ids of our mapping and the gene ids of the proteome used in comparative analyses (OMA, Orthofinder). This will be useful later in the future.
+
+```{r load_dict}
+sp_strpu <- read.table("outputs/comparative/oma/dicts/STRPU.dct", col.names = c("key","value"))
+```
+
+We use tximport to load the actual count files based on the sample table:
+
+```{r tximport}
+files <- 
+  list.files(samplesdir_RNA_spur, "h5",recursive = T, full.names = T)
+
+names(files) <- 
+  list.dirs(samplesdir_RNA_spur,full.names = F)[-1]
+
+txi.kallisto <- 
+  tximport(files, type = "kallisto", txOut = TRUE)
+```
+
+And we create a deseq2 object that we can subset later to retrieve the counts.
+
+```{r dds}
+dds_txi <- 
+  DESeqDataSetFromTximport(
+    txi.kallisto,
+    colData = sampleTable,
+    design = ~ batch + condition
+    )
+
+dds_txi$condition <- 
+  relevel(dds_txi$condition, ref = c("00_Uf_0hpf"))
+```
+
+We retrieve the counts from this object and apply a filter to keep genes with more than 5 counts in at least two stages.
+
+```{r retrieve_counts}
+spur_raw <- counts(dds_txi,normalized=FALSE)
+
+filter <- apply(spur_raw, 1, function(x) length(x[x>5])>=2)
+
+spur_raw_filt <- spur_raw[filter,]
+
+condition_x <- as.factor(substr(sampleTable$condition,1,5))
+```
+
+We create an expression set object for edgeR:
+
+```{r expressionset}
+spur_set <- 
+  newSeqExpressionSet(
+    as.matrix(spur_raw_filt),
+    phenoData = 
+      data.frame(
+        condition_x,
+        row.names=colnames(spur_raw_filt)
+        )
+    )
+
+spur_set
+```
+
+We have here a look at the data:
+
+```{r viz1}
+colors <- viridis(length(levels(condition_x)))
+
+par(mfrow = c(1,2))
+plotRLE(spur_set, outline=FALSE, ylim=c(-4, 4), col=colors[condition_x],cex.lab=0.5,main="Pre-UpperQuartile Normalization")
+plotPCA(spur_set, col=colors[condition_x], cex=0.75,main="Pre-UpperQuartile Normalization")
+par(mfrow = c(1,1))
+```
+
+We do Upper Quantile Normalisation just like we did with Ptychodera to transform the data aiming for equal variance across stage samples:
+
+```{r quantnormalization}
+spur_set <- betweenLaneNormalization(spur_set, which="upper")
+```
+
+And we check now:
+
+```{r viz2}
+par(mfrow = c(1,2))
+plotRLE(spur_set, outline=FALSE, ylim=c(-4, 4), col=colors[condition_x],main="Post-UpperQuartile Normalization")
+plotPCA(spur_set, col=colors[condition_x], cex=0.75,main="Post-UpperQuartile Normalization")
+par(mfrow = c(1,1))
+```
+
+We run edgeR a first time to run in silico empirical genes that do not change. We first create a model matrix just accounting for the developmental stage. After that we calculate normalised factors, estimate GLM common and tag-wise dispersion, and do the fitting.
+
+And after that we apply the likelihood ratio test, and get the last genes after the top 20K as "invariant":
+
+```{r identify_insilico}
+spur_design <- model.matrix(~condition_x, data=pData(spur_set))
+
+# DGE list
+spur_y <- DGEList(counts=counts(spur_set), group=condition_x)
+
+# Calculating NormFactors
+spur_y <- calcNormFactors(spur_y, method="upperquartile")
+spur_y <- estimateGLMCommonDisp(spur_y, spur_design)
+spur_y <- estimateGLMTagwiseDisp(spur_y, spur_design)
+
+# glmFit and Likelihood Ratio Test
+spur_fit <- glmFit(spur_y, spur_design)
+spur_lrt <- glmLRT(spur_fit, coef=2)
+
+# Get the top results and keep the OTHERS
+top <- topTags(spur_lrt, n=nrow(spur_set))$table
+empirical <- rownames(spur_set)[which(!(rownames(spur_set) %in% rownames(top)[1:20000]))]
+```
+
+After this we run RUVseq using those "in-silico invariable genes".
+
+```{r ruvseq}
+spur_set2 <- RUVg(spur_set, empirical, k=1)
+pData(spur_set2)
+```
+
+We have a look at the looks of these genes after RUV-seq
+
+```{r viz3}
+par(mfrow = c(1,2))
+plotRLE(spur_set2, outline=FALSE, ylim=c(-4, 4), col=colors[condition_x],main="Unwanted Variation Removed by RUVSeq")
+plotPCA(spur_set2, col=colors[condition_x], cex=0.75,main="Unwanted Variation Removed by RUVSeq")
+par(mfrow = c(1,1))
+```
+
+And here the final dataset after all these transformations:
+
+```{r vsd}
+spur_vsd <- as.data.frame(counts(spur_set2))
+
+colnames(spur_vsd) <- 
+  c(
+    "00_Uf_0h", "01_Cle_10h", "02_HaBl_18h", "03_MeBl_24h1", "03_MeBl_24h2",
+    "04_EG_30h", "05_MG_40h", "06_LG_48h", "07_Pri_56h",
+    "08_LPr_64h", "09_Plu_72h", "10_4arm", "11_VesInv",
+    "12_PentDis", "13_TubFootPr", "14_Post_Met", "15_YoungJuv"
+  )
+```
+
+## GLM fitting using edgeR to get stage-specific genes
+
+Since DESeq2 cannot be used because we dont have replicates, we can try some of the options by edgeR. We will now do linear model fitting using the variance-stabilised data we got from RUV-Seq.
+
+```{r dgelist}
+spur_y1 <- DGEList(counts(spur_set2),group=condition_x)
+spur_y1$samples$group <- 1
+```
+
+Then estimate the common dispersion from the housekeeping genes and all the libraries as one group:
+
+```{r estimatedispersion}
+spur_y0 <- estimateDisp(spur_y1[empirical,], trend="none", tagwise=FALSE)
+```
+
+Then insert this into the full data object and proceed:
+
+```{r glmfit}
+spur_y1$common.dispersion <- spur_y0$common.dispersion
+spur_fit <- glmFit(spur_y1, spur_design)
+spur_lrt <- glmLRT(spur_fit)
+```
+
+and so on. A reasonably large number of control transcripts is required, at least a few dozen and ideally hundreds.
+
+From here we get the top that we take as stage-specific expressed in purple sea urchin (`p < 0.1`).
+
+```{r spur_top}
+spur_top <- topTags(spur_lrt, n=nrow(spur_set))$table
+spur_top_dev <- spur_vsd[rownames(spur_vsd) %in% rownames(spur_top[spur_top$PValue < 0.2,]),]
+
+colnames(spur_top_dev) <- 
+  c(
+    "00_Uf_0h", "01_Cle_10h", "02_HaBl_18h", "03_MeBl_24h1", "03_MeBl_24h2",
+    "04_EG_30h", "05_MG_40h", "06_LG_48h", "07_Pri_56h",
+    "08_LPr_64h", "09_Plu_72h", "10_4arm", "11_VesInv",
+    "12_PentDis", "13_TubFootPr", "14_Post_Met", "15_YoungJuv"
+  )
+```
+
+And the total number of genes identified, nearly 9K:
+
+```{r num_top}
+nrow(spur_top_dev)
+```
+
+From this we visualise the dataset.
+
+```{r viz4}
+par(mfrow = c(1,2))
+plotRLE(as.matrix(spur_top_dev), outline=FALSE, ylim=c(-4, 4), col=colors[condition_x])
+plotPCA(as.matrix(spur_top_dev),col=colors[condition_x], cex=0.75)
+par(mfrow = c(1,1))
+```
+
+## Transcriptome correlations
+
+```{r cor_development}
+spur_cor <- cor(spur_vsd, method = "sp")
+
+Heatmap(
+  spur_cor,
+  name = "Sea Urchin\n(Spearman)",
+  cluster_rows = F,
+  cluster_columns = F,
+  col=colorRampPalette(rev(brewer.pal(7,"RdYlBu")))(100)
+  )
+```
+
+## Clustering using hierarchical clustering
+
+We will group the stage-specific expressed genes in groups of stage-specific coexpression using hierarchical clustering. We proceed to do clustering as we did previously for the other species.
+
+```{r heatmap}
+spur_hc <- 
+  hclust( # clustering ward.D2
+    dist( # using default distance metric
+      t(scale(t( # using the centered-around-mean scaling
+        spur_top_dev # of the top stage-specific genes
+        )))
+      ),
+    method = "ward.D2"
+    )
+plot(spur_hc,cex=0.3)
+abline(40,0,col="red")
+
+RNA_spur <- 
+  data.frame(
+    spur_top_dev,
+    clusterID = cutree(spur_hc, h=30)
+  )
+unique(RNA_spur$clusterID)
+```
+
+Based on visual inspection, we assign new cluster names to give them new ordering:
+
+```{r newcl}
+spur_newcl <- 
+  read.table(
+    file = "outputs/comparative/reanalysis/spur/spur_newcl.tsv",
+    header = FALSE,
+    col.names = c("clusterID","newcl")
+  )
+
+RNA_spur$newcl <-
+  translate_ids(
+    x = RNA_spur$clusterID,
+    dict = spur_newcl
+  )
+
+#We do not need the original hierachical cluster ids anymore
+RNA_spur$clusterID <- NULL
+```
+
+And a final Heatmap for visualisation:
+
+```{r, fig.width = 3.5, fig.height = 7.5}
+set.seed(1234)
+rna_spur_viz <- RNA_spur[sample(nrow(RNA_spur),1000),]
+spur_heat <- Heatmap(
+  t(scale(t(rna_spur_viz[,1:17]))),
+  name = "gene exp",
+  row_split=rna_spur_viz$newcl,
+  show_row_names = F,
+  cluster_rows=F,
+  cluster_columns=F,
+  row_title = NULL,
+  left_annotation =
+  rowAnnotation(
+    cluster =
+      anno_block(
+        gp = gpar(col=NA,fill=NA),
+        labels = unique(sort(rna_spur_viz$newcl)),
+        labels_gp = gpar(col = "black", cex=0.7),
+        labels_just = "right",
+        labels_offset = unit(1, "npc"),
+        labels_rot=0
+        )
+    ),
+  column_names_side="top",
+  col = colorRampPalette(rev(sequential_hcl(7,"RdPu")))(100)
+)
+
+draw(spur_heat)
+```
+
+And the average expression profile of the different clusters of stage-specific genes:
+
+```{r avg_profiles}
+spur_cl_avgs <-
+  aggregate(
+    t(scale(t(RNA_spur[, 1:17]))),
+    by = list(cluster = RNA_spur$newcl),
+    FUN = mean
+  )[, -1]
+
+spur_cl_colors <- 
+  colorRampPalette(colors=brewer.pal(11,"Spectral"))(nrow(spur_cl_avgs))
+
+plot(
+  0,
+  xlim = c(1, 17),
+  ylim = c(-2, 4),
+  type = "n",
+  main = "Average Expression Profile of\nStage-Specific Gene Clusters",
+  xlab = "stage of development",
+  ylab = "z-score Expression"
+)
+for (i in 1:nrow(spur_cl_avgs)) {
+  lines(c(1:17),
+        spur_cl_avgs[i,],
+        type = "l",
+        col = spur_cl_colors[i],
+        lwd = 2
+  )
+}
+legend(
+  x = 1,
+  y = 3,
+  legend = rownames(spur_cl_avgs),
+  fill = spur_cl_colors,
+  ncol = 5,
+  cex = 0.6
+)
+```
+
+## Save the data
+
+We finally translate the gene ids to the same ones used in OMA:
+
+```{r translate_ids}
+rownames(spur_vsd) <- translate_ids(x = rownames(spur_vsd), dict = sp_strpu, return.missing = TRUE)
+rownames(spur_top_dev) <- translate_ids(x = rownames(spur_top_dev), dict = sp_strpu, return.missing = TRUE)
+rownames(RNA_spur) <- translate_ids(x = rownames(RNA_spur), dict = sp_strpu, return.missing = TRUE)
+```
+
+And we create a table of gene <-> cluster for later use in our comparative analyses:
+
+```{r spur_cl}
+spur_cl <- 
+  data.frame(
+    id = rownames(RNA_spur),
+    cID = RNA_spur$newcl
+  )
+```
+
+And we save the data for TF analysis and for pairwise comparisons:
+
+```{r save}
+save(
+  spur_vsd,
+  spur_top_dev,
+  RNA_spur,
+  spur_cl_avgs,
+  spur_cl,
+  file = "outputs/rda/spur_reanalysis.rda"
+)
+```

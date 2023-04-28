@@ -1,0 +1,478 @@
+---
+title: "Ptychodera Cisreg Development: Transcription Factor Analysis"
+author: "Alberto Perez-Posada"
+date: "3/26/2023"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+
+## About
+
+In this markdown we will analyse the expression of transcription factor genes during the development of Ptychodera flava. For this we will use both the counts data we retrieved from our RNA-seq analysis and the transcription factor annotation we did in a previous separate markdown.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(ComplexHeatmap)
+library(circlize)
+library(topGO)
+library(tidyverse)
+```
+
+## Load functions
+
+```{r load_functions}
+source("code/r_code/r_functions/sourcefolder.r")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+
+
+```
+
+
+## Data Load
+
+We will load the normalised counts for DESeq2:
+
+```{r load data}
+# Counts and stage-specific clusters
+load("outputs/rda/stage_specific_clusters.rda")
+
+# TF annotation
+load("outputs/rda/TF_annotation.rda")
+```
+
+## Ptychodera TF Gene Expresion Overview
+
+We will slice the dataset of counts to retrieve just the genes that are annotated as TFs.
+
+```{r}
+pfla_tfs_vsd <-
+  pfla_rna_all[
+    rownames(pfla_rna_all) %in% pfla_tfs$id,
+    1:16
+    ]
+
+colnames(pfla_tfs_vsd) <- colnames(pfla_tfs_vsd)[1:16]
+
+pfla_tfs_vsd <- as.data.frame(pfla_tfs_vsd)
+```
+
+From here we do two things:
+
+ - We correlate the expression profile of all TF genes to detect patterns of coexpression.
+ - We create a heatmap to visualise these patterns of coexpression.
+
+```{r}
+
+clu_method <- "ward.D2"
+
+# The Heatmaps themselves
+pfla_tfs_sp_hm <- Heatmap(
+  name="Spearman",
+  cor(
+    scale(t(pfla_tfs_vsd[,1:16])),
+    method="sp" # Spearman correlation
+  ),
+  clustering_method_columns = clu_method,
+  clustering_method_rows = clu_method,
+  col=tfs_sp_hm_col,
+  show_row_names = FALSE,
+  show_column_names = FALSE
+  )
+
+pfla_tfs_exp_hm <- Heatmap(
+  name="norm\nexpr",
+  t(scale(t(pfla_tfs_vsd[,1:16])))+2, # +2 for visualisation purposes
+  col=tfs_expr_hm_col,
+  show_row_names = FALSE,
+  show_column_names = FALSE,
+  cluster_rows=T,
+  clustering_method_rows = "ward.D2",
+  cluster_columns=F,
+  top_annotation=devstages_ha_columns()
+  )
+
+```
+
+And here to visualise them both:
+
+```{r , fig.width = 12, fig.height = 12}
+draw(pfla_tfs_sp_hm + pfla_tfs_exp_hm)
+```
+
+
+## Transcription Factor Class Abundance throughout development
+
+To help us discern some patterns in the expression of these TFs, we can rely on TF Class annotation to see if there are major differences in the control of gene expression at the TF class level.
+
+For this we will prepare the counts dataset and keep the TFs of the top classes.
+
+```{r}
+pfla_rna_counts_rowmeansbyrepl <-
+    as.data.frame(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      tbl = pfla_rna_counts
+      )
+  )
+
+rownames(pfla_rna_counts_rowmeansbyrepl) <- rownames(pfla_rna_counts)
+
+pfla_tfs_counts_topclass <- 
+  merge(
+    pfla_rna_counts_rowmeansbyrepl,
+    pfla_tfs,
+    by.x = 0,
+    by.y = 1,
+  ) %>% 
+  distinct(Row.names, .keep_all = TRUE) %>%
+  column_to_rownames("Row.names") %>%
+  filter(class %in% topclasses)
+
+head(pfla_tfs_counts_topclass[,16:17])
+```
+
+We will generate a matrix to count how many genes of each TF class are expressed in each cell cluster.
+
+```{r}
+pfla_tfs_ngenes <- 
+  apply(
+    pfla_tfs_counts_topclass[1:16],
+    2,
+    function(x){ ifelse(x > 0, 1, 0) }
+    )
+
+row.names(pfla_tfs_ngenes) <- pfla_tfs_counts_topclass$class
+
+pfla_tfs_ngenes <-
+  aggregate(
+    pfla_tfs_ngenes[, 1:16],
+    by = list(Category = rownames(pfla_tfs_ngenes)),
+    FUN = sum) %>%
+  arrange(Category)
+# %>%
+#   column_to_rownames("Category")
+
+pfla_tfs_ngenes_plot <- pfla_tfs_ngenes[,16:1] %>% reshape2::melt() %>% mutate(Category = factor(Category, levels = rev(unique(Category)))) %>%
+  ggplot( aes(fill=Category, y=variable, x=value)) + 
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_manual(values=rev(topclasses_col))+
+  xlab("% TPMS/Gene") + 
+  ylab("Stage")+
+  theme_minimal()
+
+pfla_tfs_ngenes_plot
+```
+
+We also generate a table of all the cpms per class and per cell cluster. We will aggregate (sum) all cpms by TF class, for each cell cluster separately. (We will also generate a normalised )
+
+```{r}
+pfla_tfs_expgenes <-
+  aggregate(
+    pfla_tfs_counts_topclass[, 1:16],
+    by = list(Category = pfla_tfs_counts_topclass$class),
+    FUN = sum) %>%
+  arrange(Category) 
+
+
+pfla_tfs_expgenes_plot <- pfla_tfs_expgenes[,16:1] %>% reshape2::melt() %>% mutate(Category = factor(Category, levels = rev(unique(Category)))) %>%
+  ggplot( aes(fill=Category, y=variable, x=value)) + 
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_manual(values=rev(topclasses_col))+
+  xlab("% TPMS/Gene") + 
+  ylab("Stage")+
+  theme_minimal()
+
+pfla_tfs_expgenes_plot
+```
+
+We divide the cpms/class by the numexp/class, thus retrieving the cpms per class normalised by the number of expressed genes from a given class.
+
+```{r}
+pfla_tfs_expngenes <- 
+  data.frame(
+    Category = pfla_tfs_expgenes$Category,
+    pfla_tfs_expgenes[,c(1:16)+1] / pfla_tfs_ngenes[,c(1:16)+1]
+  ) %>%
+  column_to_rownames("Category")
+
+pfla_tfs_expngenes <- apply(pfla_tfs_expngenes, 2, function(x){ifelse(is.nan(x),0,x)})
+
+pfla_tf_EXPNGEN <- 
+  apply(pfla_tfs_expngenes, 2, function(x) {
+    x / sum(x)
+  })
+```
+
+A barplot to show the prominence/prevalence of TF classes on each cell cluster.
+
+```{r echo = FALSE}
+pfla_tf_EXPNGEN_plot <- as.matrix(pfla_tf_EXPNGEN[,16:1]) %>% reshape2::melt() %>% mutate(Var1 = factor(Var1, levels = rev(unique(Var1)))) %>%
+  ggplot( aes(fill=Var1, y=Var2, x=value)) + 
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_manual(values=rev(topclasses_col))+
+  xlab("% TPMS/Gene") + 
+  ylab("Stage")+
+  theme_minimal()
+
+pfla_tf_EXPNGEN_plot
+```
+
+## TF Class Expression Variability
+
+We can also showcase the differences in gene expression variability across TF classes by relying on the Coefficient of Variation at the class level.
+
+```{r}
+
+pfla_tfs_class_cv <- merge(
+  data.frame(
+    id = pfla_tfs$id,
+    class = factor(
+      pfla_tfs$class,
+      levels = unique(pfla_tfs$class)
+      )
+    ),
+  data.frame(
+    id = rownames(pfla_rna_counts_rowmeansbyrepl),
+    cv = apply(
+      pfla_rna_counts_rowmeansbyrepl[,1:16],
+      1,
+      function(x){
+        sd(x)/mean(x)
+      }
+    )
+  ),
+  by = 1
+)[,2:3]
+
+head(pfla_tfs_class_cv)
+
+```
+
+Based on the median CV and the number of genes of each class, we can do a scatter plot and a box plot to showcase these differences:
+
+```{r}
+
+tfs_cv_scatter <- 
+  ggplot(pfla_tfs_class_cv %>% group_by(class) %>%
+           mutate( med = median(cv) ) %>%
+           mutate( numgenes = log( table( as.character(class) ) ) ) ,
+         aes(x = numgenes, y = med, label=class)) +
+  geom_text(hjust=0, vjust=0, aes(colour = class))+
+  scale_color_manual(
+    values = rainbow(length(levels(pfla_tfs_class_cv$class)))
+    )+
+  theme_classic()+
+  theme(
+    legend.position = "none"
+  )
+
+tfs_cv_boxplot <- 
+  ggplot(pfla_tfs_class_cv %>% group_by(class) %>%
+           mutate(med = median(cv)) %>%
+           mutate(numgenes = log(table(as.character(class)))),
+         aes(x = reorder(class, cv, FUN=median), y = cv)) +
+  geom_boxplot(aes(fill = numgenes))+
+  scale_fill_gradient(low="#00204D", high="#FFEA46")+
+  theme_classic()+
+  theme(
+    axis.text.x = element_text(
+      colour = rainbow(length(levels(pfla_tfs_class_cv$class))),
+      angle = 90
+      )
+    )
+```
+
+The Scatter plot:
+
+```{r echo = FALSE}
+tfs_cv_scatter
+```
+
+And the Box plot of each TF class
+
+```{r echo = FALSE}
+tfs_cv_boxplot
+```
+
+## Coexpression TF classes ~ clusters of stage-specific genes
+
+Does the patterns of these TF classes correspond to the genes we have identified as stage-specific during development? For this we can count how many of each TF of a given class X correlates positively with the average expression profile of a given stage-specific cluster Y.
+
+Firs we will slice again the counts of the TFs
+
+```{r}
+
+pfla_tfs_counts <- 
+  merge(
+    pfla_rna_counts_rowmeansbyrepl,
+    pfla_tfs,
+    by.x = 0,
+    by.y = 1,
+  ) %>% 
+  distinct(Row.names, .keep_all = TRUE) %>%
+  column_to_rownames("Row.names")
+
+```
+
+And we will keep only the TFs from TFclasses with more than three annotated genes:
+
+```{r}
+
+tfclasses_morethan3genes <-
+  names(table(pfla_tfs$class)[table(pfla_tfs$class) >3])
+
+clusters <-
+  rownames(pfla_rna_dev_avg)
+
+```
+
+We create an empty matrix where to put all the data we will calculate:
+
+```{r}
+
+tfs_cluster <- 
+  matrix(
+    0,
+    nrow = length(tfclasses_morethan3genes), 
+    ncol = length(clusters)
+    )
+
+rownames(tfs_cluster) <- tfclasses_morethan3genes
+
+colnames(tfs_cluster) <- clusters
+
+tfs_cluster
+
+```
+
+We first create a large matrix of TF~stage-specific expression profile.
+
+```{r}
+
+pfla_tfs_cluster_cor <-
+  cor(
+    scale(t(pfla_tfs_counts[1:16])), 
+    t(pfla_rna_dev_avg), 
+    use = "pairwise.complete.obs"
+    )
+
+```
+
+We will parse this matrix to count jhow many TFs of a given class `j` correlate positively with the expression profile of a given class `i` :
+
+```{r}
+
+for (i in clusters) {
+  
+  h <- which(clusters == i)
+  
+  for (j in tfclasses_morethan3genes) {
+    
+    n <- which(tfclasses_morethan3genes == j)
+    
+    all_tfs_class_j <- pfla_tfs$id[pfla_tfs$class == j]
+    
+    cors_jclass_in_imodule <-
+      pfla_tfs_cluster_cor[
+        rownames(pfla_tfs_cluster_cor) %in% all_tfs_class_j,
+        colnames(pfla_tfs_cluster_cor) == i
+        ]
+    
+    good_tfs_jclass_in_imodule <-
+      length(
+        cors_jclass_in_imodule[
+          cors_jclass_in_imodule > 0.6
+          ]
+        )
+    
+    tfs_cluster[n, h] <-
+      good_tfs_jclass_in_imodule / length(cors_jclass_in_imodule)
+  }
+}
+
+```
+
+A quick look at this matrix:
+
+```{r}
+
+round(tfs_cluster,2)[1:5,1:5]
+
+```
+
+And a heatmap of coexpression:
+
+```{r, fig.height = 6, fig.width = 6}
+
+Heatmap(
+  name = "% cor(Sp) > 0.6",
+  t(tfs_cluster),
+  col = tf_clusters_hm_col,
+  heatmap_legend_param = list(
+    title=expression(paste("% ", rho, " > 0.6")),
+    title_position = "leftcenter-rot",
+    at=c(0,0.2,0.4,0.6),
+    labels=c("0","20","40","60+")
+    ),
+  row_names_side = "left",
+  row_names_gp = gpar(cex=0.7),
+  cluster_rows=F,
+  column_title="Coexpression of TF classes and\nstage-specific genes",
+  column_title_gp = gpar(cex=0.8,fontface="bold"),
+  top_annotation=tfs_ha_columns(tfclasses_morethan3genes)
+  )
+
+```
+
+## Saving the data
+
+We will save the data for further analyses down the line.
+
+```{r save}
+save(
+  pfla_tfs_vsd,
+  pfla_tfs_counts_topclass,
+  pfla_tfs_sp_hm,
+  pfla_tfs_exp_hm,
+  pfla_tfs_ngenes,
+  pfla_tfs_expgenes,
+  pfla_tf_EXPNGEN,
+  pfla_tfs_class_cv,
+  pfla_tfs_counts,
+  tfclasses_morethan3genes,
+  tfs_cluster,
+  pfla_tfs_cluster_cor,
+  pfla_tfs_ngenes_plot,
+  pfla_tfs_expgenes_plot,
+  pfla_tf_EXPNGEN_plot,
+  file = "outputs/rda/tf_analysis.rda"
+  )
+```

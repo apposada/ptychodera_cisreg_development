@@ -1,0 +1,13 @@
+{
+	"n_targets": 35961,
+	"n_bootstraps": 0,
+	"n_processed": 27720214,
+	"n_pseudoaligned": 18487036,
+	"n_unique": 17544768,
+	"p_pseudoaligned": 66.7,
+	"p_unique": 63.3,
+	"kallisto_version": "0.46.1",
+	"index_version": 10,
+	"start_time": "Thu Oct 29 17:56:54 2020",
+	"call": "kallisto quant -t 10 -i /home/ska/aperpos/Def_Pfla/other_spp/data_blan/genome/Bla_annot_v4_best_Tra.fa.kallisto.index -o /home/ska/aperpos/Def_Pfla/other_spp/data_blan/RNA/kallisto_20201029/kallisto_out_RNAseq_amphioxus_18h_rep1 /home/ska/aperpos/Def_Pfla/other_spp/data_blan/RNA/FQ/RNAseq_amphioxus_18h_rep1/RNAseq_amphioxus_18h_rep1_1.fq.gz /home/ska/aperpos/Def_Pfla/other_spp/data_blan/RNA/FQ/RNAseq_amphioxus_18h_rep1/RNAseq_amphioxus_18h_rep1_2.fq.gz"
+}

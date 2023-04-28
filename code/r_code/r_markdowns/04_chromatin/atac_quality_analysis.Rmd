@@ -1,0 +1,154 @@
+---
+title: "Ptychodera Cisreg Development: ATAC-seq Mapping Quality Analysis"
+author: "Alberto Perez-Posada"
+date: "3/31/2023"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+
+## About
+
+This markdown generates the panels showcasing the mapping statistics of the chromatin accessibility data.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(ggplot2)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## ATAC seq quality analysis
+
+```{r}
+# load table
+pfla_atac_qual <- read.delim2(
+  "./outputs/reports_atac/atac_quality.tsv",
+  header=T
+)
+```
+
+### Bowtie2 Statistics
+
+Below are the stats of the bowtie2 mapping.
+
+```{r}
+pfla_atac_bowtie2 <- pfla_atac_qual[,1:4]
+
+pfla_atac_bowtie2
+```
+
+To plot this we can relativise every metrc by the total number of reads per sample. This way we can see the percentages.
+
+```{r, echo = FALSE}
+pfla_atac_bowtie2$pct_unmapped <- apply(
+  pfla_atac_bowtie2[,2:4],
+  1,
+  function(x){x[1]/sum(x)}
+)
+pfla_atac_bowtie2$pct_singlemap <- apply(
+  pfla_atac_bowtie2[,2:4],
+  1,
+  function(x){x[2]/sum(x)}
+)
+pfla_atac_bowtie2$pct_multimap <- apply(
+  pfla_atac_bowtie2[,2:4],
+  1,
+  function(x){x[3]/sum(x)}
+)
+```
+
+And the plot itself:
+
+```{r}
+barplot(
+  as.matrix(t(pfla_atac_bowtie2[,5:7])),
+  names.arg = pfla_atac_bowtie2$sample,
+  main = "Ptychodera flava ATAC-seq mapping quality",
+  xlab = "Sample",
+  ylab = "% Reads mapped",
+  legend.text = c("unmapped","single-mapping","multi-mapping"),
+  args.legend = list(x = "topright",
+                     inset = c(- 0.15, 0)),
+  col = c("lightgray","royalblue","lightblue"),
+  xlim = c(0,11)
+)
+```
+
+We can see that these are not stellar golden-standard level stats, but it is what we have.
+
+### IDR statistics
+
+A subset of the stats in the original table are for IDR.
+
+```{r}
+pfla_atac_idr <- pfla_atac_qual[c(1,3,5,7),c(1,5:17)]
+
+pfla_atac_idr
+```
+
+To plot these:
+
+```{r, echo = FALSE}
+barplot(
+  t(pfla_atac_idr[,2:12])/1000,
+  beside = T,
+  names.arg = rep(colnames(pfla_atac_idr)[2:12], 4),
+  las = 2,
+  col = c(rep(brewer.pal(4,"Spectral")[1],11), rep(brewer.pal(4,"Spectral")[2],11), rep(brewer.pal(4,"Spectral")[3],11), rep(brewer.pal(4,"Spectral")[4],11)),
+  main = "IDR stats",
+  legend.text = c("EB","EG","MG","LG"),
+  args.legend = list(x = "topright", inset = c(- 0.1, 0), fill = brewer.pal(4,"Spectral")),
+  ylab = "# peaks (x10E3)"
+)
+```
+
+
+```{r, echo = FALSE}
+barplot(
+  height = as.numeric(t(pfla_atac_idr[,13:14])),
+  beside = T,
+  names.arg = rep(colnames(pfla_atac_idr)[13:14], 4),
+  las = 2,
+  col = sort(rep(brewer.pal(4,"Spectral"),2)),
+  main = "IDR stats",
+  legend.text = c("EB","EG","MG","LG"),
+  args.legend = list(x = "topright", inset = c(- 0.1, 0), fill = sort(brewer.pal(4,"Spectral"))),
+  ylab = "Index"
+)
+```

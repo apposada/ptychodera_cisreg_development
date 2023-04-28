@@ -1,0 +1,13 @@
+{
+	"n_targets": 35961,
+	"n_bootstraps": 0,
+	"n_processed": 31562326,
+	"n_pseudoaligned": 21512470,
+	"n_unique": 20642760,
+	"p_pseudoaligned": 68.2,
+	"p_unique": 65.4,
+	"kallisto_version": "0.46.1",
+	"index_version": 10,
+	"start_time": "Tue Feb  8 17:45:52 2022",
+	"call": "kallisto quant -t 10 -i /home/ska/aperpos/Def_Pfla/other_spp/data_blan/genome/Bla_annot_v4_best_Tra.fa.kallisto.index -o kallisto_20201029_readyfordeseq2/RNAseq_amphioxus_PreMet_rep1/ /home/ska/jtena/amphi_paper_data/RNAseq/RNAseq_amphioxus_PreMetam_1.fq.gz /home/ska/jtena/amphi_paper_data/RNAseq/RNAseq_amphioxus_PreMetam_2.fq.gz"
+}
