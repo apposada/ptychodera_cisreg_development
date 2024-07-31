@@ -13,15 +13,19 @@ rowMeans_by_repl <- function(a,tbl){
   return(c)
 }
 
-devstages_ha_columns <- function(){
+devstages_ha_columns_simple <- function(x = NULL){
   library(ComplexHeatmap)
   library(circlize)
   
+  if(is.null(x)){
+    x = levels(condition_x)
+  }
+  
   ha <- HeatmapAnnotation(
-    stage = levels(condition_x),
-    col = 
-      list(
-        stage = setNames(dev_palette,levels(condition_x))
+    stage = anno_simple(
+      x,
+      col  = setNames(dev_palette,x),
+      pch = as.character(0:(length(x)-1))
       ),
     show_annotation_name = FALSE
   )
@@ -29,16 +33,59 @@ devstages_ha_columns <- function(){
   return(ha)
 }
 
-devstages_ha_rows <- function(){
+devstages_ha_columns <- function(x = NULL){
   library(ComplexHeatmap)
   library(circlize)
   
+  if(is.null(x)){
+    x = levels(condition_x)
+  }
+  
   ha <- HeatmapAnnotation(
-    stage = levels(condition_x),
-    col = 
-      list(
-        stage = setNames(dev_palette,levels(condition_x))
-      ),
+    stage = x,
+    col  = list(stage = setNames(dev_palette,x)),
+    which = "column",
+    show_legend = FALSE,
+    show_annotation_name = FALSE
+  )
+  
+  return(ha)
+}
+
+devstages_ha_rows_simple <- function(x = NULL){
+  library(ComplexHeatmap)
+  library(circlize)
+  
+  if(is.null(x)){
+    x = levels(condition_x)
+  }
+  
+  ha <- HeatmapAnnotation(
+    stage = anno_simple(
+      x,
+      col  = setNames(dev_palette,x),
+      pch = as.character(0:(length(x)-1))
+    ),
+    which = "row",
+    show_legend = FALSE,
+    show_annotation_name = FALSE
+  )
+  
+  return(ha)
+}
+
+
+devstages_ha_rows <- function(x = NULL){
+  library(ComplexHeatmap)
+  library(circlize)
+  
+  if(is.null(x)){
+    x = levels(condition_x)
+  }
+  
+  ha <- HeatmapAnnotation(
+    stage = x,
+    col  = list(stage = setNames(dev_palette,x)),
     which = "row",
     show_legend = FALSE,
     show_annotation_name = FALSE
@@ -82,3 +129,23 @@ tfs_ha_columns <- function(tfs){
   
   return(ha)
 }
+
+quick_ha <- function(x, col = "SunsetDark", rev = FALSE, side = "column"){
+  require(ComplexHeatmap)
+  require(circlize)
+  
+  l <- length(x)
+  
+  cols <- sequential_hcl(l,col,rev = rev)
+  
+  ha <-
+    HeatmapAnnotation(
+      stage = x,
+      col = list(stage = setNames(cols,x) ),
+      which = side,
+      show_legend = FALSE,
+      show_annotation_name = FALSE
+    )
+  
+  return(ha)
+}  

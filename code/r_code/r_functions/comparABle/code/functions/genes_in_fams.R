@@ -36,7 +36,7 @@ key_genes_in_common_fams <- function(
         x_comparison_modules <- x_comparison_modules[x_comparison_modules$id != "none",]
         
         mod_b = x$module_b[i]
-        fams_i_common <- unlist(strsplit(x$gfams_common[i], ",\ "))
+        fams_i_common <- unlist(strsplit(x$gfams_common[i], sep))
         genes_module_b <- mb$id[mb$module == mod_b]
         genes_module_b_commonfams <- genes_module_b[
             genes_module_b %in% 
@@ -69,13 +69,13 @@ key_genes_in_common_fams <- function(
     #gene age bar/pieplot
     #barplot; check which one looks better . maybe a grid of pie charts?
     #maybe a grid of piecharts of ALL the comparisons and only in color/highlighted those that are significant?? does Heatmap() allow this?
-    barplot( # 
-        table(
-            x_comparison_modules$module
-        ),
-        las = 2,
-        horiz = T
-    )
+    # barplot( # 
+    #     table(
+    #         x_comparison_modules$module
+    #     ),
+    #     las = 2,
+    #     horiz = T
+    # )
     
     #gene age enrichment (barplot of FC up--down )
     commonfams_age <- gene_age_enrichment(
@@ -107,7 +107,8 @@ key_genes_in_common_fams <- function(
         list_a_common = x_fams_a,
         age_a_common = commonfams_age,
         cog_a_comon = x_fams_cog_a,
-        go_a_common = x_fams_a_GOs
+        go_a_common = x_fams_a_GOs,
+        list_b_common = x_fams_b
     )
     
     return(res_common)

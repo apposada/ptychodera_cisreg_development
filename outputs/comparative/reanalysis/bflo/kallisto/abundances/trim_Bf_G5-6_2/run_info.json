@@ -1,0 +1,13 @@
+{
+	"n_targets": 30215,
+	"n_bootstraps": 0,
+	"n_processed": 58420992,
+	"n_pseudoaligned": 43256291,
+	"n_unique": 40488755,
+	"p_pseudoaligned": 74.0,
+	"p_unique": 69.3,
+	"kallisto_version": "0.48.0",
+	"index_version": 10,
+	"start_time": "Mon May 15 20:16:04 2023",
+	"call": "kallisto quant -t 240 -i GCF_000003815.2_Bfl_VNyyK_genomic_agatLongest_mRNA.index -o ./kallisto_raw_output/trim_Bf_G5-6_2 --single -l 200 -s 20 /media/ngs3/ngs3_WD_3-1/amphioxus/Yu_before_2015/P038_Amphioxus_EvoDevo/trim_fa_gz/trim_Bf_G5-6_2.fq.gz"
+}

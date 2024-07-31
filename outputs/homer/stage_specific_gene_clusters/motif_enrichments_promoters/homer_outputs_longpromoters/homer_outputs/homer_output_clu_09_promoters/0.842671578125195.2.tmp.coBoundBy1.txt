@@ -1,0 +1,12 @@
+#Name (cmd = mergePeaks /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_09_promoters/bg.clean.pos /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_09_promoters/target.clean..pos -d 200 -cobound 1 -prefix /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_09_promoters/0.842671578125195.2.tmp)	chr	start	end	strand	stat	stat2	/home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_09_promoters/target.clean..pos
+BGpeak23877	Scaffold_15_1_contigs	17742202	17742895	+	0.000	0.000	TCONS_00013938
+BGpeak65648	Scaffold_5_1_contigs	24505316	24505512	+	0.000	0.000	TCONS_00045201
+BGpeak18103	Scaffold_14_1_contigs	5772259	5772506	+	0.000	0.000	TCONS_00010972
+BGpeak57361	Scaffold_30_1_contigs	894350	894673	+	0.000	0.000	TCONS_00038281
+BGpeak31410	Scaffold_17_1_contigs	17854649	17854885	+	0.000	0.000	TCONS_00017300
+BGpeak31411	Scaffold_17_1_contigs	17854891	17855144	+	0.000	0.000	TCONS_00017300
+BGpeak34450	Scaffold_18_1_contigs	15885779	15886199	+	0.000	0.000	TCONS_00019245
+BGpeak35843	Scaffold_18_1_contigs	32380046	32380433	+	0.000	0.000	TCONS_00019618
+BGpeak36661	Scaffold_19_1_contigs	1576872	1577261	+	0.000	0.000	TCONS_00021885
+BGpeak71780	Scaffold_71_1_contigs	295014	295207	+	0.000	0.000	TCONS_00049846
+BGpeak72965	Scaffold_7_1_contigs	19381194	19381410	+	0.000	0.000	TCONS_00050507

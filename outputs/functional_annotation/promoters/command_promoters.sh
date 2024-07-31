@@ -1,0 +1,1 @@
+awk 'BEGIN {OFS="\t"} {if ($6 == "+") {$3 = $2 + 200; $2 = $2 - 200} else if ($6 == "-") {$2 = $3 - 200; $3 = $3 + 200}; print $1, $2, $3, $4, $5, $6;}' ~/projects/ptychodera_cisreg_development/data/refs/genome/ptyFlav3_CYi_longest.tss.bed > ptyFlav3_CYi_longest.promoters.bed

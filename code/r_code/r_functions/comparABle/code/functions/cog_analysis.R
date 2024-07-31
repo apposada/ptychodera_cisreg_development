@@ -106,6 +106,7 @@ cog_enrichment_analysis <- function(x_modules, x_cog, specific_cogs = FALSE, fis
         col = col_cogs,
         row_names_side = "left",
         column_names_side = "top",
+        column_labels = translate_ids(colnames(enrichdf),funcat_lookup),
         cell_fun = function(j,i,x,y,width,height,fill){
             if(as.matrix(pvaldf)[i,j] < fisher_pval)
             grid.text(

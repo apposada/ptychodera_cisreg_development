@@ -85,3 +85,23 @@ tf_clusters_hm_col <-
       rev(viridis_pastel)
       )(20)
     )
+
+gb_col <- 
+  c(
+    yellow1 = "#f5f8aa",
+    yellow2 = "#d0be7b",
+    orange1 = "#efad84",
+    orange2 = "#d78c91",
+    purple1 = "#9d95e2",
+    purple2 = "#7b6b94",
+    blue1 = "#92baef",
+    blue2 = "#4a42b5",
+    teal1 = "#6bad94",
+    teal2 = "#2f738a",
+    green1 = "#9cce7b",
+    green2 = "#4a9c5a",
+    white1 = "#eff0f9",
+    gray1 = "#9696a4",
+    gray2 = "#5a5a63",
+    black1 = "#1a1a1a"
+  )

@@ -1,0 +1,641 @@
+---
+title: "Ptychodera Cisreg Development: ATAC-seq Analysis"
+author: "Alberto Perez-Posada"
+date: "3/31/2023"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+## About
+
+In this markdown, we analysed the counts of the Open Chromatin Regions (OCR, or 'peaks'), of our ATAC-Seq mapping. For this we will also use DESeq2.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(ggplot2)
+library(tidyverse)
+library(stringr)
+library(ggpubr)
+library(ggplotify)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load the data
+
+The tsvs of the counts are all deposited in `data/ATAC/mapped/counts`.
+
+We will create a table with all the sample information just like we did when analysing the RNA-seq data.
+
+```{r sampletable}
+sample_dir <- "data/ATAC/mapped/counts/"
+
+sample_table <- 
+  data.frame(
+    sampleNames = 
+      c(paste("dev_ATAC_pfla0", c(1:4,7,8,5,6), sep = "")), 
+    fileName = 
+      dir(path = sample_dir, pattern = "\\.counts"), 
+    condition = 
+      factor(c(c("01_EB","01_EB","02_EG","02_EG","04_LG","04_LG","03_MG","03_MG"))),
+    batch = 
+      factor(c(1,2,1,2,1,2,1,2))
+  )
+
+sample_table <- sample_table[c(1:4,7,8,5,6),]
+```
+
+We will use the `DESeqDataSetFromHTSeqCount` function to load the counts of the tsv files. We will use the `~batch+condition` formula for the design matrix, and relevel the condition for `"EB"` since this is the first developmental stage.
+
+```{r load_data}
+dds_atac <- 
+  DESeqDataSetFromHTSeqCount(
+    sampleTable = sample_table,
+    directory = sample_dir,
+    design = ~batch+condition
+    )
+
+dds_atac$condition <- 
+  relevel(dds_atac$condition, ref = c("01_EB"))
+```
+
+Much like before since this is also time-series data, we will also use the Likelihood-Ratio test to determine the OCRs who showcase differential accessibility throughout these developmental stages.
+
+```{r deseq_atac}
+dds_atac <- 
+  DESeq(
+  dds_atac,
+  test = "LRT",
+  reduced = ~batch
+  )
+```
+
+The resulting output here:
+
+```{r res_atac}
+res_atac <- results(dds_atac)
+
+round(data.frame(res_atac)[1:10,],3)
+```
+
+We will retrieve the OCRs which show a significant change in chromatin accessibility during development.
+
+```{r cutoff}
+cutoff=0.05
+
+res_atac_signif <- 
+  subset(res_atac, padj < cutoff )
+
+res_atac_signif <- 
+  subset(res_atac_signif, abs(log2FoldChange) > 1 )
+
+res_atac_signif <- 
+  res_atac_signif[ order(res_atac_signif$padj), ]
+
+head(sapply(res_atac_signif,round,digits=3))
+```
+
+We extract the significant counts from the DESeq2 object using `assay()` and subsetting for those in the list of significant OCRs.
+
+```{r counts_and_vsd}
+counts_allpeaks <- 
+  assay(
+    dds_atac,
+    normalized = T
+    )
+
+counts_signif <- 
+  counts_allpeaks[ rownames(counts_allpeaks) %in% rownames(res_atac_signif), ]
+```
+
+A PCA analysis of the eight samples:
+
+```{r PCA}
+vsd_atac <- vst(dds_atac)
+atac_pca <- plotPCA(vsd_atac)
+
+print(atac_pca)
+```
+
+And Finally, we average by replicates and get the final set of significant OCR counts:
+
+```{r rowmeans_byrep}
+pfla_atac <- 
+  data.frame(
+    EB=rowMeans(counts_signif[,1:2]),
+    EG=rowMeans(counts_signif[,3:4]),
+    MG=rowMeans(counts_signif[,5:6]),
+    LG=rowMeans(counts_signif[,7:8])
+  )
+```
+
+We subsample this dataset to visualise in a heatmap.
+
+```{r subsmaple_raw-hm}
+pfla_atac_viz <-
+  t(scale(t(
+    pfla_atac[
+      sample(nrow(pfla_atac), 500),
+    ] 
+    )))
+```
+
+We create the heatmap with the package `ComplexHeatmap`:
+
+```{r raw_hm}
+pfla_atac_hm <-
+  Heatmap(
+    name = "chrom accs",
+    pfla_atac_viz,
+    show_row_names = FALSE,
+    column_names_side="top",
+    cluster_rows = TRUE,
+    cluster_columns = FALSE,
+    clustering_method_rows = "ward.D2",
+    col=colorRampPalette(c("#337ab7","white","#f05757"))(10),
+    )
+```
+
+And the actual visualisation:
+
+```{r, fig.width = 3.5, fig.height = 5}
+draw(pfla_atac_hm)
+```
+
+## K-means clustering
+
+We can see there is around six big groups of differential accessibility. Using kmeans clustering we can retrieve these peaks classified in such clusters of differential accessibility.
+
+```{r atac_kmeans}
+nclust <- 6
+
+set.seed(1234)
+
+k2 <- 
+  kmeans(
+    t(scale(t(pfla_atac))), 
+    centers = nclust, 
+    nstart = 25
+  ) 
+```
+
+We will order these clusters based on the max and second-highest value of accessibility of their average profiles. For that we first extract the mean profile of each cluster:
+
+
+```{r atac_cl_avg}
+pfla_cl_avg <- 
+  aggregate(
+    t(scale(t(pfla_atac))),
+    by = list(k=k2$cluster),
+    FUN = mean
+    )[,-1]
+
+pfla_cl_avg
+```
+
+And then we do the ordering
+
+```{r newordering_hm, fig.width = 2.6, fig.height = 2.5}
+ord <- order( # proper order of kmeans clusters
+  apply(pfla_cl_avg,1,function(x)which(x==max(x))), # by max value
+  apply(pfla_cl_avg,1,function(x)which(x==rev(sort(x))[2])) # followed by second highest value
+  )
+
+Heatmap(
+  as.matrix(pfla_cl_avg[ord,]),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  column_names_rot = 0,
+  column_names_side = "top",
+  col = c("royalblue","#f4f0ea","#ff5520"),
+  row_names_side = "left"
+  )
+```
+
+We reassign a new cluster value (while keeping the structure) using match and a temporary little table.
+
+```{r atac_newcl}
+atac_newcl <-
+  data.frame(
+    kmeans = ord,
+    newkl = c(1:nclust)
+  )
+
+pfla_atac_kmeans <-
+  data.frame(
+    t(scale(t(pfla_atac))),
+    kmeans = translate_ids(x = k2$cluster, dict = atac_newcl)  
+  )
+```
+
+We subset a few peaks per cluster for the sake of visualisation.
+
+```{r atac_viz}
+set.seed(123)
+pfla_atac_viz <- 
+  pfla_atac_kmeans %>%  group_by(kmeans) %>% slice_sample(n = 50)
+```
+
+And we get the Heatmap
+
+```{r atac_hm, fig.width = 3.5, fig.height = 5, message = FALSE, warning = FALSE}
+pfla_atac_hm <- Heatmap(
+  pfla_atac_viz[,1:4],
+  name = "chrom accs",
+  row_split = pfla_atac_viz$kmeans,
+  show_row_names = F,
+  row_title_side = "left",
+  cluster_rows = F,
+  cluster_row_slices = T,
+  # row_labels = c("01_EB","02_EB/EG","03_EG","04_E/M/LG","05_M/LG","06_LG"),
+  cluster_columns=F,
+  row_title_rot = 0,
+  column_names_side="top",
+  column_title_rot = 0,
+  # use_raster = T,
+  col = c("royalblue","#f4f0ea","#ff5520") # c("#337ab7","white","#f05757")
+)
+
+draw(pfla_atac_hm)
+```
+
+```{r, fig.width = 3.5, fig.height = 7, message = FALSE}
+pfla_atac_hm_supp <- Heatmap(
+  as.matrix(pfla_atac_kmeans[,1:4]),
+  name = "chrom accs",
+  row_split = pfla_atac_kmeans$kmeans,
+  show_row_names = F,
+  row_title_side = "left",
+  cluster_rows = F,
+  cluster_row_slices = T,
+  cluster_columns=F,
+  row_title_rot = 0,
+  column_names_side="top",
+  column_names_rot = 0,
+  use_raster = T,
+  col = c("royalblue","#f4f0ea","#ff5520") # c("#337ab7","white","#f05757")
+)
+
+draw(pfla_atac_hm_supp)
+```
+
+
+And an Venn diagram showing the number of OCRs with accessibility on blastula and gastrula
+
+```{r venn_OCRs, fig.width = 3.5, fig.height = 3}
+library(eulerr)
+ol_peaks <- list(
+  `Blastula OCRs` = rownames(pfla_atac_kmeans[pfla_atac_kmeans$kmeans %in% c(1),]), # clusters with open chromatin at Blastula
+  `Blastula & Gastrula OCRs` = rownames(pfla_atac_kmeans[pfla_atac_kmeans$kmeans %in% c(2,3),]), # clusters with open chromatin at Blastula and Gastrula
+  `Gastrula OCRs` = rownames(pfla_atac_kmeans[pfla_atac_kmeans$kmeans %in% c(4,5,6),]) # clusters with open chromatin at Gastrula
+)
+ol_peaks_eul <- euler(calc_overlaps(ol_peaks))
+
+cols_venn <- c("#efaa90","#fbcf99")
+
+plot(
+    ol_peaks_eul,
+    fills = alpha(cols_venn,0.45),
+    edges = darken(cols_venn,.5),
+    quantities = list(type = c("counts", "percent"))
+    )
+
+```
+## Writing bed files for motif enrichment
+
+We write the bed files of the clusters to later do motif enrichment:
+
+```{r write_bedfiles, eval = FALSE}
+all_peaks_bed <- 
+  read.delim2("data/ATAC/mapped/idr/pfla_all_peaks.bed", header = FALSE)
+
+for (i in 1:nclust) {
+  pks = rownames(pfla_atac_kmeans[pfla_atac_kmeans$kmeans == i,])
+  peaks = all_peaks_bed[all_peaks_bed$V4 %in% pks,]
+  write.table(
+    peaks,
+    paste0(
+      "outputs/homer/atac_clusters/",
+      "pfla_ATAC_cluster_",i,".bed"
+    ),
+    sep="\t",
+    dec=".",
+    row.names=F,col.names=F,quote=F
+  )
+}
+```
+
+
+## Motif Enrichment Analysis
+
+We can use a set of custom wrapper functions to load the concatenated output of findMotifsGenome.pl and visualise the percentage of target peaks with enriched motifs as well as the logqval of significance. In the case of stage-specific clusters:
+
+```{r}
+# Load table
+pfla_motifs_clusters <- 
+  readr::read_tsv("outputs/homer/results_atac_clusters/motifs_all.tsv")
+
+# tidyr wrapper to present a tidy table
+pfla_motifs_clusters <- parse_homer_output_table(
+  tsv_motifs = pfla_motifs_clusters,
+  categ_regex1 = "..*category_",
+  categ_regex2 = "",
+  max_logqval = 10
+  )
+
+colnames(pfla_motifs_clusters)[1] <- "category"
+
+pfla_motifs_clusters$class[pfla_motifs_clusters$class == "?"] <-
+  pfla_motifs_clusters$motif[pfla_motifs_clusters$class == "?"]
+
+pfla_motifs_percateg_perclass <- 
+  aggregate_motifs_table(pfla_motifs_clusters)
+```
+
+And the actual plot:
+
+```{r, fig.height = 12, fig.width = 6}
+# Giant figure, suppl.
+pfla_motif_clusters_minim <- 
+  aggregate(
+    pfla_motifs_clusters[,c(8,11,15)],
+    by = list(
+      motif = pfla_motifs_clusters$motif_minim,
+      category = pfla_motifs_clusters$category
+      ),
+    FUN = max
+    )
+
+# provide a new ordering of rows for getting the levels of motif factor
+pfla_motif_clusters_minim <- 
+  pfla_motif_clusters_minim[
+    with(
+      pfla_motif_clusters_minim,
+      order(
+        category,
+        -as.numeric(pct_target_seqs_with_motif))
+      ),
+    ]
+
+
+pfla_motif_clusters_minim$motif <-
+  factor(
+    pfla_motif_clusters_minim$motif,
+    levels=unique(pfla_motif_clusters_minim$motif)
+    )
+
+
+p_motifs_clusters_minim <-
+  ggplot(
+    data = pfla_motif_clusters_minim, 
+    aes(
+      x = category, y = motif, color = `logqval`,
+      size = as.factor(size_pct))
+    ) +
+    geom_point() +
+    scale_color_continuous_sequential(palette = "SunsetDark")+
+    # scale_color_gradient(low = "#f1c232", high = "#5b0d80") +
+    theme_bw() +
+    ylab("") +
+    xlab("") +
+    ggtitle("Motif enrichment analysis") +
+    scale_y_discrete(limits=rev) +
+    theme(text = element_text(size=10), legend.text = element_text(size=10), axis.text.x = element_text(angle = 0, vjust = 0.5)) +
+    scale_size_manual(values = c(1, 2, 3, 4,5), labels = c("1-10", "10-20", "20-40", "40+")) +
+    guides(size=guide_legend(title="% peaks with motif")
+    )
+
+print(p_motifs_clusters_minim)
+```
+
+There are many enriched motifs. We do here a summarised figure with motif enrichments with q-value < 0.005, for visualisation in the main figure.
+
+```{r, fig.width = 8, fig.height = 4.5}
+threshold <- 0.005
+top_motifs <- 
+  pfla_motifs_clusters[
+    pfla_motifs_clusters$qval < threshold,
+  ]
+
+top_motifs_minim <-
+  aggregate(
+    top_motifs[,c(8,11,15)],
+    by = list(
+      motif = top_motifs$motif_minim,
+      category = top_motifs$category
+    ),
+    FUN = max
+  )
+
+# provide a new ordering of rows for getting the levels of motif factor
+top_motifs_minim <- 
+  top_motifs_minim[
+    with(
+      top_motifs_minim,
+      order(
+        category,
+        -as.numeric(pct_target_seqs_with_motif))
+    ),
+  ]
+
+top_motifs_minim$motif <-
+  factor(
+    top_motifs_minim$motif,
+    levels=unique(top_motifs_minim$motif)
+  )
+
+p_motifs_clusters_top_minim <-
+  ggplot(
+    data = top_motifs_minim, 
+    aes(
+      y = category, x = motif, color = `logqval`,
+      size = as.factor(size_pct))
+  ) +
+  geom_point() +
+  scale_color_continuous_sequential(palette = "SunsetDark")+
+  theme_bw() +
+  ylab("") +
+  xlab("") +
+  ggtitle("Motif enrichment analysis") +
+  scale_y_discrete(limits=rev) +
+  theme(text = element_text(size=10), legend.text = element_text(size=10), axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_size_manual(values = c(1, 2, 3, 4,5), labels = c("1-10", "10-20", "20-40", "40+")) +
+  guides(size=guide_legend(title="% peaks with motif"))
+
+print(p_motifs_clusters_top_minim)
+```
+
+## Motifs of OCRs associated to stage-specific genes
+
+One way to see if there is agreement at the global level between gene expression and chromatin accessibility is looking for the enriched motifs in groups of OCRs associated to particular stage-specific genes. For this, we subsetted our whole database of OCR/associated gene and binned them in groups based of the cluster of genes they are associated to.
+
+We ran HOMER as before and here is the data. Because we do not have chromatin accessibility of any stage beyond gastrulation, we will omit the motif enrichments of stage-specific genes belonging to post-gastrula stages.
+
+```{r, warning = FALSE, message = FALSE}
+# Load table
+pfla_motifs_clustersRNA <- 
+  read_tsv("outputs/homer/stage_specific_gene_clusters/motif_enrichments/all_motifs_per_stage_specific_gene_cluster.tsv")
+
+# process in the exact same way
+# tidyr wrapper to present a tidy table
+pfla_motifs_clustersRNA <- parse_homer_output_table(
+  tsv_motifs = pfla_motifs_clustersRNA,
+  categ_regex1 = "..*category_",
+  categ_regex2 = "",
+  max_logqval = 10
+  )
+
+colnames(pfla_motifs_clustersRNA)[1] <- "category"
+
+pfla_motifs_clustersRNA$category <- gsub(".*_cluster_", "", pfla_motifs_clustersRNA$category)
+pfla_motifs_clustersRNA$category <- gsub("_peaks", "", pfla_motifs_clustersRNA$category)
+pfla_motifs_clustersRNA$category <- as.numeric(pfla_motifs_clustersRNA$category)
+pfla_motifs_clustersRNA <- pfla_motifs_clustersRNA[pfla_motifs_clustersRNA$category < 14, ]
+pfla_motifs_clustersRNA$category <- factor(pfla_motifs_clustersRNA$category, levels = sort(unique(pfla_motifs_clustersRNA$category)))
+pfla_motifs_clustersRNA <- pfla_motifs_clustersRNA[order(pfla_motifs_clustersRNA$category),]
+
+pfla_motifs_percateg_perclass <- 
+  aggregate_motifs_table(pfla_motifs_clustersRNA)
+
+# Giant figure, suppl.
+pfla_motif_clustersRNA_minim <- 
+  aggregate(
+    pfla_motifs_clustersRNA[,c(8,11,15)],
+    by = list(
+      motif = pfla_motifs_clustersRNA$motif_minim,
+      category = pfla_motifs_clustersRNA$category
+      ),
+    FUN = max
+    )
+
+# provide ggplot a new ordering of the factor
+pfla_motif_clustersRNA_minim <- 
+  pfla_motif_clustersRNA_minim[
+    with(
+      pfla_motif_clustersRNA_minim,
+      order(
+        category,
+        -as.numeric(pct_target_seqs_with_motif),
+        -logqval)
+      ),
+    ]
+
+pfla_motif_clustersRNA_minim$motif <-
+  factor(
+    pfla_motif_clustersRNA_minim$motif,
+    levels=unique(pfla_motif_clustersRNA_minim$motif)
+    )
+
+p_motifs_rnaclu_closestpeaks <- 
+  ggplot(data = pfla_motif_clustersRNA_minim, aes(x = motif, y = category,
+                                                color = `logqval`, size = as.factor(size_pct))) +
+    geom_point() +
+    scale_color_continuous_sequential(palette = "SunsetDark")+
+    # scale_color_gradient(low = "#f1c232", high = "#5b0d80") +
+    theme_bw() +
+    ylab("") +
+    xlab("") +
+    ggtitle("Motif enrichment analysis") +
+    scale_y_discrete(limits=rev) +
+    theme(text = element_text(size=10), legend.text = element_text(size=10), axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+    scale_size_manual(values = c(1.5, 2.5, 3.5, 4.5,5.5), labels = c("1-10", "10-20", "20-40", "40+")) +
+    guides(size=guide_legend(title="% peaks with motif")
+  )
+
+print(p_motifs_rnaclu_closestpeaks)
+```
+
+## Saving the data
+
+And finally we save the data:
+
+```{r}
+save(
+  dds_atac,
+  res_atac,
+  res_atac_signif,
+  vsd_atac,
+  atac_pca,
+  pfla_atac_kmeans,
+  pfla_atac_hm,
+  pfla_atac_hm_supp,
+  pfla_motifs_clusters,
+  pfla_motif_clusters_minim,
+  pfla_motif_clusters_minim_perclass,
+  p_motifs_clusters_class,
+  p_motifs_rnaclu_closestpeaks,
+  file = "outputs/rda/atacseq_analysis.rda"
+)
+```
+
+
+```{r echo = FALSE}
+pdf(
+  file = "graphics/3A.pdf",
+  width = 3,
+  height = 5
+)
+draw(pfla_atac_hm)
+dev.off()
+
+pdf(
+  file = "graphics/3B.pdf",
+  width = 8,
+  height = 4.5
+)
+print(p_motifs_clusters_top_minim)
+dev.off()
+
+pdf(
+  file = "graphics/supp_atac_motifs_rna_clusters.pdf",
+  width = 8,
+  height = 4.5
+)
+print(p_motifs_rnaclu_closestpeaks)
+dev.off()
+
+
+pdf(
+  file = "graphics/S6.pdf",
+  width = 6,
+  height = 12
+)
+print(p_motifs_clusters_minim)
+dev.off()
+
+```

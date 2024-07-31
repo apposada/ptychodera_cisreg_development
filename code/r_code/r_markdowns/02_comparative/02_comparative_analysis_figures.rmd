@@ -1,0 +1,1259 @@
+---
+title: "Ptychodera Cisreg Development: Comparative Analysis Figures"
+author: "Alberto Perez-Posada"
+date: "5/1/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will do a comparison of the transcriptomes during development of Ptychodera, Amphixous, and Purple Sea Urchin.
+
+For this, we will use a solution of custom R functions and wrappers that we have named "comparABle" (kudos to @agilgal for the name!).
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+require(data.table)
+require(stringr)
+require(tidytree)
+require(ggtree)
+require(rvcheck)
+require(treeio)
+require(dendextend)
+require(phangorn)
+require(phytools)
+require(ComplexHeatmap)
+require(foreach)
+require(doParallel)
+require(colorspace)
+library(topGO)
+library(ggrastr)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load data 
+
+We will load all the comparABle wrappers that we have generated in all the markdowns of this section.
+
+```{r}
+load("outputs/rda/species_comparison.rda")
+load("outputs/rda/species_comparison_pfla_ajap.rda")
+load("outputs/rda/species_comparison_pfla_bflo.rda")
+load("outputs/rda/species_comparison_pfla_ofus.rda")
+load("outputs/rda/species_comparison_orthofinder.rda")
+```
+
+We will also load the gene age analysis:
+
+```{r}
+load("outputs/rda/geneage.rda")
+```
+
+We will also load the ancestral linkage group analysis:
+
+```{r}
+load("outputs/rda/ALGs.rda")
+```
+
+We will also load the reanalysis of all the species:
+
+```{r}
+load("outputs/rda/spur_reanalysis.rda")
+load("outputs/rda/blan_reanalysis.rda")
+load("outputs/rda/bflo_reanalysis.rda")
+load("outputs/rda/ajap_reanalysis.rda")
+# no owenia, it was downloaded from the github repository
+```
+
+## P.flava and echinoderms (S.purpuratus and A.japonica)
+
+We calculate a mean JSD for each trancriptome of P. flava and S. purpuratus using subsampling.
+
+```{r, fig.width = 3, fig.height = 2.5}
+js_mean_pf_sp <- jsd_with_subsampling(
+  a_o = PFLA_SPUR_COMPARISON$merged_data$a_o , 
+  b_o = PFLA_SPUR_COMPARISON$merged_data$b_o, 
+  n = 1000, p = 0.25
+)
+js_mean_pf_sp_rel <- relativise(js_mean_pf_sp$mean)
+
+pf_sp_js_hm <- 
+  Heatmap(
+    js_mean_pf_sp_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_sp_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_sp_rel),"Purple-Orange", rev = TRUE),
+    name = "mean\nJSD\nPf/Sp", col = brewer.pal(10,"RdBu"),
+    column_title = "S. purpuratus",
+    row_title = "P. flava"
+    )
+draw(pf_sp_js_hm)
+```
+
+
+```{r, fig.width = 8, fig.height = 6}
+pf_sp_hco_default <- plot_grid(
+  rasterise(PFLA_SPUR_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_10_Me__08_LPr_64h$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__08_LPr_64h,
+  rasterise(PFLA_SPUR_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_09_He__09_Plu_72h$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_09_He__09_Plu_72h,
+  nrow = 2, ncol = 2, rel_widths = c(.4,.6)
+  )
+pf_sp_hco_default
+```
+
+```{r, fig.width = 8, fig.height = 6, warning = FALSE, message = FALSE}
+stages_pf_sp = 
+  list(
+    a = c("04_EG","04_EG"),
+    b = c("03_MeBl_24h1","03_MeBl_24h2")
+  )
+
+pfla_spur_hicor_genes <- get_high_cor_genes(
+  mat = PFLA_SPUR_COMPARISON$pairwise_correlations$js,
+  a_o = PFLA_SPUR_COMPARISON$merged_data$a_o,
+  b_o = PFLA_SPUR_COMPARISON$merged_data$b_o,
+  stages = stages_pf_sp,
+  o = PFLA_SPUR_COMPARISON$input$o
+)
+
+pfla_spur_hicor_genes_GOs <- 
+  getGOs(
+    genelist = 
+      lapply(
+        pfla_spur_hicor_genes$hicor_topgenes, 
+        function(sub_list) {
+          setNames(sub_list$top_genes$a, names(sub_list))
+        }),
+    gene_universe = rownames(PFLA_SPUR_COMPARISON$input$a),
+    gene2GO = topGO::readMappings("outputs/functional_annotation/go_blast2go/GO_annotation.txt"),
+    max_terms = 10
+  )
+
+
+# Common genes, highly correlated
+pf_sp_hco <- plot_grid(
+  rasterise(pfla_spur_hicor_genes$hicor_topgenes[[1]]$plot_topgenes, layers = "Point", dpi = 200),
+  pfla_spur_hicor_genes_GOs$GOplot[[1]],
+  rasterise(pfla_spur_hicor_genes$hicor_topgenes[[2]]$plot_topgenes, layers = "Point", dpi = 200),
+  pfla_spur_hicor_genes_GOs$GOplot[[2]],
+  ncol = 2, nrow = 2,  rel_widths = c(.4,.6)
+  )
+
+pf_sp_hco
+```
+
+
+We do the same with A. japonica
+
+```{r, fig.width = 3, fig.height = 2.5}
+js_mean_pf_aj <- jsd_with_subsampling(
+  a_o = PFLA_AJAP_COMPARISON$merged_data$a_o , 
+  b_o = PFLA_AJAP_COMPARISON$merged_data$b_o, 
+  n = 1000, p = 0.25
+)
+js_mean_pf_aj_rel <- relativise(js_mean_pf_aj$mean)
+
+pf_aj_js_hm <- 
+  Heatmap(
+    js_mean_pf_aj_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_aj_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_aj_rel),"Heat", rev = TRUE),
+    name = "mean\nJSD\nPf/Aj", col = brewer.pal(10,"RdBu"),
+    column_title = "A. japonica",
+    row_title = "P. flava"
+    )
+draw(pf_aj_js_hm)
+```
+
+```{r, fig.width = 8, fig.height = 6}
+pf_aj_hco <- plot_grid(
+  rasterise(PFLA_AJAP_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_04_EG__06_Anj_hatch$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_AJAP_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__09_Anj_attachment,
+  rasterise(PFLA_AJAP_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_10_Me__08_Anj_doliolaria$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_AJAP_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__08_Anj_doliolaria,
+  nrow = 2, ncol = 2, rel_widths = c(.4,.6)
+  )
+pf_aj_hco
+```
+
+
+
+```{r, fig.width = 5.2, fig.height = 4}
+pf_sp_hg <-
+  as.matrix(PFLA_SPUR_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_sp_hg) <- as.character(as.numeric(colnames(pf_sp_hg)))
+rownames(pf_sp_hg) <- as.character(as.numeric(rownames(pf_sp_hg)))
+
+pf_sp_hg_hm <- 
+  Heatmap(
+    pf_sp_hg,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "S. purpuratus clusters",
+    name = "-log(p)\nPf/Sp",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_sp_hg),quantile(pf_sp_hg,.99)))
+    )
+
+draw(pf_sp_hg_hm)
+```
+
+
+```{r, fig.width = 7, fig.height = 7}
+PFLA_SPUR_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap
+```
+
+
+```{r, fig.width = 3.8, fig.height = 4}
+pf_aj_hg <-
+  as.matrix(PFLA_AJAP_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_aj_hg) <- as.character(as.numeric(colnames(pf_aj_hg)))
+rownames(pf_aj_hg) <- as.character(as.numeric(rownames(pf_aj_hg)))
+
+pf_aj_hg_hm <- 
+  Heatmap(
+    pf_aj_hg,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "A. japonica clusters",
+    name = "-log(p)\nPf/Aj",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_aj_hg),quantile(pf_aj_hg,.99)))
+    )
+
+draw(pf_aj_hg_hm)
+```
+
+
+
+```{r, fig.width = 7, fig.height = 7}
+PFLA_AJAP_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap
+```
+
+## P.flava and cephalochordates
+
+```{r, fig.width = 3, fig.height = 2.5}
+js_mean_pf_bl <- jsd_with_subsampling(
+  a_o = PFLA_BLAN_COMPARISON$merged_data$a_o , 
+  b_o = PFLA_BLAN_COMPARISON$merged_data$b_o, 
+  n = 1000, p = 0.25
+)
+js_mean_pf_bl_rel <- relativise(js_mean_pf_bl$mean)
+
+pf_bl_js_hm <- 
+  Heatmap(
+    js_mean_pf_bl_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_bl_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_bl_rel),"Purple-Yellow", rev = TRUE),
+    name = "mean\nJSD\nPf/Bl", col = brewer.pal(10,"RdBu"),
+    column_title = "B. lanceolatum",
+    row_title = "P. flava"
+    )
+draw(pf_bl_js_hm)
+```
+
+```{r, fig.width = 8, fig.height = 9}
+pf_bl_hco <- plot_grid(
+  rasterise(PFLA_BLAN_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_04_EG__08_18h$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOplot$cor_04_EG__08_18h,
+  rasterise(PFLA_BLAN_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_05_MG__08_18h$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOplot$cor_05_MG__08_18h,
+  rasterise(PFLA_BLAN_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_10_Me__14_Premet$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_BLAN_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__14_Premet,
+  nrow = 3, ncol = 2, rel_widths = c(.4,.6)
+  )
+pf_bl_hco
+```
+
+```{r, fig.width = 3, fig.height = 2.5}
+js_mean_pf_bf <- jsd_with_subsampling(
+  a_o = PFLA_BFLO_COMPARISON$merged_data$a_o , 
+  b_o = PFLA_BFLO_COMPARISON$merged_data$b_o, 
+  n = 1000, p = 0.25
+)
+js_mean_pf_bf_rel <- relativise(js_mean_pf_bf$mean)
+
+pf_bf_js_hm <- 
+  Heatmap(
+    js_mean_pf_bf_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_bf_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_bf_rel),"SunsetDark", rev = TRUE),
+    name = "mean\nJSD\nPf/Bf", col = brewer.pal(10,"RdBu"),
+    column_title = "B. floridae",
+    row_title = "P. flava"
+    )
+draw(pf_bf_js_hm)
+```
+
+```{r, fig.width = 8, fig.height = 6}
+pf_bf_hco <- plot_grid(
+  rasterise(PFLA_BFLO_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_06_MG__07_N3$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_BFLO_COMPARISON$high_corr_genes$GOs$GOplot$cor_06_MG__07_N3,
+  rasterise(PFLA_BFLO_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_08_To__09_L2$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_BFLO_COMPARISON$high_corr_genes$GOs$GOplot$cor_08_To__09_L2,
+  nrow = 2, ncol = 2, rel_widths = c(.4,.6)
+)
+
+pf_bf_hco
+```
+
+```{r, fig.height = 4, fig.width = 5}
+pf_bl_hg <-
+  as.matrix(PFLA_BLAN_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_bl_hg) <- as.character(as.numeric(colnames(pf_bl_hg)))
+rownames(pf_bl_hg) <- as.character(as.numeric(rownames(pf_bl_hg)))
+
+pf_bl_hg_hm <-
+  Heatmap(
+    pf_bl_hg,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "B. lanceolatum clusters",
+    name = "-log(p)\nPf/Bl",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_bl_hg),quantile(pf_bl_hg,.99)))
+    )
+
+draw(pf_bl_hg_hm)
+```
+
+
+
+```{r, fig.height = 7, fig.width = 7}
+PFLA_BLAN_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap
+```
+
+
+
+```{r, fig.height = 4, fig.width = 4.5}
+pf_bf_hg <-
+  as.matrix(PFLA_BFLO_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_bf_hg) <- as.character(as.numeric(colnames(pf_bf_hg)))
+rownames(pf_bf_hg) <- as.character(as.numeric(rownames(pf_bf_hg)))
+
+pf_bf_hg_hm <-
+  Heatmap(
+    pf_bf_hg,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "B. floridae clusters",
+    name = "-log(p)\nPf/Bf",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_bf_hg),quantile(pf_bf_hg,.99)))
+    )
+
+draw(pf_bf_hg_hm)
+```
+
+
+
+```{r, fig.height = 7, fig.width = 7}
+PFLA_BFLO_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap
+```
+
+
+## P. flava and O. fusiformis
+
+```{r, fig.width = 2, fig.height = 2.5}
+js_mean_pf_of <- jsd_with_subsampling(
+  a_o = PFLA_OFUS_COMPARISON$merged_data$a_o , 
+  b_o = PFLA_OFUS_COMPARISON$merged_data$b_o, 
+  n = 1000, p = 0.25
+)
+js_mean_pf_of_rel <- relativise(js_mean_pf_of$mean)
+
+pf_of_js_hm <- 
+  Heatmap(
+    js_mean_pf_of_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_of_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_of_rel),"Plasma", rev = FALSE),
+    name = "mean\nJSD\nPf/Of", col = brewer.pal(10,"RdBu"),
+    column_title = "O. fusiformis",
+    row_title = "P. flava"
+    )
+draw(pf_of_js_hm)
+```
+
+```{r, fig.width = 8, fig.height = 6}
+pf_of_hco <- plot_grid(
+  rasterise(PFLA_OFUS_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_05_MG__early_larva$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_OFUS_COMPARISON$high_corr_genes$GOs$GOplot$cor_05_MG__early_larva,
+  rasterise(PFLA_OFUS_COMPARISON$high_corr_genes$pairwise_data$hicor_topgenes$cor_06_MG__elongation$plot_topgenes, layers = "Point", dpi = 200),
+  PFLA_OFUS_COMPARISON$high_corr_genes$GOs$GOplot$cor_06_MG__elongation,
+  nrow = 2, ncol = 2, rel_widths = c(.4,.6)
+  )
+
+pf_of_hco
+```
+
+```{r, fig.height = 4, fig.width = 3.5}
+pf_of_hg <-
+  as.matrix(PFLA_OFUS_COMPARISON$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_of_hg) <- as.character(as.numeric(colnames(pf_of_hg)))
+rownames(pf_of_hg) <- as.character(as.numeric(rownames(pf_of_hg)))
+
+pf_of_hg_hm <-
+  Heatmap(
+    pf_of_hg,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "O. fusiformis clusters",
+    name = "-log(p)\nPf/Of",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_of_hg),quantile(pf_of_hg,.99)))
+    )
+
+draw(pf_of_hg_hm)
+```
+
+```{r, fig.height = 7, fig.width = 7}
+PFLA_OFUS_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap
+```
+
+## Gene Age Enrichment
+
+```{r, fig.width = 2.5, fig.height = 4}
+cl_age_tbl = pfla_age_enrichment$AgeperModule
+cl_age_chisq = chisq_and_posthoc(tbl = cl_age_tbl)
+cl_age_chisq_hm = make_chisq_heatmap(cl_age_chisq)
+
+mat <- cl_age_chisq_hm$residuals_matrix
+mat <- t(mat)
+mat <- mat[,order(colnames(mat))]
+
+pvmat <- cl_age_chisq_hm$pvalues_matrix
+pvmat <- t(pvmat)
+pvmat <- pvmat[,order(colnames(pvmat))]
+
+fisher_pval <- .05
+
+cl_age_chisq_hm <- Heatmap(
+  name = "residuals",
+  mat,
+  cluster_rows = FALSE,
+  clustering_method_rows = "ward.D2",
+  cluster_columns = FALSE,
+  row_names_gp = gpar(cex = .8),
+  column_names_gp = gpar(cex = .8),
+  column_names_side = "top",
+  row_title = "P. flava gene clusters",
+  column_labels = c("Opisthokonta","Holozoa","Metazoa","Bilateria","Deuterostomia","Ambulacraria","Hemichordata","P. flava-specific"),
+  row_names_side = "left",
+  col = make_enr_pal(values = mat),
+  cell_fun = function(j,i,x,y,width,height,fill){
+    if(pvmat[i,j] < fisher_pval)
+      grid.text(
+        "*", x, y, gp = gpar(fontsize = 15)
+      ) # add asterisk if p < .05
+  }
+)
+
+draw(cl_age_chisq_hm)
+```
+
+## ALGs
+
+```{r, fig.width = 7, fig.height = 4}
+alg_R_hm <- grid.grabExpr(draw(alg_R$heatmap))
+alg_B1_hm <- grid.grabExpr(draw(alg_B1$heatmap))
+alg_B2_hm <- grid.grabExpr(draw(alg_B2$heatmap))
+alg_C2_hm <- grid.grabExpr(draw(alg_C2$heatmap))
+
+alg_hms <- plot_grid(
+  alg_R_hm,
+  alg_B1_hm,
+  alg_B2_hm,
+  alg_C2_hm,
+  nrow = 1
+)
+
+alg_hms
+```
+
+## Figures
+
+```{r, fig.height = 3, fig.width = 14, message = FALSE, warning = FALSE}
+draw(pf_sp_js_hm+pf_aj_js_hm+pf_bl_js_hm+pf_bf_js_hm+pf_of_js_hm)
+```
+
+
+
+```{r, fig.width = 14, fig.height = 3, warning = FALSE, message = FALSE}
+draw(pf_sp_hg_hm+pf_aj_hg_hm+pf_bl_hg_hm+pf_bf_hg_hm+pf_of_hg_hm)
+```
+
+
+
+```{r}
+pdf("graphics/2AB.pdf", width = 5.5, height = 2.5)
+draw(pf_sp_js_hm+pf_bl_js_hm)
+dev.off()
+```
+
+
+
+```{r}
+pdf("graphics/2CD.pdf", width = 6, height = 2.5)
+draw(pf_sp_hg_hm+pf_bl_hg_hm)
+dev.off()
+```
+
+
+
+```{r}
+pdf("graphics/2E.pdf", width = 2.5, height = 4)
+draw(cl_age_chisq_hm)
+dev.off()
+```
+
+
+```{r}
+pdf("graphics/2G.pdf", width = 7, height = 4)
+alg_hms
+dev.off()
+```
+
+## Supplementary figures
+
+Will follow a common scheme for all:
+
+## S. PURPURATUS SUPPs
+
+Correlations:
+
+```{r}
+## SUPP Y.A
+h1 <- 
+  Heatmap(
+    PFLA_SPUR_COMPARISON$pairwise_correlations$pe,
+    name = "Pearson",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"BluYl", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_SPUR_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_SPUR_COMPARISON$pairwise_correlations$pe),"Purple-Orange", rev = TRUE)
+  )
+
+h2 <- 
+  Heatmap(
+    PFLA_SPUR_COMPARISON$pairwise_correlations$sp,
+    name = "Spearman",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"YlOrRd", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_SPUR_COMPARISON$pairwise_correlations$sp)),
+    top_annotation = quick_ha(colnames(PFLA_SPUR_COMPARISON$pairwise_correlations$sp),"Purple-Orange", rev = TRUE)
+  )
+
+h3 <- 
+  Heatmap(
+    name = "co-occurrence",
+    PFLA_SPUR_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:33],
+    cluster_rows = F,
+    cluster_columns = F,
+    col = sequential_hcl(10,"Heat", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_SPUR_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_SPUR_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:33]),"Purple-Orange", rev = TRUE)
+  )
+
+h_list <- h1+h2+h3
+
+pdf(
+  file = "graphics/Supp_Spur_01_cors.pdf",
+  width = 9,
+  height = 4
+)
+draw(h_list, auto_adjust = FALSE)
+dev.off()
+```
+
+GO terms of common stages of interest, needs to be done
+
+```{r}
+pdf("graphics/Supp_Spur_02_hco_gos.pdf", width = 8, height = 6)
+pf_sp_hco
+dev.off()
+
+pdf("graphics/Supp_Spur_02b_hco_gos.pdf", width = 8, height = 6)
+pf_sp_hco_default
+dev.off()
+```
+
+Clusters of S. purpuratus
+
+```{r}
+spur_heat_avg <- 
+  Heatmap(
+    spur_cl_avgs,
+    name = "gene exp",
+    show_row_names = T,
+    row_labels = seq(nrow(spur_cl_avgs)),
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    top_annotation = quick_ha(colnames(spur_cl_avgs),"Purple-Orange", rev = TRUE),
+    col = colorRampPalette(rev(sequential_hcl(7,"RdPu")))(100)
+  )
+
+pdf("graphics/Supp_Spur_03_clusters.pdf", width = 3.5, height = 5)
+draw(spur_heat_avg)
+dev.off()
+```
+
+COG heatmap
+
+```{r}
+pdf("graphics/Supp_Spur_04_cogs.pdf", width = 5, height = 5)
+draw(PFLA_SPUR_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+```{r}
+l_gos <- list(
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__06_LG_48h,
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__08_LPr_64h,
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_10_Me__09_Plu_72h,
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_09_He__08_LPr_64h,
+  PFLA_SPUR_COMPARISON$high_corr_genes$GOs$GOplot$cor_09_He__09_Plu_72h
+)
+
+l_gos_grid <- plot_grid(plotlist = l_gos, ncol = 2)
+
+pdf("graphics/pfla_spur_latedev_gos.pdf",he = 10, wi = 10)
+l_gos_grid
+dev.off()
+```
+
+## A. JAPONICA SUPPs
+
+```{r}
+# JSD AND CORs
+h1 <- 
+  Heatmap(
+    PFLA_AJAP_COMPARISON$pairwise_correlations$pe,
+    name = "Pearson",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"BluYl", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_AJAP_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_AJAP_COMPARISON$pairwise_correlations$pe),"Heat", rev = TRUE)
+  )
+
+h2 <- 
+  Heatmap(
+    PFLA_AJAP_COMPARISON$pairwise_correlations$sp,
+    name = "Spearman",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"YlOrRd", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_AJAP_COMPARISON$pairwise_correlations$sp)),
+    top_annotation = quick_ha(colnames(PFLA_AJAP_COMPARISON$pairwise_correlations$sp),"Heat", rev = TRUE)
+  )
+
+h3 <- 
+  Heatmap(
+    name = "co-occurrence",
+    PFLA_AJAP_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:32],
+    cluster_rows = F,
+    cluster_columns = F,
+    col = sequential_hcl(10,"Heat", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_AJAP_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_AJAP_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:32]),"Heat", rev = TRUE)
+  )
+
+h_list <- pf_aj_js_hm+h1+h2+h3
+
+pdf(
+  file = "graphics/Supp_Ajap_01_cors.pdf",
+  width = 12,
+  height = 4
+)
+draw(h_list, auto_adjust = FALSE)
+dev.off()
+```
+
+GO terms of common stages of interest
+
+```{r}
+pdf("graphics/Supp_Ajap_02_hco_gos.pdf", width = 8, height = 6)
+pf_aj_hco
+dev.off()
+```
+
+Clusters of A. japonica
+
+```{r}
+ajap_heat_avg <- 
+  Heatmap(
+    ajap_cl_avgs,
+    name = "gene exp",
+    row_labels = seq(nrow(ajap_cl_avgs)),
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    col = diverging_hcl(20,"Purple-Brown"),
+    top_annotation = quick_ha(colnames(ajap_cl_avgs),"Heat", rev = TRUE),
+  )
+
+pdf("graphics/Supp_Ajap_03_clusters.pdf", width = 3.5, height = 5)
+draw(ajap_heat_avg)
+dev.off()
+```
+
+```{r}
+pdf("graphics/Supp_Ajap_04a_hypgeom.pdf", width = 3.5, height = 3.5)
+draw(pf_aj_hg_hm)
+dev.off()
+```
+
+
+COG heatmap
+
+```{r}
+pdf("graphics/Supp_Ajap_04_cogs.pdf", width = 5, height = 5)
+draw(PFLA_AJAP_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+## B. LANCEOLATUM SUPPs
+
+```{r}
+h1 <- 
+  Heatmap(
+    PFLA_BLAN_COMPARISON$pairwise_correlations$pe,
+    name = "Pearson",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"BluYl", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BLAN_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BLAN_COMPARISON$pairwise_correlations$pe),"Purple-Yellow", rev = TRUE)
+  )
+
+h2 <- 
+  Heatmap(
+    PFLA_BLAN_COMPARISON$pairwise_correlations$sp,
+    name = "Spearman",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"YlOrRd", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BLAN_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BLAN_COMPARISON$pairwise_correlations$sp),"Purple-Yellow", rev = TRUE)
+  )
+
+h3 <- 
+  Heatmap(
+    name = "co-occurrence",
+    PFLA_BLAN_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:28],
+    cluster_rows = F,
+    cluster_columns = F,
+    col = sequential_hcl(10,"Heat", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BLAN_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BLAN_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:28]),"Purple-Yellow", rev = TRUE)
+  )
+
+h_list <- h1+h2+h3
+
+pdf(
+  file = "graphics/Supp_Blan_01_cors.pdf",
+  width = 12,
+  height = 4
+)
+draw(h_list, auto_adjust = FALSE)
+dev.off()
+```
+
+GO terms of common stages of interest
+
+```{r}
+pdf("graphics/Supp_Blan_02_hco_gos.pdf", width = 8, height = 9)
+pf_bl_hco
+dev.off()
+```
+
+Clusters of B. lanceolatum
+
+```{r}
+blan_heat_avg <- 
+  Heatmap(
+    blan_cl_avgs,
+    name = "gene exp",
+    row_labels = seq(nrow(blan_cl_avgs)),
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    col = colorRampPalette(c("#9250c1","#f8f9fc","#007b66"))(20),
+    top_annotation = quick_ha(colnames(blan_cl_avgs),"Purple-Yellow", rev = TRUE)
+  )
+
+pdf("graphics/Supp_Blan_03_clusters.pdf", width = 3.5, height = 5)
+draw(blan_heat_avg)
+dev.off()
+```
+
+COG heatmap
+
+```{r}
+pdf("graphics/Supp_Blan_04_cogs.pdf", width = 5, height = 5)
+draw(PFLA_BLAN_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+## B. FLORIDAE SUPPs
+
+```{r}
+h1 <- 
+  Heatmap(
+    PFLA_BFLO_COMPARISON$pairwise_correlations$pe,
+    name = "Pearson",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"BluYl", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BFLO_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BFLO_COMPARISON$pairwise_correlations$pe),"SunsetDark", rev = TRUE)
+  )
+
+h2 <- 
+  Heatmap(
+    PFLA_BFLO_COMPARISON$pairwise_correlations$sp,
+    name = "Spearman",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"YlOrRd", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BFLO_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BFLO_COMPARISON$pairwise_correlations$sp),"SunsetDark", rev = TRUE)
+  )
+
+h3 <- 
+  Heatmap(
+    name = "co-occurrence",
+    PFLA_BFLO_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:28],
+    cluster_rows = F,
+    cluster_columns = F,
+    col = sequential_hcl(10,"Heat", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_BFLO_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_BFLO_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:28]),"SunsetDark", rev = TRUE)
+  )
+
+h_list <- pf_bf_js_hm+h1+h2+h3
+
+pdf(
+  file = "graphics/Supp_Bflo_01_cors.pdf",
+  width = 12,
+  height = 4
+)
+draw(h_list, auto_adjust = FALSE)
+dev.off()
+```
+
+GO terms of common stages of interest
+
+```{r}
+pdf("graphics/Supp_Bflo_02_hco_gos.pdf", width = 8, height = 6)
+pf_bf_hco
+dev.off()
+```
+
+Clusters of B. floridae
+
+```{r}
+bflo_heat_avg <- 
+  Heatmap(
+    bflo_cl_avgs,
+    name = "gene exp",
+    row_labels = seq(nrow(bflo_cl_avgs)),
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    col = diverging_hcl(20,"Red-Green"),
+    top_annotation = quick_ha(colnames(bflo_cl_avgs),"SunsetDark", rev = TRUE)
+  )
+
+pdf("graphics/Supp_Bflo_03_clusters.pdf", width = 3.5, height = 5)
+draw(bflo_heat_avg)
+dev.off()
+```
+
+```{r}
+pdf("graphics/Supp_Bflo_04a_hypgeom.pdf", width = 3.5, height = 3.5)
+draw(pf_bf_hg_hm)
+dev.off()
+```
+
+COG heatmap
+
+```{r}
+pdf("graphics/Supp_Bflo_04_cogs.pdf", width = 5, height = 5)
+draw(PFLA_BFLO_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+## O. FUSIFORMIS SUPPs
+
+```{r}
+h1 <- 
+  Heatmap(
+    PFLA_OFUS_COMPARISON$pairwise_correlations$pe,
+    name = "Pearson",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"BluYl", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_OFUS_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_OFUS_COMPARISON$pairwise_correlations$pe),"Plasma", rev = TRUE)
+  )
+
+h2 <- 
+  Heatmap(
+    PFLA_OFUS_COMPARISON$pairwise_correlations$sp,
+    name = "Spearman",
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = TRUE,
+    col = sequential_hcl(10,"YlOrRd", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_OFUS_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_OFUS_COMPARISON$pairwise_correlations$sp),"Plasma", rev = TRUE)
+  )
+
+h3 <- 
+  Heatmap(
+    name = "co-occurrence",
+    PFLA_OFUS_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:23],
+    cluster_rows = F,
+    cluster_columns = F,
+    col = sequential_hcl(10,"Heat", rev = TRUE),
+    left_annotation = devstages_ha_rows(rownames(PFLA_OFUS_COMPARISON$pairwise_correlations$pe)),
+    top_annotation = quick_ha(colnames(PFLA_OFUS_COMPARISON$coocurrence_analysis$cooccurrence[1:16,17:23]),"Plasma", rev = TRUE)
+  )
+
+h_list <- pf_of_js_hm+h1+h2+h3
+
+pdf(
+  file = "graphics/Supp_Ofus_01_cors.pdf",
+  width = 9,
+  height = 3
+)
+draw(h_list, auto_adjust = FALSE)
+dev.off()
+```
+
+GO terms of common stages of interest
+
+```{r}
+pdf("graphics/Supp_Ofus_02_hco_gos.pdf", width = 8, height = 6)
+pf_of_hco
+dev.off()
+```
+
+```{r}
+pdf("graphics/Supp_Ofus_03_hypgeom.pdf", width = 3.5, height = 3.5)
+draw(pf_of_hg_hm)
+dev.off()
+```
+
+COG heatmap
+
+```{r}
+pdf("graphics/Supp_Ofus_03_cogs.pdf", width = 5, height = 5)
+draw(PFLA_OFUS_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+Orthologous TFs similarity of expression:
+
+```{r}
+f_pf_of_tfs <- rownames(PFLA_OFUS_COMPARISON$merged_data$a_o) %in% PFLA_OFUS_COMPARISON$input$o$one2one[PFLA_OFUS_COMPARISON$input$o$a %in% pfla_tfs$id]
+js_mean_pf_of_tfs <- jsd_with_subsampling(
+  a_o = PFLA_OFUS_COMPARISON$merged_data$a_o[f_pf_of_tfs,] , 
+  b_o = PFLA_OFUS_COMPARISON$merged_data$b_o[f_pf_of_tfs,], 
+  n = 1000, p = 0.25
+)
+js_mean_pf_of_tfs_rel <- relativise(js_mean_pf_of_tfs$mean)
+
+pf_of_js_tfs_hm <- 
+  Heatmap(
+    js_mean_pf_of_tfs_rel,
+    cluster_rows = F, cluster_columns = F,
+    show_row_names = F, show_column_names = F,
+    left_annotation = devstages_ha_rows(rownames(js_mean_pf_of_tfs_rel)),
+    top_annotation = quick_ha(colnames(js_mean_pf_of_tfs_rel),"Plasma", rev = FALSE),
+    name = "mean\nJSD\nPf/Of", col = brewer.pal(10,"RdBu"),
+    column_title = "O. fusiformis",
+    row_title = "P. flava"
+  )
+draw(pf_of_js_tfs_hm)
+
+pdf(
+  file = "graphics/Supp_Ofus_TFs_cors.pdf",
+  width = 2.1,
+  height = 3
+)
+draw(pf_of_js_tfs_hm)
+dev.off()
+```
+
+
+## SUPPLEMENTARY ORTHOFINDER
+
+```{r}
+pdf("graphics/Supp_Orthof_Spur_01_cors.pdf",wi = 7, he = 4)
+plot_cors(PFLA_SPUR_COMPARISON_OF$pairwise_correlations)
+dev.off()
+
+pf_sp_hg_OF <-
+  as.matrix(PFLA_SPUR_COMPARISON_OF$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_sp_hg_OF) <- as.character(as.numeric(colnames(pf_sp_hg_OF)))
+rownames(pf_sp_hg_OF) <- as.character(as.numeric(rownames(pf_sp_hg_OF)))
+
+pf_sp_hg_hm_OF <-
+  Heatmap(
+    pf_sp_hg_OF,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "B. lanceolatum clusters",
+    name = "-log(p)\nPf/Bl",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_sp_hg_OF),quantile(pf_sp_hg_OF,.99)))
+    )
+
+pdf("graphics/Supp_Orthof_Spur_02_HypGeom.pdf", wi = 3.5, he = 3.5)
+draw(pf_sp_hg_hm_OF)
+dev.off()
+
+pdf("graphics/Supp_Orthof_Spur_02_COGs.pdf", wi = 5, he = 5)
+draw(PFLA_SPUR_COMPARISON_OF$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+
+```{r}
+pdf("graphics/Supp_Orthof_Blan_01_cors.pdf",wi = 7, he = 4)
+plot_cors(PFLA_BLAN_COMPARISON_OF$pairwise_correlations)
+dev.off()
+
+pf_bl_hg_OF <-
+  as.matrix(PFLA_BLAN_COMPARISON_OF$orthology_overlap_modules$pairwise_module_comparison$loghypg)
+colnames(pf_bl_hg_OF) <- as.character(as.numeric(colnames(pf_bl_hg_OF)))
+rownames(pf_bl_hg_OF) <- as.character(as.numeric(rownames(pf_bl_hg_OF)))
+
+pf_bl_hg_hm_OF <-
+  Heatmap(
+    pf_bl_hg_OF,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_names_gp = gpar(cex = .8),
+    # column_names_rot = 0,
+    column_names_side = "top",
+    row_names_gp = gpar(cex = .8),
+    row_names_side = "left",
+    row_title = "P. flava clusters",
+    column_title = "B. lanceolatum clusters",
+    name = "-log(p)\nPf/Bl",
+    col = colorRamp2(c("gray100","firebrick"),breaks = c(min(pf_bl_hg_OF),quantile(pf_bl_hg_OF,.99)))
+    )
+
+pdf("graphics/Supp_Orthof_Blan_02_HypGeom.pdf", wi = 3.5, he = 3.5)
+draw(pf_bl_hg_hm_OF)
+dev.off()
+
+pdf("graphics/Supp_Orthof_Blan_02_COGs.pdf", wi = 5, he = 5)
+draw(PFLA_BLAN_COMPARISON_OF$orthology_overlap_modules$genes_in_common_fams$commonfams$cog_a_comon$heatmap)
+dev.off()
+```
+
+
+## ALGs SUPPs
+
+```{r}
+list_hts <-
+  plot_grid(
+    grid.grabExpr(draw(alg_R$heatmap_all, auto_adjust = FALSE)),
+    grid.grabExpr(draw(alg_B1$heatmap_all, auto_adjust = FALSE)),
+    grid.grabExpr(draw(alg_B2$heatmap_all, auto_adjust = FALSE)),
+    grid.grabExpr(draw(alg_C2$heatmap_all, auto_adjust = FALSE)),
+    grid.grabExpr(draw(l_alg_exp$B3$heatmap_all, auto_adjust = FALSE)),
+    grid.grabExpr(draw(l_alg_exp$O2$heatmap_all, auto_adjust = FALSE)),
+    ncol = 1
+    )
+
+pdf("graphics/Supp_ALG_heatmaps_all.pdf", width = 6, height = 24)
+list_hts
+dev.off()
+
+
+make_spp_hm <- function(X, spp, name, cols = c("gray95","tomato")){
+  X <- as.matrix(X)
+  rownames(X) <- spp
+  colnames(X) <- rownames(X)
+  h_X <- Heatmap(
+    name = name, X[-3,-1], cluster_columns = F, cluster_rows = F, col = cols,
+    cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
+      if(!(is.na(X[-3,-1][i,j]))) grid.text(round(X[-3,-1],3)[i, j], x, y)
+    },
+    row_names_gp = gpar(cex = .75), column_names_gp = gpar(cex = .75),
+    na_col = "white"
+  )
+  return(h_X)
+}
+h_gow_m_R <- make_spp_hm(X = alg_R$gower, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Gower R", cols = c("seagreen4","gray95"))
+h_gow_m_B1 <- make_spp_hm(X = alg_B1$gower, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Gower B1", cols = c("seagreen4","gray95"))
+h_gow_m_B2 <- make_spp_hm(X = alg_B2$gower, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Gower B2", cols = c("seagreen4","gray95"))
+h_gow_m_C2 <- make_spp_hm(X = alg_C2$gower, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Gower C2", cols = c("seagreen4","gray95"))
+
+l_hms_gow <-
+  list(
+    grid::grid.grabExpr(draw(h_gow_m_R)),
+    grid::grid.grabExpr(draw(h_gow_m_B1)),
+    grid::grid.grabExpr(draw(h_gow_m_B2)),
+    grid::grid.grabExpr(draw(h_gow_m_C2))
+  )
+
+
+h_rand_m_R <- make_spp_hm(X = alg_R$rand, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand R")
+h_rand_m_B1 <- make_spp_hm(X = alg_B1$rand, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand B1")
+h_rand_m_B2 <- make_spp_hm(X = alg_B2$rand, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand B2")
+h_rand_m_C2 <- make_spp_hm(X = alg_C2$rand, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand C2")
+
+l_hms_rand <-
+  list(
+    grid::grid.grabExpr(draw(h_rand_m_R)),
+    grid::grid.grabExpr(draw(h_rand_m_B1)),
+    grid::grid.grabExpr(draw(h_rand_m_B2)),
+    grid::grid.grabExpr(draw(h_rand_m_C2))
+  )
+
+h_fc_m_R <- make_spp_hm(X = alg_R$fc, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand FC R", cols = c("gray95","royalblue"))
+h_fc_m_B1 <- make_spp_hm(X = alg_B1$fc, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand FC B1", cols = c("gray95","royalblue"))
+h_fc_m_B2 <- make_spp_hm(X = alg_B2$fc, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand FC B2", cols = c("gray95","royalblue"))
+h_fc_m_C2 <- make_spp_hm(X = alg_C2$fc, spp = c("P. flava","S. purpuratus","B. floridae"), name = "Rand FC C2", cols = c("gray95","royalblue"))
+
+l_hms_fc <-
+  list(
+    grid::grid.grabExpr(draw(h_fc_m_R)),
+    grid::grid.grabExpr(draw(h_fc_m_B1)),
+    grid::grid.grabExpr(draw(h_fc_m_B2)),
+    grid::grid.grabExpr(draw(h_fc_m_C2))
+  )
+
+pdf("graphics/ALG_Rand_heatmaps.pdf",wi = 6.25, he = 5)
+cowplot::plot_grid(plotlist = l_hms_gow, ncol = 2)
+cowplot::plot_grid(plotlist = l_hms_rand, ncol = 2)
+cowplot::plot_grid(plotlist = l_hms_fc, ncol = 2)
+dev.off()
+
+
+
+library(ape)
+pdf("graphics/all_ALGs_trees.pdf", he = 10, wi = 5)
+par(mfrow = c(5,3))
+for(i in names(l_alg_exp)){
+  plot(as.phylo(l_alg_exp[[i]]$species_tree),main = i)
+}
+par(mfrow = c(1,1))
+dev.off()
+```
+
+Saving the common genes
+
+```{r}
+pfla_genenames <-
+  read.delim2(
+    file = "outputs/functional_annotation/eggnog/emapper.annotations",
+    skip = 3,
+    header = TRUE
+  )[,c(1,5,13)]
+pfla_genenames <- pfla_genenames[pfla_genenames$predicted_gene_name != "",]
+
+l_hco_genes_all <- lapply(
+  list(
+    pfla_spur = PFLA_SPUR_COMPARISON, pfla_ajap = PFLA_AJAP_COMPARISON,
+    pfla_blan = PFLA_BLAN_COMPARISON, pfla_bflo = PFLA_BFLO_COMPARISON,
+    pfla_ofus = PFLA_OFUS_COMPARISON
+    ),
+  function(x){
+    y = lapply(
+      x$high_corr_genes$pairwise_data$hicor_topgenes,
+      function(i){i$top_genes}
+    )
+    y = bind_rows(y, .id = "stages")
+    return(y)
+  }
+)
+hco_genes_all <- bind_rows(l_hco_genes_all, .id = "species")
+hco_genes_all$pred_name <- translate_ids(hco_genes_all$a, dict = pfla_genenames, return.missing = FALSE)
+hco_genes_all$stages <- sub("cor_","",sub("__"," / ", hco_genes_all$stages))
+write.table(hco_genes_all, file = "outputs/comparative/20240513_list_common_genes.tsv", row.names = FALSE, quote = FALSE, sep = "\t")
+```

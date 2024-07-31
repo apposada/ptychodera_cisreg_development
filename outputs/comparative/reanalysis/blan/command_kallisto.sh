@@ -1,1 +1,0 @@
-/home/ska/aperpos/Def_Pfla/other_spp/data_blan/RNA/command_kallisto_blan_tra_index.sh

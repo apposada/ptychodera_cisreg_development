@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phyloxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.phyloxml.org" xsi:schemaLocation="http://www.phyloxml.org http://www.phyloxml.org/1.20/phyloxml.xsd">
+ <phylogeny rooted="true" rerootable="false" branch_length_unit="PAM">
+  <name>Species phylogeny estimated in OmaStandalone - release 2.4.1</name>
+  <date>2024-04-17T23:55:01</date>
+  <clade>
+   <clade branch_length="23.235863">
+    <taxonomy>
+     <id>559292</id>
+     <code>YEAST</code>
+     <scientific_name></scientific_name>
+    </taxonomy>
+   </clade>
+   <clade branch_length="23.235863">
+    <clade branch_length="27.241397">
+     <taxonomy>
+      <id>595528</id>
+      <code>CAPO3</code>
+      <scientific_name></scientific_name>
+     </taxonomy>
+    </clade>
+    <clade branch_length="3.858924">
+     <clade branch_length="2.584552">
+      <clade branch_length="23.776629">
+       <taxonomy>
+        <id>7227</id>
+        <code>DROME</code>
+        <scientific_name></scientific_name>
+       </taxonomy>
+      </clade>
+      <clade branch_length="2.655234">
+       <clade branch_length="19.251542">
+        <taxonomy>
+         <id>45351</id>
+         <code>NEMVE</code>
+         <scientific_name></scientific_name>
+        </taxonomy>
+       </clade>
+       <clade branch_length="0.536316">
+        <clade branch_length="17.306906">
+         <name>OWEFU</name>
+        </clade>
+        <clade branch_length="0.365639">
+         <clade branch_length="0.702981">
+          <clade branch_length="12.912125">
+           <clade branch_length="1.622116">
+            <taxonomy>
+             <id>7740</id>
+             <code>BRALA</code>
+             <scientific_name></scientific_name>
+            </taxonomy>
+           </clade>
+           <clade branch_length="1.857643">
+            <name>BRAFL</name>
+           </clade>
+          </clade>
+          <clade branch_length="8.705669">
+           <clade branch_length="1.438725">
+            <clade branch_length="7.303966">
+             <taxonomy>
+              <id>8364</id>
+              <code>XENTR</code>
+              <scientific_name></scientific_name>
+             </taxonomy>
+            </clade>
+            <clade branch_length="4.879019">
+             <clade branch_length="2.266670">
+              <taxonomy>
+               <id>10090</id>
+               <code>MOUSE</code>
+               <scientific_name></scientific_name>
+              </taxonomy>
+             </clade>
+             <clade branch_length="2.090936">
+              <taxonomy>
+               <id>9606</id>
+               <code>HUMAN</code>
+               <scientific_name></scientific_name>
+              </taxonomy>
+             </clade>
+            </clade>
+           </clade>
+           <clade branch_length="2.900085">
+            <clade branch_length="6.238829">
+             <taxonomy>
+              <id>8090</id>
+              <code>ORYLA</code>
+              <scientific_name></scientific_name>
+             </taxonomy>
+            </clade>
+            <clade branch_length="1.275279">
+             <clade branch_length="4.048861">
+              <taxonomy>
+               <id>7955</id>
+               <code>DANRE</code>
+               <scientific_name></scientific_name>
+              </taxonomy>
+             </clade>
+             <clade branch_length="3.943775">
+              <taxonomy>
+               <id>7994</id>
+               <code>ASTMX</code>
+               <scientific_name></scientific_name>
+              </taxonomy>
+             </clade>
+            </clade>
+           </clade>
+          </clade>
+         </clade>
+         <clade branch_length="1.332728">
+          <clade branch_length="5.152864">
+           <clade branch_length="8.134983">
+            <name>PFLAV</name>
+           </clade>
+           <clade branch_length="8.668622">
+            <name>SACKO_ok</name>
+           </clade>
+          </clade>
+          <clade branch_length="1.875023">
+           <clade branch_length="14.697241">
+            <name>AENJA_ok</name>
+           </clade>
+           <clade branch_length="1.242013">
+            <clade branch_length="12.003027">
+             <name>AMPFI_ok</name>
+            </clade>
+            <clade branch_length="0.310063">
+             <clade branch_length="10.345299">
+              <clade branch_length="3.590358">
+               <name>LYTVA_ok</name>
+              </clade>
+              <clade branch_length="0.136768">
+               <clade branch_length="2.548120">
+                <name>HELIO_ok</name>
+               </clade>
+               <clade branch_length="3.100571">
+                <name>STRPU_ok</name>
+               </clade>
+              </clade>
+             </clade>
+             <clade branch_length="14.569856">
+              <clade branch_length="0.044113">
+               <name>APOSJ_ok</name>
+              </clade>
+              <clade branch_length="0.108692">
+               <name>APOSC_ok</name>
+              </clade>
+             </clade>
+            </clade>
+           </clade>
+          </clade>
+         </clade>
+        </clade>
+       </clade>
+      </clade>
+     </clade>
+     <clade branch_length="0.770285">
+      <clade branch_length="33.325351">
+       <taxonomy>
+        <id>6239</id>
+        <code>CAEEL</code>
+        <scientific_name></scientific_name>
+       </taxonomy>
+      </clade>
+      <clade branch_length="31.693294">
+       <taxonomy>
+        <id>79327</id>
+        <code>SCHMD</code>
+        <scientific_name></scientific_name>
+       </taxonomy>
+      </clade>
+     </clade>
+    </clade>
+   </clade>
+  </clade>
+
+ </phylogeny>
+</phyloxml>

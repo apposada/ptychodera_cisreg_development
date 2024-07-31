@@ -11,8 +11,6 @@ comparABle <- function(
   gb,
   cog_a,
   cog_b,
-  across_a,
-  across_b,
   a_samples,
   b_samples,
   cooc_n = 1000,
@@ -91,39 +89,48 @@ comparABle <- function(
   
   # COMMON GENES IN CORRELATIONS
   print("Common genes in Correlations")
-  # This should be determined autommatically ... or with an "if (stages_hicor are known) {} else {} ..."
-  ab_common_genes_cor <- commongenes_cor(
-    merge_ab$ab_o,
-    across_a = across_a, 
-    across_b = across_b,
-    min_cor = 0.8
-  )
-  
-  ab_common_genes_cor <- merge(
-    ab_common_genes_cor,
-    o,
-    by = 1
+  ab_common_genes_cor <- get_high_cor_genes(
+    mat = cors$js,
+    a_o = merge_ab$a_o,
+    b_o = merge_ab$b_o,
+    o = o
   )
   
   print("Common genes in Correlations (GO)")
-  ab_common_genes_cor_GOs <- getGOs(
-    genelist = list(a = ab_common_genes_cor$a),
-    gene_universe = a_universe,
-    gene2GO = a_id2go
-  )
+  ab_common_genes_cor_GOs <- 
+    getGOs(
+      genelist = 
+        lapply(
+          ab_common_genes_cor$hicor_topgenes, 
+          function(sub_list) {
+            setNames(sub_list$top_genes$a, names(sub_list))
+            }),
+      gene_universe = a_universe,
+      gene2GO = a_id2go
+    )
   
   print("Common genes in Correlations (age)")
-  ab_common_genes_cor_age <- gene_age_enrichment(
-    x_modules = data.frame(
-      id = a_universe,
-      module = ifelse(
-        a_universe %in% ab_common_genes_cor$a,
-        "common",
-        "non_common"
-      )
-    ),
-    x_age = ga[ga$age %in% common_evo_nodes,] # custom vector should be a variable of common evol.nodes
-  )
+  ab_common_genes_cor_age <- 
+    lapply(
+      lapply(
+        ab_common_genes_cor$hicor_topgenes,
+        function(sub_list) {
+          data.frame(
+            id = a_universe,
+            module = 
+              ifelse(
+                a_universe %in% sub_list$top_genes$a, "common","not_common"
+              )
+          )
+        }
+      ),
+      function(x){
+        gene_age_enrichment(
+          x_modules = x,
+          x_age = ga[ga$age %in% common_evo_nodes,]
+        )
+      }
+    )
   
   # COMPARE MODULES
   print("Pairwise Orthology Overlap Strategy across modules -- hypergeometric and binonmial tests")
@@ -183,63 +190,6 @@ comparABle <- function(
     col = rev(sequential_hcl(10,"YlOrRd"))
   )
   
-  ab_cooc_hm <- function() {
-    heatmap(
-      cooc$cooccurrence,
-      symm = T,
-      Rowv = cooc$tree$edge
-    )
-  }
-  
-  # # Common genes, highly correlated
-  # high_correlation_genes <- function(){
-  #   par(mfrow = c(1,2))
-  #   boxplot(
-  #     main = a_name,
-  #     ab_common_genes_cor[,3:6],
-  #     col = viridis::inferno(7)[3:7],
-  #     xlab = "stage",
-  #     ylab = "scaled expression"
-  #   )
-  #   boxplot(
-  #     main = a_name,
-  #     ab_common_genes_cor[,7:10],
-  #     col = viridis::magma(7)[3:7],
-  #     xlab = "stage",
-  #     ylab = "scaled expression"
-  #   )
-  #   par(mfrow = c(1,1))
-  # }
-  
-  # GO terms
-  #' turn this into a GGplot, same for the whole plethora of
-  #' enriched GO terms
-  # 
-  # plot(
-  #   x = 
-  #     ab_common_genes_GOs$GOtable$a$Significant /
-  #     ab_common_genes_GOs$GOtable$a$Expected,
-  #   y = 
-  #     -log(
-  #       as.numeric(
-  #         ab_common_genes_GOs$GOtable$a$classicFisher
-  #       )
-  #     ),
-  #   xlab = "FC no. Obs/Exp genes",
-  #   ylab = "-logpvalue"
-  # )
-  # 
-  # Age of highly cor genes
-  # high_correlation_genes_age <- function(){
-  #   par(mfrow = c(1,2))
-  #   barplot(
-  #     t(t(ab_common_genes_cor_age$enrichment[1,c(5,3,4,1,2)]))
-  #   )
-  #   barplot(t(t(ab_common_genes_cor_age$AgeperModule[1,c(5,3,4,1,2)])))
-  #   par(mfrow = c(1,1))
-  # }
-  
-  
   # Comparison of modules, binomial test
   # turn this into complexheatmap
   modulecomp_ab_logbinom_hm <- Heatmap(
@@ -261,21 +211,21 @@ comparABle <- function(
   
   res <- list(
     input = list(
-      a,
-      b,
-      o,
-      f,
-      ma,
-      mb,
-      ga,
-      cog_a
+      a = a,
+      b = b,
+      o = o,
+      f = f,
+      ma = ma,
+      mb = mb,
+      ga = ga,
+      cog_a = cog_a
     ),
     merged_data = merge_ab,
     pairwise_correlations = cors,
     pca_analysis = pi,
     coocurrence_analysis = cooc,
     high_corr_genes = list(
-      table = ab_common_genes_cor,
+      pairwise_data = ab_common_genes_cor,
       GOs = ab_common_genes_cor_GOs,
       age = ab_common_genes_cor_age
     ),
@@ -288,10 +238,7 @@ comparABle <- function(
       spearman_cor = ab_spearman,
       pearson_cor = ab_pearson,
       jensen_shannon = ab_jsd,
-      coocurrence_hm = ab_cooc_hm(),
       coocurrence_Heatmap = cooc_hm,
-      # high_correlated_genes_boxplot = high_correlation_genes(),
-      # high_correlated_genes_boxplot_age = high_correlation_genes_age(),
       orthology_overlap_binomial_hm = modulecomp_ab_logbinom_hm,
       orthology_overlap_hypgeom_hm = modulecomp_ab_loghypg_hm
     )

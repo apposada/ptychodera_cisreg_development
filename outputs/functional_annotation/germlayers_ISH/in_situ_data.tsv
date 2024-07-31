@@ -1,0 +1,124 @@
+id	germlayer	germlayer_col	gene	TSO	geneID	Accession	BlastDescription	Endoderm	Mesoderm	Ectoderm	Reference	Provider	Notes
+TCONS_00027229	All	#bcbcbc	fgfrb	S (protein receptor)	XLOC_018998	KT290885.1	fibroblast growth factor receptor 2-like isoform X1	1	1	1	Fan et al., 2018	Tzu-Pei Fan	Endodermal-anterior, mesodermal-ventral, ectodermal-ventral, ectodermal-apical, ectodermal-blastopore
+TCONS_00049438	All	#bcbcbc	gata1/2/3	T	XLOC_035886		GATA-binding factor 2	1	1	1	unpublished	Cindy	Whole endoderm, whole mesoderm, ectodermal-blastopore
+TCONS_00055784	All	#bcbcbc	sfrp1/5	S	XLOC_040541	KP133094.1	secreted frizzled-related protein 5-like	1	1	1	Rottinger et al., 2015; Su et al., 2019	Rottinger et al. and Su et al.	Endodermal-anterior, mesodermal-ventral, ectodermal-apical
+TCONS_00019349	All	#bcbcbc	smad6	S	XLOC_013430	HQ904074.1	mothers against decapentaplegic homolog 6	1	1	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Whole endoderm, mesodermal-dorsal, ectodermal-dorsal
+TCONS_00046180	All	#bcbcbc	ld4	T	XLOC_033740	KP133102.1	DNA-binding protein inhibitor ID-4-like	1	1	1	Rottinger et al., 2015	Rottinger et al.	Whole endoderm, whole mesoderm, ectodermal-apical
+TCONS_00033865	All	#bcbcbc	ets1/2	T	XLOC_023791	HQ291271.1	protein C-ets-1-like isoform X1	1	1	1	Rottinger & Martindale, 2011	Rottinger & Martindale and Tzu-Pei Fan	Endodermal-anterior, mesodermal-ventral, ectodermal-ciliary band
+TCONS_00010210	All	#bcbcbc	delta	S	XLOC_007268		neurogenic locus protein delta-like isoform X1	1	1	1	unpublished	TCT	Endodermal-anterior, mesodermal-dorsal, ectodermal-ventral, ectodermal-apical, ectodermal-ciliary band, ectodermal-blastopore
+TCONS_00005605	All	#bcbcbc	mn1	T	XLOC_004066		transcriptional activator MN1	1	1	1	unpublished	Cindy	Endodermal-anterior, mesodermal-ventral, ectodermal-ventral, ectodermal-apical
+TCONS_00003400	All	#bcbcbc	frizzle5/8	S (Wnt receptor)	XLOC_002564	HQ291268.1	frizzled-5	1	1	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Ectodermal-anterior, mesodermal-ventral, anterior-ectoderm
+TCONS_00002547	All	#bcbcbc	alk4/5/7	S (receptor protein)	XLOC_001950		TGF-beta receptor type-1	1	1	1	unpublished	Chin-Yi Lin	Ubiquitous, weak signal in the apical region and the ciliary bnad
+TCONS_00010068	All	#bcbcbc	six3	T	XLOC_007168	KP133095.1	homeobox protein SIX3	1	1	1	Rottinger et al., 2015	Rottinger et al. and Gigi	Endodermal-anterior, whole mesoderm, ectodermal-ventral, ectodermal-dorsal, ectodermal-apical
+TCONS_00004384	All	#bcbcbc	frizzled1/2/7	S (Wnt receptor)	XLOC_003271	HQ291267.1	frizzled-7-A-like	1	1	1		Gigi	Whole endoderm, whole mesoderm, ectodermal-ventral
+TCONS_00020362	All	#bcbcbc	smad2/3	S	XLOC_014110		mothers against decapentaplegic homolog 3 isoform X1	1	1	1	unpublished	Chin-Yi Lin	Ubiquitous
+TCONS_00053655	All	#bcbcbc	fgfra2	S (protein receptor)	XLOC_038948	KT290886.1	fibroblast growth factor receptor 2-like isoform X1	1	1	1	Fan et al., 2018	Tzu-Pei Fan	Endodermal-anterior, whole mesoderm, ectodermal-blastopore
+TCONS_00048956	All	#bcbcbc	hmgi-c	T	XLOC_035560		high mobility group protein HMGI-C	1	1	1	unpublished	Cindy	Endodermal-anterior, mesodermal-ventral, ectodermal-apical
+TCONS_00017786	Ectoderm	#a8d1f1	bsx	T	XLOC_012314		brain-specific homeobox protein homolog	0	0	1	unpublished	Chin-Yi Lin	Right side cilia
+TCONS_00042204	Ectoderm	#a8d1f1	fgfb	S	XLOC_030824	KT290880.1	fibroblast growth factor 9	0	0	1	Fan et al., 2018	Tzu-Pei Fan	Ectodermal-ventral
+TCONS_00034214	Ectoderm	#a8d1f1	erg	T	XLOC_024089		transcriptional regulator Erg-like isoform X4	0	0	1	unpublished	Cindy	Ectodermal-apical, ectodermal-blastopore
+TCONS_00042093	Ectoderm	#a8d1f1	brn3	T	XLOC_030744		POU domain| class 4| transcription factor 3	0	0	1	unpublished	Cindy	Ectodermal ventral, ectodermal-dorsal, ectodermal-blastopore
+TCONS_00030792	Ectoderm	#a8d1f1	pitx2	T	XLOC_021322		pituitary homeobox 2 isoform X2	0	0	1		Gigi	Right side ectoderm
+TCONS_00031091	Ectoderm	#a8d1f1	nodal	S	XLOC_021523	KP133110.1	nodal homolog	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-ventral
+TCONS_00031434	Ectoderm	#a8d1f1	admp1	S	XLOC_021755	KP744521	bone morphogenetic protein 2-like	0	0	1	Chang et al., 2016	Chang et al.	Ectodermal-ventral, ectodermal-apical
+TCONS_00015347	Ectoderm	#a8d1f1	lhx2/9	T	XLOC_010636		LIM/homeobox protein Lhx9 isoform X5	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00030276	Ectoderm	#a8d1f1	Ngn	T	XLOC_020967		neurogenin transcription factor	0	0	1	unpublished	TCT	Ectodermal- ciliary band
+TCONS_00052512	Ectoderm	#a8d1f1	foxE	T	XLOC_038185		forkhead box protein E4-like	0	0	1		Gigi	Ectodermal-ventral
+TCONS_00031385	Ectoderm	#a8d1f1	chat	O (choline acetyltransferase)	XLOC_021716		choline O-acetyltransferase	0	0	1	unpublished	TCT	Ectodermal-apical
+TCONS_00031055	Ectoderm	#a8d1f1	atonal	T	XLOC_021499		basic helix-loop-helix transcription factor amos-like	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00024115	Ectoderm	#a8d1f1	foxQ2	T	XLOC_016756	HQ291266.1	protein lin-31-like	0	0	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Ectodermal-apical
+TCONS_00028163	Ectoderm	#a8d1f1	oasis	T	XLOC_019614	KP133107.1	cyclic AMP-responsive element-binding protein 3-like protein 4 isoform X2	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-ventral
+TCONS_00056455	Ectoderm	#a8d1f1	onecut	T	XLOC_040989	MH782157.1	one cut domain family member 2-like isoform X1	0	0	1	Su et al., 2019	Gigi	Ectodermal-ciliary band
+TCONS_00028953	Ectoderm	#a8d1f1	rx	T	XLOC_020081		retina and anterior neural fold homeobox protein 2	0	0	1	unpublished	Cindy	Ectodermal-dorsal, ectodermal-apical
+TCONS_00029829	Ectoderm	#a8d1f1	nckx5/slc24a5	O (potassium-dependent sodium/calcium exchanger)	XLOC_020660		probable sodium/potassium/calcium exchanger CG1090	0	0	1	unpublished	Cindy	Ectodermal-ciliary band
+TCONS_00019737	Ectoderm	#a8d1f1	gbx	T	XLOC_013686		homeobox protein GBX-2	0	0	1	unpublished	Gigi	Ectodermal-blastopore
+TCONS_00011489	Ectoderm	#a8d1f1	gsc	T	XLOC_008109	MH782152.1	homeobox protein goosecoid-like	0	0	1	Su et al., 2019	Gigi	Ectodermal-ventral
+TCONS_00043772	Ectoderm	#a8d1f1	gsx	T	XLOC_031936	AY436761.1	GS homeobox 1-like	0	0	1	Ikuta et al., 2013	Gigi	Ectodermal-blastopore
+TCONS_00009628	Ectoderm	#a8d1f1	Nkx2.1	T	XLOC_006877	AAM93268.1	homeobox protein Nkx-2.1-like	0	0	1	Su et al., 2019	Gigi	Ectodermal-ventral; pfemg15b17 (3k) (Kuni)
+TCONS_00033072	Ectoderm	#a8d1f1	histidine decarboxylase	O	XLOC_023126		histidine decarboxylase-like	0	0	1	unpublished	Cindy	Ectodermal-blastopore
+TCONS_00005144	Ectoderm	#a8d1f1	xbp1	T	XLOC_003785	KP133106.1	X-box-binding protein 1	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-ventral, ectodermal-dorsal
+TCONS_00003496	Ectoderm	#a8d1f1	vsx	T	XLOC_002630		visual system homeobox 2-like	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00050937	Ectoderm	#a8d1f1	chordin	S	XLOC_036996	HQ904075.1	chordin-like isoform X1	0	0	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Ectodermal-ventral
+TCONS_00031626	Ectoderm	#a8d1f1	hox7	T	XLOC_021910		transcription factor Hox11/13c	0	0	1	unpublished (?)	Chin-Yi Lin	Ectodermal-blastopore; Gigi's plasmid (?)
+TCONS_00000865	Ectoderm	#a8d1f1	olig	T	XLOC_000651		oligodendrocyte transcription factor 2-like	0	0	1	unpublished	Cindy	Ectodermal-apical, ectodermal-ciliary band
+TCONS_00027932	Ectoderm	#a8d1f1	otp	T	XLOC_019467		RecName: Full=Homeobox protein orthopedia	0	0	1	unpublished	Cindy	Ectodermal-ciliary band, ectodermal-blastopore
+TCONS_00018803	Ectoderm	#a8d1f1	t-brain	T	XLOC_013037	AB004911.1	T-box brain protein 1 isoform X2	0	0	1	Tagawa et al., 2000	Tagawa et al. and Gigi	Ectodermal-apical, ectodermal-ventral (very week)
+TCONS_00020805	Ectoderm	#a8d1f1	dlx	T	XLOC_014417	AB028221.1	distalless protein	0	0	1	Harada et al., 2001; Röttinger and Martindale, 2011; Su et al., 2019	Harada et al., Röttinger and Martindale and Su et al.	Ectodermal-dorsal, ectodermal-ciliary band
+TCONS_00011283	Ectoderm	#a8d1f1	lefty	S	XLOC_007961	KP133109.1	left-right determination factor 2-like	0	0	1	Rottinger et al., 2015	Rottinger et al., Gigi	Right side ectoderm
+TCONS_00026601	Ectoderm	#a8d1f1	nk3.2	T	XLOC_018564		homeobox protein Nkx-3.2	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00035589	Ectoderm	#a8d1f1	NKA	O (sodium-potassium ATPase)	XLOC_025259		sodium/potassium-transporting ATPase subunit alpha-1 isoform X1	0	0	1	Stumpp et al., 2015	Gigi	Almost whole ectoderm
+TCONS_00026612	Ectoderm	#a8d1f1	hmx	T	XLOC_018570		homeobox protein HMX3	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00043771	Ectoderm	#a8d1f1	xlox	T	XLOC_031935	AY436762.1	pancreas/duodenum homeobox protein 1-like	0	0	1	Ikuta et al., 2013	Gigi	Ectodermal-blastopore
+TCONS_00021998	Ectoderm	#a8d1f1	soxb2	T	XLOC_015237		transcription factor SoxB2	0	0	1		Gigi	Ectodermal-ventral, ectodermal-dorsal
+TCONS_00043320	Ectoderm	#a8d1f1	fgfc	S	XLOC_031600	KT290881.1	putative fibroblast growth factor 1	0	0	1	Fan et al., 2018	Tzu-Pei Fan	Ectodermal-ciliary band
+TCONS_00054333	Ectoderm	#a8d1f1	cripto	S	XLOC_039461	KP133093.1	cryptic protein-like	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-apical
+TCONS_00002727	Ectoderm	#a8d1f1	wnt1	S	XLOC_002080		proto-oncogene Wnt-1	0	0	1		Gigi	Ectodermal-blastopore
+TCONS_00011491	Ectoderm	#a8d1f1	otx	T	XLOC_008111	AB028220.1	homeobox protein OTX2	0	0	1	Harada et al., 2000	Harada et al. and Gigi	Ectodermal-ciliary band
+TCONS_00050627	Ectoderm	#a8d1f1	wnt4	S	XLOC_036769		protein Wnt-4	0	0	1	unpublished (?)	Chin-Yi Lin	Ectoermal-blastopore; Yann's plasmid
+TCONS_00029005	Ectoderm	#a8d1f1	mef	T	XLOC_020117	KP133104.1	myocyte-specific enhancer factor 2C isoform X4	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-dorsal
+TCONS_00027805	Ectoderm	#a8d1f1	fgf8/17/18	S	XLOC_019390	KT290883.1	fibroblast growth factor 8b	0	0	1	Fan et al., 2018	Tzu-Pei Fan	Ectodermal-apical
+TCONS_00002725	Ectoderm	#a8d1f1	wnt3	S	XLOC_002078		protein Wnt-3a	0	0	1		Gigi	Ectodermal-blastopore
+TCONS_00037355	Ectoderm	#a8d1f1	dcry	O (circadian photorecepter)	XLOC_026671		cryptochrome-1-like	0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00030469	Ectoderm	#a8d1f1	RGR-opsin	O (G protein coupled receptor)	XLOC_021101			0	0	1	unpublished	Cindy	Ectodermal-apical
+TCONS_00048312	Ectoderm	#a8d1f1	wnt2	S	XLOC_035143		protein Wnt-2b-A-like	0	0	1	unpublished (?)	Chin-Yi Lin	Posterior-ectoderm; Yann's plasmid
+TCONS_00012816	Ectoderm	#a8d1f1	smMHC	O (smooth muscle myosin heavy chain)	XLOC_008908	MG593814.1	Myosin heavy chain| non-muscle	0	0	1	Fan et al., 2018	Tzu-Pei Fan	Ectodermal-dorsal
+TCONS_00027285	Ectoderm	#a8d1f1	vent2	T	XLOC_019033	KP133108.1	Homeobox protein vent1	0	0	1	Rottinger et al., 2015	Rottinger et al.	Ectodermal-ventral
+TCONS_00032272	Ectoderm	#a8d1f1	hox11-13A (OIST)	T	XLOC_022455		ranscription factor Hox11/13a	0	0	1		Gigi	Ectodermal-blastopore
+TCONS_00019578	Ectoderm	#a8d1f1	pea	T	XLOC_013578	HQ291270.1	ETS translocation variant 1 isoform X1	0	0	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Ectodermal-dorsal, ectodermal-apical, ectodermal-ciliary band; in situ not clear
+TCONS_00048981	EctoMeso	#d9d2e9	CaM-K	O (Calcium/calmodulin-dependent protein kinase)	XLOC_035578		calcium/calmodulin-dependent protein kinase type 1-like	0	1	1	Tagawa et al., 2014	Tagawa et al.	Mesodermal-ventral, ectodermal-ventral, ectodermal-apical
+TCONS_00008966	EctoMeso	#d9d2e9	foxc	T	XLOC_006404	MG593809.1	forkhead box protein C2-B-like	0	1	1	Fan et al., 2018	Tzu-Pei Fan	Mesodermal-ventral, ectodermal-ciliary band
+TCONS_00005618	EctoMeso	#d9d2e9	tbx2/3	T	XLOC_004075	MH782153.1	T-box transcription factor TBX2 isoform X2	0	1	1	Su et al., 2019	Gigi	Mesodermal-dorsal, ectodermal-dorsal
+TCONS_00018385	EctoMeso	#d9d2e9	bmp5/8	S	XLOC_012737		bone morphogenetic protein 6	0	1	1		Gigi	Mesodermal-dorsal, ectodermal-apical, ectodermal-blastopore
+TCONS_00021191	EctoMeso	#d9d2e9	wnt11	S	XLOC_014698		protein Wnt-11	0	1	1		Gigi	Mesodermal-dorsal, ectodermal-ventral
+TCONS_00051388	EctoMeso	#d9d2e9	pax3/7	T	XLOC_037336		paired box protein Pax-3 isoform X2	0	1	1	unpublished	Gigi	Mesodermal-dorsal, ectodermal-ventral
+TCONS_00026419	EctoMeso	#d9d2e9	admp2	S	XLOC_018458	KP744519	bone morphogenetic protein 2-like	0	1	1	Rottinger et al., 2015; Chang et al., 2016	Gigi	Ectodermal-dorsal, Mesodermal-dorsal
+TCONS_00009626	EctoMeso	#d9d2e9	msx	T	XLOC_006875	KP133103.1	homeobox protein MSH-D-like	0	1	1	Su et al., 2019	Gigi	Mesodermal-dorsal, ectodermal-dorsal
+TCONS_00043572	EctoMeso	#d9d2e9	fgfd	S	XLOC_031789	KT290882.1	fibroblast growth factor 16	0	1	1	Fan et al., 2018	Tzu-Pei Fan	Mesodermal-ventral, ectodermal-ventral
+TCONS_00005425	EctoMeso	#d9d2e9	DAT	O (Dopamine transporter)	XLOC_003940		sodium-dependent dopamine transporter	0	1	1	unpublished	Cindy	Mesodermal-dorsal, ectodermal-apical
+TCONS_00013853	EctoMeso	#d9d2e9	stMHC	O (striated muscle myosin heavy chain)	XLOC_009586	MG593813.1	myosin heavy chain| striated muscle-like	0	1	1	Fan et al., 2018	Tzu-Pei Fan	Mesodermal-ventral, ectodermal-ventral, ectodermal-apical, ectodermal-blastopore
+TCONS_00023129	EctoMeso	#d9d2e9	pax6	T	XLOC_016025	MH782156.1	paired box protein Pax-6 isoform X1	0	1	1	Su et al., 2019	Gigi	Mesodermal-dorsal, both sides of the lateral ectoderm
+TCONS_00006014	EctoMeso	#d9d2e9	lhx1/5	T	XLOC_004377		LIM/homeobox protein Lhx5 isoform X1	0	1	1	unpublished	Cindy	Mesodermal-dorsal, ectodermal-apical, ectodermal-ciliary band
+TCONS_00027205	EctoMeso	#d9d2e9	fgfa	S	XLOC_018983	KT290879.1	putative fibroblast growth factor 1	0	1	1	Fan et al., 2018	Tzu-Pei Fan	Whole mesoderm, ectodermal-dorsal, ectodermal-apical
+TCONS_00009689	EctoMeso	#d9d2e9	foxg	T	XLOC_006914	MH782154.1	forkhead box protein G1	0	1	1	Su et al., 2019	Gigi	Mesodermal-dorsal ectodermal-ciliary band
+TCONS_00022869	EctoMeso	#d9d2e9	zic	T	XLOC_015853		zinc finger protein ZIC 4-like	0	1	1	unpublished	Cindy	Mesodermal-ventral, ectodermal-apical
+TCONS_00009756	EctoMeso	#d9d2e9	bmp2/4	S	XLOC_006966	AB028219.1	bone morphogenetic protein 2-like	0	1	1	Harada et al., 2002; Röttinger and Martindale, 2011; Su et al., 2019	Harada et al., Röttinger and Martindale and Su et al.	Mesodermal-dorsal, ectodermal-dorsal
+TCONS_00021074	EctoMeso	#d9d2e9	arrestin	S	XLOC_014610		beta-arrestin-1-like isoform X1	0	1	1	unpublished	Cindy	Mesodermal-dorsal, ectodermal-apical
+TCONS_00054301	EctoMeso	#d9d2e9	elav	O (RNA binding protein)	XLOC_039436		ELAV-like protein 4 isoform X3	0	1	1		Gigi	Mesodermal-ventral, ectodermal-ciliary band, ectodermal-blastopore
+TCONS_00022432	Endoderm	#fff2cc	NHE3	O (sodium–hydrogen exchanger)	XLOC_015562		sodium/hydrogen exchanger 2 isoform X1	1	0	0	Stumpp et al., 2015	Gigi	Whole endoderm; TL stage: only expressed in the midgut
+TCONS_00027993	Endoderm	#fff2cc	wntA	S	XLOC_019505		WntA-like protein	1	0	0	unpublished (?)	Chin-Yi Lin	Endodermal-posterior
+TCONS_00008500	Endoderm	#fff2cc	tsg	O (tumor suppressor gene)	XLOC_006083	KP133096.1	twi	1	0	0			
+TCONS_00006434	Endoderm	#fff2cc	piwi1	O (RNA-binding protein)	XLOC_004662	MN917174.1	piwi-like protein 1 isoform X1	1	0	0	Lin et al., 2020	Chin-Yi Lin	Endodermal-posterior
+TCONS_00054170	Endoderm	#fff2cc	vasa	O (dead box family)	XLOC_039348	MN917171.1	vasa-like protein	1	0	0	Lin et al., 2020	Chin-Yi Lin	Endodermal-posterior
+TCONS_00009611	EndoEcto	#d4f7e2	foxa/HNF3	T	XLOC_006868	AB023019.1	forkhead transcription factor A	1	0	1	Taguchi et al., 2000; Röttinger and Martindale, 2011; Su et al., 2019	Taguchi et al., Röttinger and Martindale and Su et al.	Whole endoderm, ectodernal-ventral
+TCONS_00044541	EndoEcto	#d4f7e2	hedgehog (Hh)	S	XLOC_032506	KP133097.1	sonic hedgehog protein	1	0	1	Arimoto and Tagawa, 2015; Rottinger et al., 2015	Arimoto and Tagawa, Rottinger et al., Gigi and Yann	Whole endoderm, ectodermal-ventral, ectodermal-apical
+TCONS_00009627	EndoEcto	#d4f7e2	Nkx2.2	T	XLOC_006876	MH782155.1	homeobox protein Nkx-2.2a-like	1	0	1	Su et al., 2019	Gigi	Endoderma-posterior, ectodermal-ventral, ectodermal-ciliary band; pfg14i20 (1.5k) (Kuni)
+TCONS_00000938	EndoEcto	#d4f7e2	frizzle9/10	S (Wnt receptor)	XLOC_000710		Frizzled-10	1	0	1	unpublished (?)	Chin-Yi Lin	Endodermal-posterior, posterior ectoderm
+TCONS_00021994	EndoEcto	#d4f7e2	soxB1a	T	XLOC_015234		transcription factor Sox-3-like	1	0	1	unpublished	Chin-Yi Lin	Endodermal-anterior, ectodermal-ventral, ectodermal-apical, ectodermal-ciliary band
+TCONS_00021994	EndoEcto	#d4f7e2	soxB1b	T	XLOC_015234		transcription factor Sox-3-like	1	0	1	unpublished	Chin-Yi Lin	Endodermal-anterior, ectodermal-ventral, ectodermal-apical, ectodermal-ciliary band
+TCONS_00012670	EndoEcto	#d4f7e2	axin	S	XLOC_008818		axin-1 isoform X1	1	0	1	unpublished	Chin-Yi Lin	Endodermal-posterior, posterior ectoderm
+TCONS_00053751	EndoEcto	#d4f7e2	sfrp1-like	S	XLOC_039021	HQ291269.1	Frizzled-1	1	0	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Endodermal-anterior, ectodermal-apical
+TCONS_00019620	EndoEcto	#d4f7e2	irxA	T	XLOC_013612	KP133098.1	iroquois-class homeodomain protein IRX-6-like	1	0	1	Rottinger et al., 2015	Rottinger et al.	Endodermal-anterior, ectodermal-ventral
+TCONS_00047036	EndoEcto	#d4f7e2	brachyury (Bra)	T	XLOC_034300	AB004912.1	brachyury protein	1	0	1	Tagawa et al., 1998; Peterson et al., 1999; Röttinger and Martindale, 2011	Tagawa et al., Peterson et al. and Röttinger and Martindale, 2011	Endodermal-posterior, ectodermal-ventral, ectodermal-blastopore
+TCONS_00009755	EndoEcto	#d4f7e2	univin	S	XLOC_006965		protein DVR-1-like	1	0	1	unpublished	Chin-Yi Lin	Endodermal-anterior (dorsal), Ectodermal-dorsal, right side cilia
+TCONS_00042478	EndoEcto	#d4f7e2	cdx	T	XLOC_031006	AY436764.1	homeobox protein CDX-2	1	0	1	Ikuta et al., 2013	Gigi	Endodermal-posterior, ectodermal-blastopore
+TCONS_00032270	EndoEcto	#d4f7e2	hox9/10	T	XLOC_022453		Homeobox protein Hox-C10	1	0	1		Gigi	Endodermal-posterior, ectodermal-blastopore
+TCONS_00003661	EndoEcto	#d4f7e2	wnt6	S	XLOC_002748		protein Wnt-6-like	1	0	1	unpublished (?)	Chin-Yi Lin	Endodermal-posterior, ectodermal-blastopore; Yann's plasmid
+TCONS_00019620	EndoEcto	#d4f7e2	irx	T	XLOC_013612		iroquois-class homeodomain protein IRX-6-like	1	0	1		Gigi	Endodermal-anterior, ectodermal-ciliary band
+TCONS_00042229	EndoEcto	#d4f7e2	Clock	T	XLOC_030844		neuronal PAS domain-containing protein 2-like	1	0	1	Tagawa et al., 2014	Tagawa et al.	Endodermal-anterior, ectodermal-ventral, ectodermal-dorsal, ectodermal-apical
+TCONS_00016141	EndoEcto	#d4f7e2	lhx3/4	T	XLOC_011183		LIM/homeobox protein Lhx3	1	0	1	unpublished	KTW	Endodermal-anterior, ectodermal-apical, ectodermal-ciliary band
+TCONS_00045275	EndoEcto	#d4f7e2	soxc	T	XLOC_033063		transcription factor Sox-11-like	1	0	1	unpublished	Chin-Yi Lin	Endodermal-anterior, endodermal-posterior, ectodermal-ventral, ectodermal-ciliary band, ectoermal-apical, ectodermal-blastopore
+TCONS_00027023	EndoEcto	#d4f7e2	fgfr1-like	S (protein receptor)	XLOC_018853	HQ904073.1	fibroblast growth factor receptor-like 1 isoform X1	1	0	1	Rottinger & Martindale, 2011	Rottinger & Martindale	Endodermal-anterior, ectodermal-ventral
+TCONS_00049562	EndoEcto	#d4f7e2	wnt7	S	XLOC_035971		protein Wnt-7b isoform X2	1	0	1	unpublished (?)	Chin-Yi Lin	Ventral-endoderm and ectoderm; Yann's plasmid
+TCONS_00045364	EndoMeso	#fce5cd	eya	T	XLOC_033135		eyes absent homolog 1 isoform X1	1	1	0	unpublished	KTW	Endodermal-anterior, whole mesoderm
+TCONS_00052493	EndoMeso	#fce5cd	fgfra1	S (protein receptor)	XLOC_038171	KT290884.1	fibroblast growth factor receptor 2-like isoform X1	1	1	0	Fan et al., 2018	Tzu-Pei Fan	Ectodermal-anterior, whole mesoderm
+TCONS_00014419	EndoMeso	#fce5cd	myocardin	T	XLOC_009994	MG593811.1	MKL/myocardin-like protein 1	1	1	0	Fan et al., 2018	Tzu-Pei Fan	Endodermal-posterior, mesodermal-ventral
+TCONS_00038519	Mesoderm	#f4cccc	follistain	O (activin-binding protein)	XLOC_027629	KP133099.1	follistatin-related protein 1	0	1	0	Rottinger et al., 2015	Rottinger et al.	Mesodermal-dorsal
+TCONS_00019983	Mesoderm	#f4cccc	zeb	T	XLOC_013841		zinc finger E-box-binding homeobox 1-like isoform X1	0	1	0		Gigi	Mesodermal-ventral
+TCONS_00003496	Mesoderm	#f4cccc	alx	T	XLOC_002630		visual system homeobox 2-like	0	1	0	unpublished	Cindy	Mesodermal-ventral
+TCONS_00001139	Mesoderm	#f4cccc	lin-28	O (RNA-binding protein)	XLOC_000847		protein lin-28 homolog isoform X2	0	1	0	unpublished	Cindy	Whole mesoderm
+TCONS_00008967	Mesoderm	#f4cccc	foxf	T	XLOC_006405	MG593810.1	forkhead box protein F1	0	1	0	Fan et al., 2018	Tzu-Pei Fan	Whole mesoderm
+TCONS_00030933	Mesoderm	#f4cccc	r-opsin2	O (G protein coupled receptor)	XLOC_021421			0	1	0	unpublished	Cindy	Mesodermal-dorsal
+TCONS_00013871	Mesoderm	#f4cccc	soxE	T	XLOC_009592		transcription factor SOX-9	0	1	0	unpublished	Cindy	Mesodermal-dorsal
+TCONS_00053817	Mesoderm	#f4cccc	activin	S	XLOC_039072		growth/differentiation factor 8-like	0	1	0	unpublished	Chin-Yi Lin	Mesodermal-ventral
+TCONS_00026600	Mesoderm	#f4cccc	nkx2.5	T	XLOC_018563		homeobox protein Nkx-2.6	0	1	0	unpublished	Cindy	Whole mesoderm
+TCONS_00010067	Mesoderm	#f4cccc	six1/2	T	XLOC_007167		homeobox protein SIX2	0	1	0	unpublished	Cindy	Mesodermal-dorsal

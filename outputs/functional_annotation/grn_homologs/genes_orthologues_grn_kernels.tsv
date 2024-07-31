@@ -1,0 +1,26 @@
+kernel	method_orthology	query	id	orthologue_type	gene
+endomesoderm	oma	STRPU_00279	TCONS_00010212	1:1	Delta
+endomesoderm	oma	STRPU_17832	TCONS_00047036	1:1	Bra
+endomesoderm	oma	STRPU_17842	TCONS_00001141	1:1	Blimp1/Krox1
+endomesoderm	oma	STRPU_21071	TCONS_00011491	1:1	Otx
+endomesoderm	of	STRPU_24010	TCONS_00017935	1:1	GATAe
+endomesoderm	ish	FoxA	TCONS_00009611	1:1	FoxA
+axial_mesoderm	of	HUMAN08678	TCONS_00010306	many:1	Fos
+axial_mesoderm	of	HUMAN11327	TCONS_00008734	many:1	Nfat5
+axial_mesoderm	of	HUMAN19147	TCONS_00009028	many:many	Snail-like 1
+axial_mesoderm	of	HUMAN19147	TCONS_00009035	many:many	Snail-like 2
+axial_mesoderm	of	HUMAN23486	TCONS_00052518	many:1	FoxD1
+axial_mesoderm	of	HUMAN27325	TCONS_00019139	many:1	Mnx1
+axial_mesoderm	oma	HUMAN00267	TCONS_00050269	many:1	Plod1/2/3
+axial_mesoderm	oma	HUMAN09712	TCONS_00033093	1:1	Kif23
+axial_mesoderm	oma	HUMAN14055	TCONS_00019641	1:1	Dsel
+axial_mesoderm	oma	HUMAN19147	TCONS_00018547	1:1	Snail
+axial_mesoderm	oma	HUMAN20719	TCONS_00003612	1:1	Ctnb1
+axial_mesoderm	oma	HUMAN21622	TCONS_00050269	many:1	Plod1/2/3
+axial_mesoderm	oma	HUMAN26732	TCONS_00050269	many:1	Plod1/2/3
+axial_mesoderm	rbh	HUMAN21113	TCONS_00048301	rbh	Pric3
+axial_mesoderm	rbh	HUMAN21432	TCONS_00047742	rbh	Klf15
+axial_mesoderm	ish	FoxA	TCONS_00009611	1:1	FoxA
+axial_mesoderm	ish	Brachyury	TCONS_00047036	ish	Bra
+axial_mesoderm	ish	NODAL	TCONS_00031091	ish	Nodal
+axial_mesoderm	ish	Delta	TCONS_00010212	ish	Delta

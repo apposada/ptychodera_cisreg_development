@@ -1,0 +1,242 @@
+################################################################################
+#        ___           ___           ___     
+#       /\  \         /\__\         /\  \    
+#      /::\  \       /::|  |       /::\  \   
+#     /:/\:\  \     /:|:|  |      /:/\:\  \  
+#    /:/  \:\  \   /:/|:|__|__   /::\~\:\  \ 
+#   /:/__/ \:\__\ /:/ |::::\__\ /:/\:\ \:\__\
+#   \:\  \ /:/  / \/__/~~/:/  / \/__\:\/:/  /
+#    \:\  /:/  /        /:/  /       \::/  / 
+#     \:\/:/  /        /:/  /        /:/  /  
+#      \::/  /        /:/  /        /:/  /   
+#       \/__/         \/__/         \/__/    
+#   
+################################################################################
+
+# Type of input sequence data, has to be either 'DNA' or 'AA'
+InputDataType := 'AA';
+
+# Output folder
+OutputFolder := 'Output';
+
+# if you want to recompute everything from scratch every time the script
+# is run, set the following parameter to false.
+ReuseCachedResults := true;
+
+# number of pairwise protein alignments done in one unit. The larger this 
+# number, the longer each unit runs, and the fewer files get produced. This 
+# allows to adjust the frequency of milestone steps (e.g. in case of computer 
+# crash)
+AlignBatchSize := 1e6;
+
+# alignments which have a score lower than MinScore will not be considered.
+# The scores are in Gonnet PAM matrices units.
+MinScore := 181;
+
+# Length tolerance ratio.  If the length of the effective alignment is less 
+# than LengthTol*min(length(s1),length(s2)) then the alignment is not 
+# considered.
+LengthTol := 0.61;
+
+# During the stable pair formation, if a pair has a distance provable higher 
+# than another pair (i.e. StablePairTol standard deviations away) then it is 
+# discarded.
+StablePairTol := 1.81;
+
+# During the stable pair formation, if the within species evolutionary distance 
+# difference is more than InparalogTol standard deviations closer than the 
+# distance to the other species, a pair is still considered inparalog even 
+# if they don't fullfil the StablePairTol criterion
+InparalogTol := 3.00;
+
+# The ParalogTol is used to identify clear paralogous pairs, which can be 
+# used in further analysis. If set to a value larger than StablePairTol,
+# homologous matches for which the difference in their evolutionary distance
+# is larger than ParalogTol * std(distance), where std(distance) is the 
+# standard deviation of the distance difference between the closest ortholog
+# and the more distant homolog, will be stored. 
+# WARNING: This is an experimental feature only! No performance analysis nor
+# in-depth debugging has been done on this feature. USE AT OWN RISK!
+# computing and storing the paralogs can be disabled by setting this
+# parameter to a negative value.
+ParalogTol := -2.5*StablePairTol;
+
+# For the verification of stable pairs, there is also a tolerance parameter 
+# (for details, see Dessimoz et al, Nucl Acids Res 2006)
+VerifiedPairTol := 1.53;
+
+# SkipVerification is a flag to disable the Verification step entirely.
+# This can be useful for dataset where little differential gene loss is
+# expected and where the verification step takes a long time otherwise.
+# Uncomment to activate.
+# SkipVerification := true;
+
+# Any sequence which is less than MinSeqLen amino acids long in regular 
+# genomes is not considered.
+MinSeqLen := 50;
+
+# Whether or not OMA should keep only one splicing variant per gene, i.e. 
+# the one with the most homologous matches in all other species.
+# Annotation of splicing variants needs to be provided in a text file 
+# DB/<genome>.splice 
+UseOnlyOneSplicingVariant := true;
+
+# use experimental code (single processor only) to compute homologous
+# clusters instead of full All-against-all. 
+UseExperimentalHomologousClusters := false;
+
+# OMA groups are cliques on the pairwise ortholog graph. By specifying 
+# a QuasiCliquesCutoff of less than 1, OMA groups that do not share any
+# species and N/(n*m) >= QuasiCliquesCutoff where N is the number of 
+# orthologous relations between the two OMA groups of sizes n and m, 
+# will be merged. The merged groups will be written to seperate output
+# files.
+QuasiCliquesCutoff := 1.0:
+
+
+##############################################################
+# Output parameters
+##############################################################
+# Enables/disables the generation of stable identifiers for OMA groups (and 
+# Hierarchical Groups if their computation enabled). The identifier consists 
+# of a prefix to determine the type of the group ('OMA' or 'HOG'), and a 
+# subsequence of the amino acid sequence uniquely present in this group. The 
+# computation of these ids might require a substantial amount of time. The ids 
+# are stored in the OrthoXML files only.
+StableIdsForGroups := false;
+
+# Enable/disable guessing of the id types while generating the orthoxml
+# file. In this context we refer to ID type guessing as the task to 
+# gussing whether an ID should be stored in the geneId, protId or 
+# transcriptId tag. If the flag is set to false, the whole fasta header 
+# is used and stored as is in the protId tag.
+GuessIdType := false;
+
+# Avoid producing some of the output files. This can reduce computing time
+# and especially avoids the generation of many files in large analysis. By 
+# default all the output files are generated. Uncomment certain lines to 
+# avoid the production of the corresponding output.
+#WriteOutput_PairwiseOrthologs := false;
+#WriteOutput_OrthologousPairs_orthoxml := false;  #this file requires lots of time.
+#WriteOutput_OrthologousGroupsFasta := false;
+#WriteOutput_HOGFasta := false;
+#WriteOutput_Paralogs := false; 
+#WriteOutput_PhyleticProfileHOG := false;
+#WriteOutput_PhyleticProfileOG := false;
+
+
+##############################################################
+# Hierarchical Orthologous Groups (HOGs)
+##############################################################
+# Infer the Hierarchical Orthologous Groups (HOGs)? 
+# In OMA standalone prior to 2.0 you can activate the inference of HOGs 
+# through the Top-Down algorithm by setting 'DoHierarchicalGroup' to 'true'. 
+# Since 2.0, you should set it to 'top-down' or 'bottom-up'. The 'top-down' 
+# is the original approach, where as 'bottom-up' is the much more scaleable 
+# algorithm introduced in version 2.0.0 for the first time. You can disable
+# the HOG computation by setting it to 'false'.
+DoHierarchicalGroups := 'bottom-up';
+
+# The hierarchical groups need a hierarchy of the involved species in from of 
+# a tree. This tree can either be estimated from the OMA Groups by setting the 
+# SpeciesTree variable to 'estimate', or a (partially resolved) tree can be 
+# given in Newick format. The estimation step needs again additional computing 
+# time.
+SpeciesTree := 'estimate';
+#SpeciesTree := '((mouse,mouse2),human,dog);';
+
+# Out-group species. If the species tree should be estimated, you should provide
+# a set of out-group species to properly root the species tree. The set of
+# out-group species must form a monophyletic clade that branches off from the
+# root.
+# If you do not want to specify an out-group set, you can set the parameter to
+# 'none', in which case OmaStandalone will use a mid-point rooting. However,
+# this root is most likely wrong and inferred hierarchical orthologous groups 
+# (HOGs) will be strongly affected from this. Therefore this setting is 
+# strongly discouraged
+OutgroupSpecies := ['YEAST'];
+# OutgroupSpecies := ['dog'];  # example with one out-group species
+# OutgroupSpecies := ['DROME', 'DROSA'];  # example with more than one species
+# OutgroupSpecies := 'none';  # use midpoint rooting (strongly discouraged)
+
+
+# The cutoff in GETHOGs bottom-up algorithm to make an edge trusted in the 
+# orthology graph among HOGs. This parameter applies only to the bottom-up 
+# approach. Use 'ReachabilityCutoff' for the top-down approach. 
+MinEdgeCompletenessFraction := 0.65;
+
+
+# The cutoff of 'average reachability within two steps' defines up to what 
+# point a cluster is split into sub-clusters. This parameter applies only to the
+# top-down approach. For the bottom-up approach, use the parameter 
+# 'MinEdgeCompletenessFraction' instead.
+ReachabilityCutoff := 0.65;
+
+# Define maximum amount of time (in sec) spent by the program for breaking
+# every connected component of the orthology graph at its weakest link on a
+# given taxonomic level. If set to a negative value, no timelimit is enforced.
+# This variable applies only to the top-down approach.
+MaxTimePerLevel := 1200;  # 20min
+
+
+
+##############################################################
+# Function Prediction
+##############################################################
+# Compute predictions using Orthologous groups?
+# You can either set it to 'true', which will enable the computation or 
+# disable it by setting it to 'false'. Writing the output takes a long time. 
+DoGroupFunctionPrediction := true;
+
+# Fraction of group members that need to be assigned with a certain
+# GO annotation in order to transfer it. The lower the value is the 
+# more liberally functions are propagated.
+GroupFunctionCutoff := 0.5;
+
+# Specify how to limit function propagation on clades. Parameter can be
+# one of (i) default (ii) none or (iii) <file-path>.
+# default infers species tree and limits propagation at predefined clade 
+# levels. 'none' disables the limits entirely and the last option allows to 
+# point to a tsv file with the following format: <SPECIES NAME>\t<CLADE>,
+# that provides a mapping from genome name to a clade. Only annotations that 
+# are supported within the same clade are transferred to a genome.
+CladeDefinition := 'default';
+
+
+###############################################################################
+# ESPRIT -- Detection of split genes
+###############################################################################
+# Use Esprit?
+# You can either set this to 'true', which will enable esprit and shut down the
+# parts of OMA that are not directly needed for esprit, or set it to 'false' to
+# make no use of esprit at all.
+UseEsprit := false;
+
+# NOTE: Genomes in which split genes are to be found should be called 
+#       "{unique name}.contig.fa". All other genomes are considered
+#       reference genomes.
+
+
+# ESPRIT PARAMETERS 
+
+# Confidence level variable for contigs  (this is the parameter "tol" 
+# described in the paper)
+DistConfLevel := 2;
+
+# Min proportion of genomes with which contigs form many:1 BestMatches to 
+# consider that we might be dealing with fragments of the same gene (this is 
+# the parameter "MinRefGenomes" described in the paper, normalized by the 
+# total number of reference genomes)
+MinProbContig := 0.4;
+
+# Maximum overlap between fragmnents of same gene from different contigs
+MaxContigOverlap := 5;
+
+# Any sequence which is less than MinSeqLen amino acids long in contigs is not 
+# considered.
+MinSeqLenContig := 20;
+
+# Minimum score for BestMatch in scaffold recognition
+MinBestScore := 250;
+
+

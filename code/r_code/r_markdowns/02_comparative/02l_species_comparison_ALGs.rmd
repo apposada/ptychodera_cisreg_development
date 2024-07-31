@@ -1,0 +1,727 @@
+---
+title: "Ptychodera Cisreg Development: Comparative Analysis Figures"
+author: "Alberto Perez-Posada"
+date: "09/05/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+We will assess the transcriptomic similarity between three deuterostome species using a common set of orthologues.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+require(colorspace)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load data 
+
+We will load all the comparABle wrappers that we have generated in all the markdowns of this section.
+
+```{r}
+load("outputs/rda/deseq2.rda")
+load("outputs/rda/bflo_reanalysis.rda")
+load("outputs/rda/spur_reanalysis.rda")
+ALGs <- 
+  read.delim2(
+    file = "outputs/functional_annotation/ALG_genes/all_ALGs.tsv",
+    header = TRUE
+    )
+```
+
+We will parse and keep tidy all the dictionaries of IDs of species
+
+```{r}
+xloc_tcons <- read.table("data/refs/genome/xloc_tcons_longestIso.tsv",header=F,col.names=c("id","gene"))
+bflo_loc <- read.delim2("outputs/comparative/reanalysis/bflo/dict_genomepaper/BFL_transctiptID2geneID.tsv",header = TRUE)
+bf_bflo <- read.table("outputs/comparative/oma/dicts/BRAFL.dct", col.names = c("key","value"))
+bflo_loc <- bflo_loc[bflo_loc$transcript_id %in% bf_bflo$key,]
+bflo_loc$id <- translate_ids(x = bflo_loc$transcript_id,dict = bf_bflo)
+spur_loc <- read.delim2("outputs/comparative/reanalysis/spur/dict_genomepaper/SPU_transctiptID2geneID.tsv",header = TRUE)
+sp_strpu <- read.table("outputs/comparative/oma/dicts/STRPU.dct", col.names = c("key","value"))
+spur_loc <- spur_loc[spur_loc$protein_ID %in% sp_strpu$key,]
+spur_loc$id <- translate_ids(x = spur_loc$protein_ID,dict = sp_strpu)
+```
+
+We collate all the ID equivalences here:
+
+```{r}
+ALGs$id_pfla <- translate_ids(ALGs$PFL, dict = xloc_tcons[,c(2,1)])
+ALGs$id_bflo <- translate_ids(ALGs$BFL, dict = bflo_loc[,c(2,3)])
+ALGs$id_spur <- translate_ids(ALGs$SPU,dict = spur_loc[,c(3,4)])
+
+rownames(ALGs) <- ALGs$id_pfla
+```
+
+We can use this as a translation layer between the data of the three species.
+
+## Filtering the data
+
+With this we keep the genes that are in the expression matrices of the three species.
+
+```{r}
+common_alg_genes <- 
+  ALGs$id_pfla %in% rownames(pfla_rna_dev) & 
+  ALGs$id_spur %in% rownames(spur_vsd) & 
+  ALGs$id_bflo %in% rownames(bflo_vsd)
+
+deut_or <- ALGs[common_alg_genes,c(4:7)]
+deut_or$or <-
+  paste0("O_",formatC(1:nrow(deut_or), width = nchar( trunc( abs(nrow(deut_or)) ) ), format = "d", flag = "0"))
+```
+
+First we subset the data of Ptychodera
+
+```{r}
+a <- pfla_rna_dev[rownames(pfla_rna_dev) %in% deut_or$id_pfla, -17]
+rownames(a) <- translate_ids(rownames(a), dict = deut_or[,c(2,5)])
+colnames(a) <- paste("PF_",sub("X","",colnames(a)))
+```
+
+Then S. purpuratus
+
+```{r}
+spur_dds <- DESeqDataSetFromMatrix(countData = spur_vsd, colData = data.frame(condition = colnames(spur_vsd)),design = ~ condition)
+spur_dds <- estimateSizeFactors(spur_dds)
+spur_norm <- counts(spur_dds, normalized=TRUE)  
+
+b <- spur_norm[rownames(spur_norm) %in% deut_or$id_spur,]
+rownames(b) <- translate_ids(rownames(b), dict = deut_or[,c(4,5)])
+colnames(b) <- paste("SP_",colnames(b))
+```
+
+& Then B. floridae
+
+```{r}
+c <- RNA_bflo[rownames(RNA_bflo) %in% deut_or$id_bflo,-c(13,14)]
+rownames(c) <- translate_ids(rownames(c), dict = deut_or[,c(3,5)])
+colnames(c) <- paste("BF_",colnames(c))
+```
+
+The intersect and the filtering:
+
+```{r}
+f <- intersect(rownames(a),intersect(rownames(b),rownames(c)))
+a <- a[f,]
+b <- b[f,]
+c <- c[f,]
+```
+
+And the concatenation and normalisation:
+
+```{r}
+abc <- cbind(a,b,c)
+abc <- qnorm(abc)
+```
+
+```{r fig.width = 6, fig.height = 8}
+ha <- HeatmapAnnotation(
+  stage = anno_simple(
+    colnames(abc),
+    col  = setNames(
+      c(
+        dev_palette,
+        sequential_hcl(ncol(b),"Purple-Orange",rev = TRUE),
+        sequential_hcl(ncol(c),"SunsetDark",rev = TRUE)
+      ),
+      colnames(abc)),
+    pch = as.character(c(1:ncol(a),1:ncol(b),1:ncol(c)))
+  ),
+  which = "column",
+  show_legend = FALSE,
+  show_annotation_name = FALSE
+)
+
+abc_individually_scaled <-
+  as.matrix(
+    cbind(
+      t(scale(t(abc[,1:ncol(a)]))),
+      t(scale(t(abc[,(ncol(a)+1)+seq(1:ncol(b))]))),
+      t(scale(t(abc[,(ncol(a)+ncol(b))+(1:ncol(c))])))
+        )
+  )
+
+h_abc <-
+  Heatmap(
+    name = "expression",
+    abc_individually_scaled,
+    cluster_columns = FALSE, cluster_rows = TRUE,
+    show_row_names = FALSE,
+    col = colorRamp2(col = c("#0b5394","#eeeeee","#bd0000"),breaks = c(quantile(abc_individually_scaled,.05),0,quantile(abc_individually_scaled,.99))), # c("gray95","#47535b")
+    clustering_method_rows = "ward.D2",
+    column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    top_annotation = ha,
+    show_column_names = FALSE,
+    column_title = "3,192 orthologues from the Deuterostome LCA"
+  )
+
+draw(h_abc)
+```
+
+The data is ready to use.
+
+## Comparison
+
+We will use comparABle's implementation of the Jensen-Shannon Distance:
+
+```{r}
+abc_ <- apply(abc+1,2,function(x){x/sum(x)})
+
+js <- function(p,q){ #jensen-shannon from https://stackoverflow.com/questions/11226627/jensen-shannon-divergence-in-r
+  n <- 0.5 * (p + q)
+  JS <- sqrt(0.5 * (sum(p * log((p / n)) + sum(q * (log((q / n)))))))
+  return(JS)
+}
+
+abc_jsd <- matrix(NA,nrow=ncol(abc_),ncol=ncol(abc_))
+for (i in 1:ncol(abc_)){
+  for (j in 1:ncol(abc_)){
+    abc_jsd[i,j] <- js(abc_[,i],abc_[,j])
+  }
+}
+
+rownames(abc_jsd) <- colnames(abc_)
+colnames(abc_jsd) <- colnames(abc_)
+```
+
+Then the heatmap:
+
+```{r, fig.width = 6.5, fig.height = 6}
+ha_row <- HeatmapAnnotation(
+  stage = anno_simple(
+    colnames(abc),
+    col  = setNames(
+      c(
+        dev_palette,
+        sequential_hcl(ncol(b),"Purple-Orange",rev = TRUE),
+        sequential_hcl(ncol(c),"SunsetDark",rev = TRUE)
+      ),
+      colnames(abc)),
+    pch = as.character(c(1:ncol(a),1:ncol(b),1:ncol(c)))
+  ),
+  which = "row",
+  show_legend = FALSE,
+  show_annotation_name = FALSE
+)
+
+h_abc_jsd <-
+  Heatmap(
+    abc_jsd,
+    name = "JSD", 
+    col = colorRamp2(
+      brewer.pal(10, "RdBu"),
+      breaks = seq(10,25, length = 10)
+    ),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    row_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    row_names_gp = gpar(cex = .5),
+    column_names_gp = gpar(cex = .5),
+    top_annotation = ha,
+    right_annotation = ha_row,
+    bottom_annotation = ha,
+    left_annotation = ha_row
+  )
+
+draw(h_abc_jsd)
+```
+
+We can do this with subsampling:
+
+```{r}
+abc_jsd_mean <- jsd_with_subsampling(
+  a_o = abc,
+  b_o = abc,
+  p = .25
+  )
+```
+
+And the tidy heatmap of just the P. flava stages versus the other two species:
+
+```{r, fig.width = 5, fig.height = 3}
+ha_ <- HeatmapAnnotation(
+  stage = anno_simple(
+    colnames(abc[,17:45]),
+    col  = setNames(
+      c(
+        sequential_hcl(ncol(b),"Purple-Orange",rev = TRUE),
+        sequential_hcl(ncol(c),"SunsetDark",rev = TRUE)
+      ),
+      colnames(abc[,17:45])),
+    pch = as.character(c(1:ncol(b),1:ncol(c)))
+  ),
+  which = "column",
+  show_legend = FALSE,
+  show_annotation_name = FALSE
+)
+
+
+deuts_jsd <-
+  Heatmap(
+    relativise(abc_jsd_mean$mean[1:16,17:45]),
+    name = "JSD", 
+    col = brewer.pal(10, "RdBu"),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    column_split = factor(c(rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("SP","BF")),
+    show_row_names = FALSE, show_column_names = FALSE,
+    top_annotation = ha_,
+    left_annotation = devstages_ha_rows_simple()
+  )
+draw(deuts_jsd)
+```
+
+
+## Pearson correlation at once of all the species:
+
+We can also use the metric of Spearman correlation as a proxy to see which stages are most similar between species.
+
+```{r}
+abc_sp <- cor(abc, method = "sp")
+```
+
+```{r fig.width = 6.5, fig.height = 6}
+h_abc_sp <- 
+  Heatmap(
+    name = "Sp",
+    abc_sp,
+    col = colorRamp2(seq(0,0.75, length = 10),rev(brewer.pal(10,"RdYlBu"))),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    row_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    row_names_gp = gpar(cex = .5),
+    column_names_gp = gpar(cex = .5),
+    top_annotation = ha,
+    right_annotation = ha_row,
+    bottom_annotation = ha,
+    left_annotation = ha_row
+  )
+
+
+draw(h_abc_sp)
+```
+
+## Correlating genes
+
+We will correlate the expression profile of all the genes:
+
+```{r}
+cor_genes <- cor(t(abc), method = "sp")
+ccc <- hclust(as.dist(1-cor_genes), method = "ward.D2")
+```
+
+To check in particular the dynamics of transcription factors:
+
+```{r}
+f_tfs <- which(rownames(abc) %in% deut_or$or[deut_or$id_pfla %in% pfla_tfs$id])
+cor_tfs <- cor_genes[f_tfs,f_tfs]
+
+ccc_tfs <- hclust(as.dist(1-cor_tfs), method = "ward.D2")
+```
+
+The JSD using the 234 orthologous TFs in the 3 species:
+
+```{r, fig.width = 6.5, fig.height = 6}
+abc_tfs_ <- apply(abc[f_tfs,]+1,2,function(x){x/sum(x)})
+abc_tfs_jsd <- matrix(NA,nrow=ncol(abc_tfs_),ncol=ncol(abc_tfs_))
+for (i in 1:ncol(abc_tfs_)){
+  for (j in 1:ncol(abc_tfs_)){
+    abc_tfs_jsd[i,j] <- js(abc_tfs_[,i],abc_tfs_[,j])
+  }
+}
+
+rownames(abc_tfs_jsd) <- colnames(abc_tfs_)
+colnames(abc_tfs_jsd) <- colnames(abc_tfs_)
+
+h_abc_tfs_jsd <-
+  Heatmap(
+    abc_tfs_jsd,
+    name = "JSD", 
+    col = colorRamp2(
+      brewer.pal(10, "RdBu"),
+      breaks = seq(3,7, length = 10)
+    ),
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    row_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    row_names_gp = gpar(cex = .5),
+    column_names_gp = gpar(cex = .5),
+    top_annotation = ha,
+    right_annotation = ha_row,
+    bottom_annotation = ha,
+    left_annotation = ha_row
+  )
+
+draw(h_abc_tfs_jsd)
+
+pdf("graphics/abc_JSD_TFs_3spp.pdf",wi = 6.5, he = 6)
+draw(h_abc_tfs_jsd)
+dev.off()
+```
+
+```{r}
+h_cor_tfs_3spp <-
+  Heatmap(
+    cor_tfs,
+    name = "spearman",
+    # col = rev(brewer.pal(10,"RdYlBu")),
+    col = colorRamp2(c("royalblue","gray100","gray100","gray100","tomato"),breaks = c(-0.9,-0.5,0,0.5,0.9)),
+    cluster_rows = ccc_tfs, cluster_columns = ccc_tfs, show_row_names = F, show_column_names = F,
+    use_raster = FALSE
+  )
+
+h_tfs_ip_3spp <-
+  Heatmap(
+    cbind(
+      t(scale(apply(abc_ip[f_tfs,1:13],1,relativise))),
+      t(scale(apply(abc_ip[f_tfs,14:26],1,relativise))),
+      t(scale(apply(abc_ip[f_tfs,27:39],1,relativise)))
+      ),
+    name = "interpolated\nexpression",
+    col = colorRamp2(col = c("gray95","#47535b"),breaks = c(0,1)),
+    top_annotation = ha_ip,
+    bottom_annotation = ha_ip,
+    cluster_rows = ccc_tfs,
+    cluster_columns = FALSE,
+    show_row_names = FALSE, show_column_names = FALSE,
+    column_split = factor(c(rep("PF",13),rep("SP",13),rep("BF",13)), levels = c("PF","SP","BF"))
+  )
+
+h_tfs_3spp <-
+  Heatmap(
+    cbind(
+        t(scale(apply(abc[f_tfs,1:ncol(a)],1,relativise))),
+        t(scale(apply(abc[f_tfs,(ncol(a)+seq(1:ncol(b)))],1,relativise))),
+        t(scale(apply(abc[f_tfs,(ncol(a)+ncol(b))+(1:ncol(c))],1,relativise)))
+      ),
+    name = "expression",
+    col = colorRamp2(col = c("gray95","#47535b"),breaks = c(0,1)),
+    top_annotation = ha,
+    bottom_annotation = ha,
+    cluster_rows = ccc_tfs,
+    cluster_columns = FALSE,
+    show_row_names = FALSE, show_column_names = FALSE,
+    column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+    border = TRUE
+  )
+
+```
+
+More heatmaps...
+
+```{r, fig.width = 6.5, fig.height = 6}
+draw(h_cor_tfs_3spp+h_tfs_3spp)
+
+
+pdf("graphics/cor_abc_tfs.pdf",wi = 6.5, he = 6)
+draw(h_cor_tfs_3spp+h_tfs_3spp)
+dev.off()
+```
+
+We will create a quick graph for showing the different deuterostome TFs connected based on their shared transcriptional dynamics across development in the three species:
+
+```{r, fig.width = 7, fig.height = 7}
+g <-
+  graph_from_adjacency_matrix(
+  cor_tfs,
+  diag = FALSE,
+  mode = "upper",
+  weighted = TRUE
+  )
+
+g = subgraph.edges(g, which(E(g)$weight > quantile(E(g)$weight,.99)), delete.vertices = TRUE)
+V(g)$pfla_id = translate_ids(V(g)$name,deut_or[,c(5,2)])
+V(g)$class <-  translate_ids(V(g)$pfla_id,pfla_tfs)
+V(g)$col <- pfla_attributes_list[[2]]$col[match(V(g)$class,pfla_attributes_list[[2]]$TFclass)]
+V(g)$pred_name <- translate_ids(V(g)$pfla_id,pfla_genenames[,c(1,2)])
+V(g)$pred_name[V(g)$pfla_id %in% insitu_data$id] <- insitu_data$gene[match(V(g)$pfla_id[V(g)$pfla_id %in% insitu_data$id], insitu_data$id)]
+
+set.seed(1234)
+plot(
+  g,
+  vertex.color = V(g)$col,
+  vertex.frame.color = darken(V(g)$col, 0.5),
+  vertex.frame.color = "#3c3c3c",
+  vertex.label = V(g)$pred_name,
+  vertex.label.cex = 0.5,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = darken(V(g)$col, .65),
+  vertex.size = 5,
+  layout = layout_with_fr(g)
+)
+
+pdf("graphics/Deut_TFs_3spp_graph.pdf", wi = 8, he = 8)
+set.seed(1234)
+plot(
+  g,
+  vertex.color = V(g)$col,
+  vertex.frame.color = darken(V(g)$col, 0.5),
+  vertex.frame.color = "#3c3c3c",
+  vertex.label = V(g)$pred_name,
+  vertex.label.cex = 0.5,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = darken(V(g)$col, .65),
+  vertex.size = 5,
+  layout = layout_with_fr(g)
+)
+dev.off()
+```
+
+We will cut the clustering of the TFs to generate separate, granular clusters of shared transcryptional dynamics. There is high agreement of course because it comes from the same data.
+
+```{r, fig.height = 7, fig.width = 7}
+cor_tfs_clu <-
+  cutree(
+    ccc_tfs,
+    h = 1.25
+  )
+
+clu_cols <- setNames(lighten(desaturate(rainbow(length(unique(cor_tfs_clu))),.3),.3),sort(unique(cor_tfs_clu)))
+V(g)$clu <- cor_tfs_clu[match(V(g)$name,names(cor_tfs_clu))]
+V(g)$clu_col <- clu_cols[match(V(g)$clu, names(clu_cols))]
+
+set.seed(1234)
+plot(
+  g,
+  vertex.color = V(g)$clu_col,
+  vertex.frame.color = darken(V(g)$clu_col, 0.5),
+  vertex.label = V(g)$pred_name,
+  vertex.label.cex = 0.5,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = darken(V(g)$col, .65),
+  vertex.size = 6,
+  layout = layout_with_fr(g)
+)
+legend("bottomright",legend = names(clu_cols),pch = 21, pt.bg = clu_cols, col = darken(clu_cols,.5), cex = .6, ncol = 11)
+
+pdf("graphics/Deut_TFs_3spp_graph_clus.pdf", wi = 8, he = 8)
+set.seed(1234)
+plot(
+  g,
+  vertex.color = V(g)$clu_col,
+  vertex.frame.color = darken(V(g)$clu_col, 0.5),
+  vertex.label = V(g)$pred_name,
+  vertex.label.cex = 0.5,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = darken(V(g)$col, .65),
+  vertex.size = 6,
+  layout = layout_with_fr(g)
+)
+legend("bottomright",legend = names(clu_cols),pch = 21, pt.bg = clu_cols, col = darken(clu_cols,.5), cex = .6, ncol = 11)
+dev.off()
+```
+
+The question is, can we translate these associations into real biological information? We can inspect the data a bit manually doing the following:
+
+We will first divide the graph into the different components based on the clustering we did.
+
+```{r}
+ccs <- data.frame(
+  id = names(cor_tfs_clu),
+  member = cor_tfs_clu
+)
+
+divide_into_components <- function(x,CCs,impl="create_from_scratch", verbose = FALSE) {
+  require(igraph)
+  lis <- list()
+  for( i in unique(CCs$member)) {
+    if(verbose) message(i)
+    vids_i <- which(
+      V(x)$name %in% CCs$id[CCs$member == i]
+    )
+    nw_i <- induced_subgraph(
+      graph = x,
+      vids = vids_i,
+      impl = impl
+    )
+    j = paste0("CC_",i)
+    lis[[j]] <- nw_i
+  }
+  return(lis)
+}
+
+g_lcc <- divide_into_components(x=g, CCs = ccs, verbose = FALSE)
+g_lcc <- g_lcc[which(sapply(g_lcc,vcount)>0)]
+```
+
+We need to check with heatmaps, here all clusters have separate heatmaps:
+
+````{r}
+pdf("graphics/TFs_graphs_heatmaps.pdf", he = 4, wi = 7.5)
+for(i in unique(ccs$member)){
+  genes = ccs$id[ccs$member == i]
+  if(length(genes) == 1 ) next
+  pf_ids = translate_ids(genes,deut_or[,c(5,2)])
+  pred_names = translate_ids(pf_ids,data.frame(V(g)$pfla_id,V(g)$pred_name))
+  xlocs  = translate_ids(pf_ids,xloc_tcons)
+  labels = paste0(pred_names, " (",xlocs,")")
+  h_i <-
+    Heatmap(
+      name = "expression",
+      abc_individually_scaled[genes,],
+      cluster_columns = FALSE, cluster_rows = TRUE,
+      row_labels = labels,
+      col = colorRamp2(col = c("#0b5394","#eeeeee","#bd0000"),breaks = c(quantile(abc_individually_scaled,.05),0,quantile(abc_individually_scaled,.99))),
+      clustering_method_rows = "ward.D2",
+      column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+      top_annotation = ha,
+      show_column_names = FALSE,
+      row_names_gp = gpar(cex = .8),
+      column_title = paste0("TFs cluster ",i)
+    )
+  
+  draw(h_i)
+}
+message(i)
+dev.off()
+```
+
+Here they are all put together (only labels of genes with predicted names/symbols are shown)
+
+```{r, fig.width = 3.5, fig.height = 15}
+h_abc_tfs_3spp_clu <- Heatmap(
+  cbind(
+    t(scale(apply(abc[f_tfs,1:ncol(a)],1,relativise))),
+    t(scale(apply(abc[f_tfs,(ncol(a)+seq(1:ncol(b)))],1,relativise))),
+    t(scale(apply(abc[f_tfs,(ncol(a)+ncol(b))+(1:ncol(c))],1,relativise)))
+  ),
+  name = "expression",
+  col = colorRamp2(col = c("gray95","#47535b"),breaks = c(0,1)),
+  top_annotation = ha,
+  bottom_annotation = ha,
+  row_labels = gsub("O_.*","",gsub("TCONS.*","",translate_ids(rownames(abc[f_tfs,]), data.frame(V(g)$name,V(g)$pred_name)))),
+  cluster_rows = FALSE,
+  # cluster_rows = ccc_tfs,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = FALSE,
+  column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+  # right_annotation = tfs_rowanno,
+  row_split = cor_tfs_clu,
+  row_names_gp = gpar(cex = .6),
+  row_title_gp = gpar(col = clu_cols,font = 2),
+  border =TRUE
+)
+
+pdf("graphics/h_abc_tfs_3spp_clu.pdf", wi = 3.5, he = 15)
+draw(h_abc_tfs_3spp_clu)
+dev.off()
+```
+
+Cluster 14 is interest because there is a number of TFs with early expression in ambulacraria and later expression in B.floridae which might account for the observed similariites
+
+```{r}
+f_14 <- which(rownames(abc) %in% ccs$id[ccs$member == 14])
+
+h_abc_tfs_3spp_clu14 <- Heatmap(
+  cbind(
+    t(scale(apply(abc[f_14,1:ncol(a)],1,relativise))),
+    t(scale(apply(abc[f_14,(ncol(a)+seq(1:ncol(b)))],1,relativise))),
+    t(scale(apply(abc[f_14,(ncol(a)+ncol(b))+(1:ncol(c))],1,relativise)))
+  ),
+  name = "expression",
+  col = colorRamp2(col = c("gray95","#47535b"),breaks = c(0,1)),
+  top_annotation = ha,
+  bottom_annotation = ha,
+  row_labels = translate_ids(rownames(abc[f_14,]), data.frame(V(g)$name,V(g)$pred_name)),
+  # cluster_rows = FALSE,
+  # cluster_rows = ccc_tfs,
+  cluster_columns = FALSE,
+  show_row_names = TRUE,
+  show_column_names = FALSE,
+  column_split = factor(c(rep("PF",ncol(a)),rep("SP",ncol(b)),rep("BF",ncol(c))), levels = c("PF","SP","BF")),
+  # right_annotation = tfs_rowanno,
+  row_title_gp = gpar(col = clu_cols,font = 2),
+  border =TRUE
+)
+pdf("graphics/h_abc_tfs_3spp_clu14.pdf", he = 3, wi = 9)
+draw(h_abc_tfs_3spp_clu14)
+dev.off()
+
+draw(h_abc_tfs_3spp_clu14)
+```
+
+## Saving plots
+
+```{r}
+pdf("graphics/2A.pdf", he = 3, wi = 5)
+draw(deuts_jsd)
+dev.off()
+
+pdf("graphics/supp_3192_orthologues_heatmap.pdf",wi = 6, he = 8)
+draw(h_abc)
+dev.off()
+
+pdf("graphics/supp_08plus_A.pdf",wi = 6.5, he = 6)
+draw(h_abc_jsd)
+dev.off()
+
+pdf("graphics/supp_08plus_B.pdf",wi = 6.5, he = 6)
+draw(h_abc_sp)
+dev.off()
+```
+
+## Saving stuff
+
+```{r}
+write.table(
+  merge(
+    deut_or[,c(5,2:4)],
+    abc,
+    by.x = 1, by.y = 0
+  ),
+  file = "outputs/deuterostome_orthologues_three_species_expression_matrix.tsv",
+  sep = "\t", dec = ".", row.names = FALSE, quote = FALSE
+)
+
+write.table(
+  merge(
+    ccs,
+    merge(
+    deut_or[,c(5,2:4)],
+    abc,
+    by.x = 1, by.y = 0
+    ),
+    by.x = 1,
+    by.y = 1
+    ),
+  file = "outputs/deuterostome_orthologous_TFs_three_species_expression_matrix_and_clustering.tsv",
+  sep = "\t", dec = ".", row.names = FALSE, quote = FALSE
+)
+
+```

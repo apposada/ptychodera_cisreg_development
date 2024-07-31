@@ -184,20 +184,31 @@ plot_outedges_per_category <- function(s){
   )
 }
 
-plot_behavior_per_category2 <- function(s){
-  a <- s$edges_per_funcat_family[,c(4,5)]
-  a <- a[a$funcat != "",]
-  a$funcat <- factor(a$funcat, levels = LETTERS)
+plot_behavior_per_category2 <- function(s, main = NULL, use_log = TRUE) {
+  require(ggplot2)
+  a <- s$edges_per_funcat_family[, c(4, 5)]
+  a <- a[a$funcat != "", ]
+  a$funcat <- translate_ids(a$funcat, funcat_lookup)
+  a$funcat <- factor(a$funcat, levels = funcat_lookup$functional_category)
+  # a$funcat <- factor(a$funcat, levels = LETTERS)
   a$ratio[a$ratio > min(a$ratio)] <- 1
-  a <- a[a$ratio == 1,]
+  a <- a[a$ratio == 1, ]
   x <- as.vector(table(a$funcat))
   names(x) <- names(table(a$funcat))
-  x <- log(x,10)
+  if (use_log) x <- log(x, 10)
   x[is.infinite(x)] <- 0
-  barplot(
-    x,
-    col = rainbow(length(levels(a$funcat)))
+  
+  data <- data.frame(
+    funcat = factor(names(x),levels = funcat_lookup$functional_category),
+    count = x
   )
+  
+  ggplot(data, aes(x = funcat, y = count, fill = funcat)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = rainbow(length(levels(data$funcat)))) +
+    labs(title = main, y = ifelse(use_log, "log(n.genes)", "n.genes")) +
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5), legend.position = "none")
 }
 
 

@@ -1,0 +1,676 @@
+---
+title: "Ptychodera Cisreg Development: Differential Gene Expression Analysis"
+author: "Alberto Perez-Posada"
+date: "5/3/2024"
+output:
+  html_document: default
+  pdf_document: default
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+
+## About
+
+
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(ComplexHeatmap)
+library(circlize)
+library(topGO)
+library(dendextend)
+library(limma)
+```
+
+## Load functions
+
+```{r load_functions, message=FALSE, warning=FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+
+## Data Load
+
+We will load the normalised counts for DESeq2:
+
+```{r load data}
+load("outputs/rda/normalised_counts.rda")
+```
+
+## Correlation plots
+
+We can explore the structure of our data by doing correlation as well as dimensionality reduction.
+
+```{r spearman}
+rna_counts_sp <- 
+  cor(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      pfla_rna_counts
+    )
+  )
+```
+
+To summarise our data, we will calculate the arithmetic mean across columns that are replicates from the same developmental stage using a custom function. Thus we end up with:
+
+```{r heatmap sp, fig.width = 3.5, fig.height = 2.5}
+pf_spe_hm <-
+  Heatmap(
+    rna_counts_sp,
+    name="Spearman",
+    top_annotation=devstages_ha_columns(),
+    left_annotation=devstages_ha_rows(),
+    cluster_rows = F,
+    cluster_columns = F,
+    show_row_names=F,
+    show_column_names=F,
+    col=colorRampPalette(rev(brewer.pal(7,"RdYlBu")))(100)
+  )
+
+pdf(
+  file = "graphics/1C.pdf",
+  height = 2.5,
+  width = 3.5
+)
+draw(pf_spe_hm)
+dev.off()
+
+draw(pf_spe_hm)
+```
+
+## Clustering of the developmental stages
+
+To check how many broad groups of developmental stages we can identify at the transcriptomic level, we cluster these stages.
+
+```{r, warning = FALSE, message = FALSE,  fig.width = 5, fig.height = 4.5}
+pf_spe_hm_clu <-
+  Heatmap(
+    rna_counts_sp,
+    name="Spearman",
+    top_annotation=devstages_ha_columns_simple(),
+    left_annotation=devstages_ha_rows(),
+    cluster_rows = TRUE,
+    cluster_columns = TRUE,
+    show_row_names=F,
+    show_column_names=F,
+    col=colorRampPalette(rev(brewer.pal(7,"RdYlBu")))(100)
+  )
+
+dend <- row_dend(pf_spe_hm_clu)
+labels_colors(dend) <- dev_palette[order.dendrogram(dend)]
+
+pdf("graphics/Supp_1_2_1.pdf", he = 4.5, wi = 5)
+draw(pf_spe_hm_clu)
+dev.off()
+
+draw(pf_spe_hm_clu)
+```
+
+```{r, fig.width = 5, fig.height = 4.5}
+# Levy et al 2021 'treeFromEnsembleClustering' from source
+pf_counts <- sapply(
+  levels(condition_x),
+  rowMeans_by_repl,
+  pfla_rna_counts
+)
+pf_counts_cooc = tidyup(pf_counts, highlyvariable = T)
+
+set.seed(4343) # fixed seed, important
+h <- c(0.75,0.95)
+clustering_algorithm <- "hclust"
+clustering_method <- "average"
+cor_method <- "pearson"
+p <- 0.1
+vargenes = rownames(pf_counts_cooc)
+
+cooc <- treeFromEnsembleClustering(
+  x=pf_counts_cooc, p=p, h=h,  n = 1000, vargenes = vargenes, bootstrap=FALSE,
+  clustering_algorithm=clustering_algorithm, clustering_method=clustering_method, 
+  cor_method=cor_method
+)
+
+dend2 <- as.dendrogram(cooc$tree)
+labels_colors(dend2) <- dev_palette[order.dendrogram(dend2)]
+
+col_cooc <-
+  colorRamp2(
+    seq(min(cooc$cooccurrence),max(cooc$cooccurrence),length=9),
+    colors=c(
+      "white",'#ffffe5','#fff7bc','#fee391','#fec44f',
+      '#fe9929','#ec7014','#cc4c02','#990000'
+      )
+    )
+
+pfla_rna_cooc <- Heatmap(
+  name="co-occurence",
+  cooc$cooccurrence,
+  col = col_cooc,
+  cluster_rows = as.hclust(cooc$tree),
+  cluster_columns = as.hclust(cooc$tree),
+  left_annotation = devstages_ha_rows(),
+  top_annotation = devstages_ha_columns_simple(),
+  row_names_gp = gpar(fontsize = 8),
+  column_names_gp = gpar(fontsize = 8)
+)
+
+pdf("graphics/Supp_1_2_2.pdf", he = 4.5, wi = 5)
+draw(pfla_rna_cooc)
+dev.off()
+
+draw(pfla_rna_cooc)
+```
+
+```{r, fig.width = 8, fig.height = 6}
+par(mar = c(5, 4, 4, 5) + 0.1, mfrow = c(1,2))
+plot(dend, horiz = T, main = "'complete' clustering,\nSpearman correlation as distance")
+plot(dend2, horiz = T, main = "co-occurrency with subsampling")
+par(mar = c(5, 4, 4, 2) + 0.1, mfrow = c(1,1))
+
+pdf("graphics/Supp_1_2_3.pdf", he = 6, wi = 8)
+par(mar = c(5, 4, 4, 5) + 0.1, mfrow = c(1,2))
+plot(dend, horiz = T, main = "'complete' clustering,\nSpearman correlation as distance")
+plot(dend2, horiz = T, main = "co-occurrency with subsampling")
+par(mar = c(5, 4, 4, 2) + 0.1, mfrow = c(1,1))
+dev.off()
+```
+
+And a glimpse of the highest values of correlations as a graph connecting the different developmental stages:
+
+```{r, fig.width = 5.5, fig.height = 5.5}
+library(igraph)
+g_stages <-
+  graph_from_adjacency_matrix(
+    rna_counts_sp, mode = "upper", weighted = TRUE, diag = FALSE
+  )
+thresh = .6
+g_stages <- 
+  subgraph.edges(
+    g_stages,
+    E(g_stages)[E(g_stages)$weight > thresh]
+    )
+
+V(g_stages)$color <-
+  translate_ids(
+    x = V(g_stages)$name,
+    dict = 
+      data.frame(
+        stage = levels(condition_x),
+        col = dev_palette
+      )
+  )
+
+set.seed(1234)
+plot(g_stages, vertex.label.family = "Helvetica", vertex.label.color = "black")
+
+pdf("graphics/Supp_1_2_4.pdf", he = 5.5, wi = 5.5)
+set.seed(1234)
+plot(g_stages, vertex.label.family = "Helvetica", vertex.label.color = "black")
+dev.off()
+```
+
+
+## DESeq2 analysis
+
+We will import the RUV-normalised counts to DESeq2 following the design matrix we generated before.
+
+```{r deseqdataset}
+dds <- 
+  DESeqDataSetFromMatrix(
+    countData = pfla_rna_counts,
+    colData = pData(set2),
+    design = ~ W_1 + condition_x
+    )
+
+dds <- estimateSizeFactors(dds)
+
+nc <- counts(dds, normalized=TRUE)
+
+filter <- rowSums(nc >= 10) >= 2
+
+dds <- dds[filter,]
+```
+
+Estimation of factor sizes and the dispersion
+
+```{r estimations}
+dds <- estimateSizeFactors(dds)
+dds <- estimateDispersions(dds)
+```
+
+The likelihood-ratio test is the proper one for time-series analysis.
+
+```{r LRT test}
+dds <- 
+  nbinomLRT(
+    dds,
+    reduced=as.formula("~ W_1"),
+    maxit=500
+    )
+```
+
+And the results:
+
+```{r results}
+res <- results(dds)
+
+round(data.frame(res)[1:10,],3)
+```
+
+We will apply a cutoff to keep genes with a p-value < 0.05 (likelihood ratio test) as significant.
+
+```{r signif}
+cutoff=0.05
+
+res_signif <- 
+  subset(res, padj < cutoff )
+
+head(apply(res_signif,2,round,digits=3))
+```
+
+To proceed with data visualisation and clustering analysis, we will use the variance-stabilised transform of this data.
+
+```{r vst}
+# Variance-stabilised transformation
+vsd <- vst(dds)
+
+# Assay with all genes
+vsd_allgen <- 
+  as.data.frame(
+    assay(vsd)
+    )
+
+# Assay with only significant genes
+vsd_signif <- 
+  as.data.frame(
+    assay(
+      vsd[rownames(vsd) %in% rownames(res_signif),]
+      )
+    )
+
+```
+
+To summarise our data, we will calculate the arithmetic mean across columns that are replicates from the same developmental stage using a custom function. Thus we end up with:
+
+```{r rowmeans_byrepl}
+pfla_rna_all <-
+    as.data.frame(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      vsd_allgen # all genes
+      )
+  )
+
+rownames(pfla_rna_all) <- rownames(vsd_allgen)
+
+pfla_rna_dev <-
+  data.frame(
+    sapply(
+      levels(condition_x),
+      rowMeans_by_repl,
+      vsd_signif # significantly regulated throughout develompent
+      )
+  )
+
+rownames(pfla_rna_dev) <- rownames(vsd_signif)
+
+pfla_rna_dev[1:5,1:5]
+
+```
+
+We can cluster our data to detect patterns of gene expression during development.
+
+```{r hcluster}
+
+pfla_rna_dev_hc <- 
+  hclust(
+    dist(t(scale(t(pfla_rna_dev)))),
+    method = "ward.D2"
+  )
+
+```
+
+We pick a threshold to cut around distance "50".
+
+```{r plot hcluster}
+
+plot(pfla_rna_dev_hc,cex=0.3)
+
+cutoff = 50
+abline(cutoff, 0, col="red")
+
+```
+
+And we proceed to binning the genes in clusters:
+
+```{r cID}
+pfla_rna_dev$clusterID <-
+  cutree(pfla_rna_dev_hc, h = cutoff)
+
+unique(pfla_rna_dev$clusterID)
+```
+
+We manually rearranged these clusters and provided new IDs.
+
+```{r}
+hclu_names <- 
+  read.table(
+    "assets/rna_dev_hcluster_name_equiv.tsv",
+    header = F, 
+    col.names = c("clusterID","cID"),
+    colClasses = c("numeric","character")
+  )
+
+pfla_rna_dev$cID <-
+  hclu_names$cID[
+    match(
+      pfla_rna_dev$clusterID,
+      as.integer(hclu_names$clusterID)
+      )
+    ]
+
+#remove old numbering
+pfla_rna_dev$clusterID <- NULL
+```
+
+We will subsample this gigantic dataset to retrieve a few genes per cluster in order to see their dynamics during development.
+
+```{r}
+set.seed(2)
+pfla_rna_dev_viz2 <- pfla_rna_dev %>% group_by(cID) %>% slice_sample(n=10)
+```
+
+Lorem Ipsum
+
+```{r heatmap, fig.width = 3, fig.height = 7.5, warning=FALSE}
+pf_hm <- 
+  Heatmap(
+    t(scale(t(pfla_rna_dev_viz2[,1:16]))),
+    name = "gene exp",
+    top_annotation=devstages_ha_columns(),
+    row_split=pfla_rna_dev_viz2$cID,
+    show_row_names = F,
+    show_column_names=F,
+    cluster_rows=F,
+    cluster_columns=F,
+    column_names_side="top",
+    row_title = NULL,
+    col=app_pal1,
+    use_raster = F
+  )
+
+pdf("graphics/supp_1_pf_hm_moregenes.pdf", wi = 3, he = 7.5)
+draw(pf_hm)
+dev.off()
+
+draw(pf_hm)
+```
+
+A tidier visualisation of the clusters that we will use throughout the manuscript. This is achieved averaging the expression profile of all genes of each clusters.
+
+```{r}
+pfla_rna_dev_avg <-
+  data.frame(
+    aggregate(
+      t(scale(t(pfla_rna_dev[,1:16]))),
+      by = list(cluster = pfla_rna_dev$cID),
+      FUN = mean
+    )[-1],
+    row.names = sort(unique(pfla_rna_dev$cID))
+  )
+
+```
+
+Lorem Ipsum
+
+```{r heatmap_avg, fig.width = 3.5, fig.height = 4}
+pf_avg_hm <-
+  Heatmap(
+    name="avg exp\nz-score",
+    as.matrix(quantile_normalisation(pfla_rna_dev_avg)),
+    show_row_names = TRUE,
+    row_names_side = "left",
+    show_column_names = F,
+    cluster_rows=F,
+    cluster_columns=F,
+    top_annotation=devstages_ha_columns(),
+    column_names_side="top",
+    row_title = NULL,
+    col=cividis(7)
+  )
+
+draw(pf_avg_hm)
+```
+
+```{r}
+pdf(
+  file = "graphics/1D.pdf",
+  height = 4,
+  width = 3.5
+)
+draw(pf_avg_hm)
+dev.off()
+```
+
+## Gene Ontology Analysis of stage-specific gene clusters
+
+After this, we do Gene Ontology using a custom wrapper function:
+
+```{r, warning = FALSE, message = FALSE}
+library(topGO)
+
+#gene universe
+gene_universe <- allgenes
+
+# gene-GO mappings
+pfla_id_GO <-
+  readMappings(
+    "outputs/functional_annotation/go_blast2go/GO_annotation.txt"
+  )
+
+#list of genes of interest
+pfla_clusters_list <- list()
+
+for (i in unique(pfla_rna_dev$cID)) {
+  pfla_clusters_list[[i]] <- 
+    rownames(pfla_rna_dev)[pfla_rna_dev$cID == i]
+}
+
+names(pfla_clusters_list) <- unique(pfla_rna_dev$cID)
+
+pfla_GOs <- getGOs(
+  genelist = pfla_clusters_list,
+  gene_universe = gene_universe,
+  gene2GO = pfla_id_GO
+)
+```
+
+## Motif enrichment analysis in promoters
+
+```{r, eval = FALSE}
+pfla_promoters <- read.delim2(
+  file = "~/projects/ptychodera_cisreg_development/outputs/functional_annotation/promoters/ptyFlav3_CYi_longest.promoters.bed",
+  sep = "\t",
+  header = FALSE
+)
+
+for (i in unique(pfla_rna_dev$cID)){
+  pfla_prom_i <- pfla_promoters[
+    pfla_promoters$V4 %in%
+      rownames(pfla_rna_dev[pfla_rna_dev$cID == i,]),
+  ]
+  
+  write.table(
+    pfla_prom_i,
+    paste0(
+      "~/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/clu_",
+      i,
+      "_promoters.bed"
+    ),
+    sep = "\t",
+    col.names = FALSE,
+    row.names = FALSE,
+    quote = FALSE
+  )
+}
+```
+
+We do HOMER motif analysis on these promoters
+
+```
+#!/bin/bash
+
+GENOME="~/projects/ptychodera_cisreg_development/data/refs/genome/ptyFlav3.fa"
+PEAKS_DIRECTORY="~/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/"
+BG_PEAKS="~/projects/ptychodera_cisreg_development/outputs/functional_annotation/promoters/ptyFlav3_CYi_longest.promoters.bed"
+OUTDIR="~/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs/"
+
+mkdir -p $OUTDIR
+
+for i in ${PEAKS_DIRECTORY}/*.bed ; do
+
+        x=${i##*/}
+        z=${x%.bed}
+
+        echo "treating sample $z"
+
+        srun -c 12 -N 1 -n 1 -J homer_appos \
+        findMotifsGenome.pl $i $GENOME \
+        ${OUTDIR}/homer_output_${z} -bg $BG_PEAKS \
+        -p 12 -mset vertebrates
+
+done
+
+echo "Done."
+```
+
+We load the results and plot them as a dotplot
+
+```{r}
+# Load table
+pfla_motifs_promoters_0 <- 
+  read_tsv("~/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs_longpromoters/homer_outputs/motifs_all.tsv")
+
+# process in the exact same way
+# tidyr wrapper to present a tidy table
+pfla_motifs_promoters <- parse_homer_output_table(
+  tsv_motifs = pfla_motifs_promoters_0,
+  qval_thresh = .1,
+  categ_regex1 = "..*clu_",
+  categ_regex2 = "",
+  max_logqval = 10
+)
+
+colnames(pfla_motifs_promoters)[1] <- "cluster"
+
+pfla_motifs_promoters$cluster <- gsub("_promoters", "", pfla_motifs_promoters$cluster)
+pfla_motifs_promoters$cluster <- as.numeric(pfla_motifs_promoters$cluster)
+pfla_motifs_promoters$cluster <- factor(pfla_motifs_promoters$cluster, levels = sort(unique(pfla_motifs_promoters$cluster)))
+pfla_motifs_promoters <- pfla_motifs_promoters[with(pfla_motifs_promoters,order(cluster,-as.numeric(pct_target_seqs_with_motif))),]
+pfla_motifs_promoters$motif <- 
+  factor(pfla_motifs_promoters$motif, levels = rev(unique(pfla_motifs_promoters$motif)))
+```
+
+```{r, fig.width = 10, fig.height = 6}
+motifs_promoters_ggplot_all <- ggplot(pfla_motifs_promoters,aes(y = cluster, x = motif, color = `logqval`, size = as.factor(size_pct)))+
+  geom_point()+
+  scale_color_continuous_sequential(palette = "SunsetDark")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  scale_size_manual(values = c(1, 2, 3, 4,5), labels = c("1-10", "10-20", "20-50", "50+"))+
+  guides(size=guide_legend(title="% peaks with motif"))+
+  scale_x_discrete(limits = rev)+
+  scale_y_discrete(limits = rev)+
+  ggtitle("Motif enrichment analysis (qval < 0.05)")
+
+print(motifs_promoters_ggplot_all)
+```
+
+```{r}
+pdf("graphics/motifs_promoters.pdf", height = 5, width = 10)
+print(motifs_promoters_ggplot_all)
+dev.off()
+```
+
+## Saving the data
+
+Saving the data for follow-up analyses
+
+```{r}
+save(
+  #counts
+  pfla_rna_counts,
+  condition_x,
+  #DESeq2 results
+  dds,
+  res,
+  res_signif,
+  #VST data
+  vsd_allgen,
+  vsd_signif,
+  pfla_rna_all,
+  #stage-specific gene expression dataset
+  pfla_rna_dev,
+  pfla_rna_dev_viz,
+  pfla_rna_dev_avg,
+  #Heatmaps
+  pf_spe_hm,
+  pf_hm,
+  pf_avg_hm,
+  #GO analysis
+  pfla_GOs,
+  #Output file
+  file = "outputs/rda/deseq2.rda"
+)
+
+```
+
+A smaller version of this output with just the counts and the stage-specific clusters:
+
+```{r}
+save(
+  allgenes,
+  # counts
+  pfla_rna_counts,
+  condition_x,
+  #VST data
+  pfla_rna_all,
+  #stage-specific gene expression dataset
+  pfla_rna_dev,
+  pfla_rna_dev_avg,
+  #Heatmaps
+  pf_hm,
+  pf_avg_hm,
+  #GO analysis
+  pfla_GOs,
+  #Output file
+  file = "outputs/rda/stage_specific_clusters.rda"
+)
+```

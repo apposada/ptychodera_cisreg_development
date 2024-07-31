@@ -1,1 +1,0 @@
-/home/ska/aperpos/Def_Pfla/outputs/identif_tf_transdev/TF_domains_XG_PFAM_NAMES.txt

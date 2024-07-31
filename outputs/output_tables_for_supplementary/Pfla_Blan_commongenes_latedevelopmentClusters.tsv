@@ -1,0 +1,849 @@
+Pfla_genename	predicted_gene_name	eggNOG description	pair of stage-specific clusters
+TCONS_00000093	RPL23	ribosomal protein L23	14__18
+TCONS_00000116	PRSS23	protease, serine	20__21
+TCONS_00000470	ALPL	Alkaline phosphatase	21__21
+TCONS_00001267	GRIK2	Glutamate receptor, ionotropic, kainate	17__24
+TCONS_00001294	SLC22A13	solute carrier family 22	19__21
+TCONS_00001294	SLC22A13	solute carrier family 22	19__22
+TCONS_00001294	SLC22A13	solute carrier family 22	19__24
+TCONS_00001301	SLC22A3	Sugar (and other) transporter	21__21
+TCONS_00001362	ORCT	organic cation transmembrane transporter activity	15__21
+TCONS_00001373	ORCT	Sugar (and other) transporter	19__22
+TCONS_00001373	ORCT	Sugar (and other) transporter	19__21
+TCONS_00001373	ORCT	Sugar (and other) transporter	19__24
+TCONS_00001480	BDH1	3-hydroxybutyrate dehydrogenase, type 1	19__24
+TCONS_00001489	DNAH8	Dynein, axonemal heavy chain	15__21
+TCONS_00001539	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00001539	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00001539	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00001540	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	19__21
+TCONS_00001540	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	19__22
+TCONS_00001540	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	19__24
+TCONS_00001541	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00001541	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00001541	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00001542	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00001542	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00001542	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00001543	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__21
+TCONS_00001543	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__24
+TCONS_00001545	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	21__21
+TCONS_00001650	ORCT	organic cation transmembrane transporter activity	17__22
+TCONS_00001650	ORCT	organic cation transmembrane transporter activity	17__24
+TCONS_00001650	ORCT	organic cation transmembrane transporter activity	17__21
+TCONS_00001653	ORCT	organic cation transmembrane transporter activity	22__24
+TCONS_00001653	ORCT	organic cation transmembrane transporter activity	22__21
+TCONS_00001664	MPC2	mitochondrial pyruvate carrier 2	14__18
+TCONS_00001737	COL27A1	collagen, type XXVII, alpha 1	21__21
+TCONS_00001870	GPX2	Glutathione peroxidase	21__21
+TCONS_00002066	SLCO4C1	Solute carrier organic anion transporter family, member	21__21
+TCONS_00002069	ORCT	organic cation transmembrane transporter activity	20__24
+TCONS_00002069	ORCT	organic cation transmembrane transporter activity	20__21
+TCONS_00002154	NAAA	N-acylethanolamine acid amidase	17__21
+TCONS_00002237	NOS1	Produces nitric oxide (NO) (By similarity)	17__21
+TCONS_00002256	ARL6	ADP-ribosylation factor-like 6	14__18
+TCONS_00002333	BIRC2	X-linked inhibitor of apoptosis	17__24
+TCONS_00002344	TRIM2	tripartite motif containing	22__21
+TCONS_00002901	HELZ2	Helicase with zinc finger	20__21
+TCONS_00002903	HELZ2	Helicase with zinc finger	20__21
+TCONS_00003003	RPS26	ribosomal protein S26	14__18
+TCONS_00003102	GSTA4	glutathione S-transferase alpha	21__21
+TCONS_00003250	ARSB	Arylsulfatase B	17__21
+TCONS_00003369	TANC2	Tetratricopeptide repeat, ankyrin repeat and coiled-coil containing	22__21
+TCONS_00004057	KIF9	Kinesin family member	14__18
+TCONS_00004120	TRAF2	Tnf receptor-associated factor 2	22__21
+TCONS_00004120	TRAF2	Tnf receptor-associated factor 2	22__24
+TCONS_00004625	PIPOX	Pipecolic acid oxidase	20__21
+TCONS_00004643	RPL23A	ribosomal protein	14__18
+TCONS_00004673	PIPOX	Pipecolic acid oxidase	21__21
+TCONS_00004701	ACHE	Acetylcholinesterase	20__21
+TCONS_00004701	ACHE	Acetylcholinesterase	20__24
+TCONS_00004743	SLC7A5	solute carrier family 7 (amino acid transporter light chain, L system), member	19__21
+TCONS_00004830	YPEL2	yippee-like 1 (Drosophila)	20__21
+TCONS_00004852	GOLGA3	Golgin A3	14__18
+TCONS_00004873	NNMT	N-methyltransferase	17__21
+TCONS_00005080	CHRNA9	Cholinergic receptor, nicotinic, alpha	21__21
+TCONS_00005141	PGLYRP2	Peptidoglycan recognition protein 2	17__21
+TCONS_00005184	SULT3A1	Sulfotransferase	22__24
+TCONS_00005366	CA14	Carbonic anhydrase XIV	21__21
+TCONS_00005367	CA14	carbonic anhydrase	21__21
+TCONS_00005399	PRODH2	proline dehydrogenase (oxidase) 2	20__24
+TCONS_00005439	CCDC42B	Coiled-coil domain containing 42	14__18
+TCONS_00005558	GGT1	gamma-glutamyltransferase 1	22__24
+TCONS_00005570	GGT1	gamma-glutamyltransferase 1	22__24
+TCONS_00005812	ERP29	endoplasmic reticulum protein 29	17__21
+TCONS_00005982	CACHD1	cache domain containing 1	17__22
+TCONS_00006106	SLC43A2	Solute carrier family 43 member	17__24
+TCONS_00006162	RL	Extracellular regulated MAP kinase	20__24
+TCONS_00006442	CCDC65	coiled-coil domain containing 65	14__18
+TCONS_00006491	SLC13A3	Solute carrier family 13	17__21
+TCONS_00006555	SLC6A4	solute carrier family 6 (neurotransmitter transporter, serotonin), member 4	20__24
+TCONS_00006560	GSTA4	glutathione S-transferase alpha	20__21
+TCONS_00006586	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	17__21
+TCONS_00006587	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	20__21
+TCONS_00006730	SLC43A3	Solute carrier family 43 member	17__24
+TCONS_00006837	GABBR2	gamma-aminobutyric acid (GABA) B receptor, 2	21__21
+TCONS_00006890	ADORA2B	adenosine a2a receptor	20__21
+TCONS_00006890	ADORA2B	adenosine a2a receptor	20__24
+TCONS_00007428	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	17__21
+TCONS_00007435	DNAH5	Dynein, axonemal heavy chain	19__21
+TCONS_00007546	WBSCR27	Williams Beuren syndrome chromosome region 27	20__21
+TCONS_00007691	CTSZ	cathepsin Z	17__21
+TCONS_00007692	CTSZ	Papain family cysteine protease	17__21
+TCONS_00007962	LCT	Lactase-like	21__21
+TCONS_00008047	LCT	Lactase-like	22__21
+TCONS_00008047	LCT	Lactase-like	22__24
+TCONS_00008118	DPEP1	Dipeptidase	15__21
+TCONS_00008120	DPEP1	Dipeptidase	17__21
+TCONS_00008379	TRIM2	tripartite motif containing 2	22__24
+TCONS_00008416	CPXM2	carboxypeptidase X (M14 family), member	20__24
+TCONS_00008416	CPXM2	carboxypeptidase X (M14 family), member	20__21
+TCONS_00008536	CUBN	Cotransporter which plays a role in lipoprotein, vitamin and iron metabolism, by facilitating their uptake. Binds to ALB, MB, Kappa and lambda-light chains, TF, hemoglobin, GC, SCGB1A1, APOA1, high density lipoprotein, and the GIF-cobalamin complex. The binding of all ligands requires calcium. Serves as important transporter in several absorptive epithelia, including intestine, renal proximal tubules and embryonic yolk sac. Interaction with LRP2 mediates its trafficking throughout vesicles and facilitates the uptake of specific ligands like GC, hemoglobin, ALB, TF and SCGB1A1. Interaction with AMN controls its trafficking to the plasma membrane and facilitates endocytosis of ligands. May play an important role in the development of the peri-implantation embryo through internalization of APOA1 and cholesterol. Binds to LGALS3 at the maternal-fetal interface	17__24
+TCONS_00008536	CUBN	Cotransporter which plays a role in lipoprotein, vitamin and iron metabolism, by facilitating their uptake. Binds to ALB, MB, Kappa and lambda-light chains, TF, hemoglobin, GC, SCGB1A1, APOA1, high density lipoprotein, and the GIF-cobalamin complex. The binding of all ligands requires calcium. Serves as important transporter in several absorptive epithelia, including intestine, renal proximal tubules and embryonic yolk sac. Interaction with LRP2 mediates its trafficking throughout vesicles and facilitates the uptake of specific ligands like GC, hemoglobin, ALB, TF and SCGB1A1. Interaction with AMN controls its trafficking to the plasma membrane and facilitates endocytosis of ligands. May play an important role in the development of the peri-implantation embryo through internalization of APOA1 and cholesterol. Binds to LGALS3 at the maternal-fetal interface	17__21
+TCONS_00008648	TBX20	TBOX	21__21
+TCONS_00008650	UGT2A1	UDP Glucuronosyltransferase 2 family, polypeptide	21__21
+TCONS_00008693	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	15__21
+TCONS_00008703	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	22__21
+TCONS_00008790	CHRNA9	Cholinergic receptor, nicotinic, alpha	17__21
+TCONS_00008790	CHRNA9	Cholinergic receptor, nicotinic, alpha	17__24
+TCONS_00008790	CHRNA9	Cholinergic receptor, nicotinic, alpha	17__22
+TCONS_00008918	FADD35	AMP-dependent synthetase and ligase	21__21
+TCONS_00009004	PARP2	poly (ADP-ribose) polymerase 2	14__18
+TCONS_00009044	CUBN	cubilin (intrinsic factor-cobalamin receptor)	15__21
+TCONS_00009050	CUBN	cubilin (intrinsic factor-cobalamin receptor)	15__21
+TCONS_00009156	PNLIP	pancreatic	22__21
+TCONS_00009156	PNLIP	pancreatic	22__24
+TCONS_00009172	LCT	Lactase-like	21__21
+TCONS_00009205	FABP12	fatty acid binding protein 12	15__21
+TCONS_00009249	LCT	Lactase-like	20__24
+TCONS_00009249	LCT	Lactase-like	20__21
+TCONS_00009825	LCT	Lactase-like	19__22
+TCONS_00009825	LCT	Lactase-like	19__21
+TCONS_00009825	LCT	Lactase-like	19__24
+TCONS_00009826	LCT	Lactase-like	17__24
+TCONS_00009826	LCT	Lactase-like	17__22
+TCONS_00009826	LCT	Lactase-like	17__21
+TCONS_00009840	CALM2	calmodulin	22__21
+TCONS_00009844	RPS27A	ribosomal protein S27A	14__18
+TCONS_00009963	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	22__21
+TCONS_00009965	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	22__21
+TCONS_00010137	CYP2U1	cytochrome P450	19__24
+TCONS_00010154	NAALAD2	N-acetylated alpha-linked acidic	22__24
+TCONS_00010155	NAALAD2	N-acetylated alpha-linked acidic	20__24
+TCONS_00010160	WBSCR27	Williams Beuren syndrome chromosome region 27	20__21
+TCONS_00010179	ECH1	Enoyl CoA hydratase 1, peroxisomal	17__22
+TCONS_00010386	PLB1	Phospholipase B1	19__24
+TCONS_00010396	PLB1	Phospholipase B1	19__24
+TCONS_00010510	CPB2	Carboxypeptidase	19__24
+TCONS_00010599	TGFB2	Transforming growth factor beta	20__21
+TCONS_00010696	SUL-3	Arylsulfatase	20__21
+TCONS_00010936	YPEL5	yippee-like 5 (Drosophila)	20__21
+TCONS_00011013	NPC2	Niemann-Pick disease, type C2	17__21
+TCONS_00011013	NPC2	Niemann-Pick disease, type C2	17__24
+TCONS_00011047	ELM	EFh	14__18
+TCONS_00011151	LCT	beta-glucosidase	17__22
+TCONS_00011151	LCT	beta-glucosidase	17__21
+TCONS_00011151	LCT	beta-glucosidase	17__24
+TCONS_00011152	LCT	lactase-phlorizin	19__22
+TCONS_00011152	LCT	lactase-phlorizin	19__24
+TCONS_00011152	LCT	lactase-phlorizin	19__21
+TCONS_00011213	BCHE	butyrylcholinesterase	21__21
+TCONS_00011214	BCHE	butyrylcholinesterase	20__24
+TCONS_00011214	BCHE	butyrylcholinesterase	20__21
+TCONS_00011333	PRDX5	Peroxiredoxin 5	22__24
+TCONS_00011370	LGMN	legumain	22__24
+TCONS_00011374	CRYZ	crystallin, zeta (quinone reductase)	15__21
+TCONS_00011432	EEF1G	eukaryotic translation elongation factor 1 gamma	17__21
+TCONS_00011458	CPB2	Carboxypeptidase	19__24
+TCONS_00011460	CPB2	Carboxypeptidase	22__24
+TCONS_00011487	NAALAD2	N-acetylated alpha-linked acidic	19__24
+TCONS_00011496	GPHB5	glyco-protein hormone	17__21
+TCONS_00011553	MANBA	Mannosidase, beta A, lysosomal	19__22
+TCONS_00011645	CPB2	Carboxypeptidase	22__24
+TCONS_00011649	NPC2	Niemann-Pick disease, type C2	22__24
+TCONS_00011649	NPC2	Niemann-Pick disease, type C2	22__21
+TCONS_00011888	CPB2	Carboxypeptidase	22__24
+TCONS_00012113	CPB2	Carboxypeptidase	17__24
+TCONS_00012132	FAU	Finkel-Biskis-Reilly murine sarcoma virus (FBR-MuSV) ubiquitously expressed	14__18
+TCONS_00012161	SLC51A	solute carrier family 51, alpha subunit	21__21
+TCONS_00012269	TMEM175	Transmembrane protein 175	17__22
+TCONS_00012280	RPS15A	Ribosomal protein S8	14__18
+TCONS_00012326	SI	alpha-glucosidase	15__21
+TCONS_00012341	ACTG1	ACTIN	17__21
+TCONS_00012346	ACTG1	Actins are highly conserved proteins that are involved in various types of cell motility and are ubiquitously expressed in all eukaryotic cells	20__21
+TCONS_00012353	ACT1	Actins are highly conserved proteins that are involved in various types of cell motility and are ubiquitously expressed in all eukaryotic cells	17__21
+TCONS_00012534	GRIN2B	Glutamate receptor ionotropic N-methyl D-aspartate	17__24
+TCONS_00012540	GRIN2B	Glutamate receptor ionotropic N-methyl D-aspartate	17__24
+TCONS_00012754	FOXJ1	forkhead box J1	14__18
+TCONS_00012859	SLC29A4	solute carrier family 29 (nucleoside transporters), member 4	22__21
+TCONS_00012905	RPL10	ribosomal protein	14__18
+TCONS_00013041	ACTA2	Actins are highly conserved proteins that are involved in various types of cell motility and are ubiquitously expressed in all eukaryotic cells	22__21
+TCONS_00013069	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	21__21
+TCONS_00013072	CYP27B1	Cytochrome P450 family 27 subfamily	21__21
+TCONS_00013073	CYP27B1	Cytochrome P450 family 27 subfamily	21__21
+TCONS_00013164	DNAH9	Dynein, axonemal heavy chain	17__24
+TCONS_00013443	ANGPT1	Angiopoietin	17__22
+TCONS_00013466	SBK1	SH3-binding domain kinase	21__21
+TCONS_00013618	RPL3	ribosomal protein	14__18
+TCONS_00013817	EST-6	Esterase	19__21
+TCONS_00013817	EST-6	Esterase	19__22
+TCONS_00013817	EST-6	Esterase	19__24
+TCONS_00013856	MYH3	Myosin heavy chain	21__21
+TCONS_00013933	DNAI2	Dynein, axonemal, intermediate chain 2	14__18
+TCONS_00014048	RPS2	Ribosomal protein	14__18
+TCONS_00014221	CYP27B1	Cytochrome P450 family 27 subfamily	21__21
+TCONS_00014361	DEGS1	delta(4)-desaturase, sphingolipid	14__18
+TCONS_00014394	MOXD1	monooxygenase, DBH-like 1	22__21
+TCONS_00014394	MOXD1	monooxygenase, DBH-like 1	22__24
+TCONS_00014445	RPS9	Ribosomal protein S9	14__18
+TCONS_00014468	EST-6	Esterase	15__21
+TCONS_00014571	SLC46A3	Solute carrier family 46, member 3	19__24
+TCONS_00014615	CYP27B1	Cytochrome P450 family 27 subfamily	21__21
+TCONS_00014672	RPL35	ribosomal protein L35	14__18
+TCONS_00014921	TRAF2	Tnf receptor-associated factor 2	22__24
+TCONS_00014921	TRAF2	Tnf receptor-associated factor 2	22__21
+TCONS_00014922	TRAF2	Tnf receptor-associated factor 2	17__24
+TCONS_00014922	TRAF2	Tnf receptor-associated factor 2	17__21
+TCONS_00014927	TRAF2	Tnf receptor-associated factor 2	17__24
+TCONS_00014927	TRAF2	Tnf receptor-associated factor 2	17__21
+TCONS_00014928	TRAF2	Tnf receptor-associated factor 2	17__21
+TCONS_00014928	TRAF2	Tnf receptor-associated factor 2	17__24
+TCONS_00014930	TRAF2	Tnf receptor-associated factor 2	17__24
+TCONS_00014930	TRAF2	Tnf receptor-associated factor 2	17__21
+TCONS_00014933	TRAF2	Tnf receptor-associated factor 2	20__21
+TCONS_00014933	TRAF2	Tnf receptor-associated factor 2	20__24
+TCONS_00014936	TRAF2	Tnf receptor-associated factor 2	20__21
+TCONS_00014936	TRAF2	Tnf receptor-associated factor 2	20__24
+TCONS_00014971	RPL5	ribosomal protein L5	14__18
+TCONS_00015061	TRIM72	tripartite motif containing	22__21
+TCONS_00015085	BCHE	Butyrylcholinesterase	20__24
+TCONS_00015085	BCHE	Butyrylcholinesterase	20__21
+TCONS_00015113	PROKR1	Prokineticin receptor	15__21
+TCONS_00015261	PON2	paraoxonase	19__24
+TCONS_00015263	PON2	paraoxonase	17__24
+TCONS_00015264	PON2	paraoxonase	22__24
+TCONS_00015270	PON2	paraoxonase	20__24
+TCONS_00015274	PON2	paraoxonase	17__24
+TCONS_00015322	TRAF2	Tnf receptor-associated factor 2	22__21
+TCONS_00015322	TRAF2	Tnf receptor-associated factor 2	22__24
+TCONS_00015365	RPGR	retinitis pigmentosa GTPase regulator	20__21
+TCONS_00015393	PTCHD1	patched domain containing 3	19__24
+TCONS_00015495	RPS5A	ribosomal protein	14__18
+TCONS_00015728	C5	Complement component	17__22
+TCONS_00015759	TRAF2	Tnf receptor-associated factor 2	21__21
+TCONS_00015817	RPL7A	Ribosomal protein L7a	14__18
+TCONS_00015820	PON2	paraoxonase	17__24
+TCONS_00015823	PON2	paraoxonase	20__24
+TCONS_00015840	NAAA	N-acylethanolamine acid amidase	21__21
+TCONS_00015879	RPS18	Ribosomal protein S18	14__18
+TCONS_00015954	CPB2	Carboxypeptidase	17__24
+TCONS_00016066	GPRTAK2	Serpentine type 7TM GPCR chemoreceptor Srsx	22__24
+TCONS_00016066	GPRTAK2	Serpentine type 7TM GPCR chemoreceptor Srsx	22__21
+TCONS_00016076	MAL-A8	Solute carrier family 3 (Cystine, dibasic and neutral amino acid transporters, activator of cystine, dibasic and neutral amino acid transport), member 1	17__21
+TCONS_00016099	TRAF2	Tnf receptor-associated factor 2	20__21
+TCONS_00016099	TRAF2	Tnf receptor-associated factor 2	20__24
+TCONS_00016106	NR5A2	nuclear receptor subfamily 5 group A member	20__24
+TCONS_00016204	TRAF2	Tnf receptor-associated factor 2	19__21
+TCONS_00016204	TRAF2	Tnf receptor-associated factor 2	19__24
+TCONS_00016230	FMO5	Dimethylaniline monooxygenase (N-oxide-forming)	22__21
+TCONS_00016237	C9ORF117	chromosome 9 open reading frame 117	19__21
+TCONS_00016303	SLC22A13	solute carrier family 22	20__24
+TCONS_00016303	SLC22A13	solute carrier family 22	20__21
+TCONS_00016305	ORCT	organic cation transmembrane transporter activity	21__21
+TCONS_00016314	SLC22A13	solute carrier family 22	21__21
+TCONS_00016346	PON2	paraoxonase	19__24
+TCONS_00016416	MGST1	Microsomal glutathione S-transferase 1	22__21
+TCONS_00016502	MGST1	Microsomal glutathione S-transferase 1	15__21
+TCONS_00016504	MGST1	Microsomal glutathione S-transferase 1	22__21
+TCONS_00016614	SUL-3	Arylsulfatase	22__21
+TCONS_00016624	ADAR	Adenosine deaminase, RNA-specific	20__24
+TCONS_00016640	ALDH3B2	Aldehyde dehydrogenase	19__21
+TCONS_00016690	RPL28	ribosomal protein L28	14__18
+TCONS_00016788	ORCT	organic cation transmembrane transporter activity	20__24
+TCONS_00016788	ORCT	organic cation transmembrane transporter activity	20__21
+TCONS_00016890	SLC5A8	solute carrier family 5	20__24
+TCONS_00016890	SLC5A8	solute carrier family 5	20__21
+TCONS_00017038	SLC16A12	solute carrier family 16, member 12 (monocarboxylic acid transporter 12)	20__24
+TCONS_00017049	ACOX1	acyl-Coenzyme A oxidase	19__22
+TCONS_00017049	ACOX1	acyl-Coenzyme A oxidase	19__24
+TCONS_00017082	SLCO4A1	solute carrier organic anion transporter family, member 4A1	19__21
+TCONS_00017086	SLCO4A1	Solute carrier organic anion transporter family, member	15__21
+TCONS_00017109	BBOX1	butyrobetaine (gamma), 2-oxoglutarate dioxygenase (gamma-butyrobetaine hydroxylase) 1	17__21
+TCONS_00017212	SLC16A14	solute carrier family 16, member 14 (monocarboxylic acid transporter 14)	17__24
+TCONS_00017212	SLC16A14	solute carrier family 16, member 14 (monocarboxylic acid transporter 14)	17__22
+TCONS_00017274	OTOGL	Otogelin-like	22__24
+TCONS_00017301	BBOX1	butyrobetaine (gamma), 2-oxoglutarate dioxygenase (gamma-butyrobetaine hydroxylase) 1	17__21
+TCONS_00017309	FAM167A	Family with sequence similarity 167, member	20__21
+TCONS_00017480	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	21__21
+TCONS_00017485	ST8SIA5	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 5	21__21
+TCONS_00017567	SLC16A12	solute carrier family 16, member 12 (monocarboxylic acid transporter 12)	20__24
+TCONS_00017644	CYP4B1	Cytochrome P450, family 4, subfamily	15__21
+TCONS_00017715	SLC16A7	solute carrier family 16, member 7 (monocarboxylic acid transporter 2)	22__24
+TCONS_00017742	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	19__21
+TCONS_00017742	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	19__24
+TCONS_00017744	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	20__24
+TCONS_00017744	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	20__21
+TCONS_00017771	RPL19	ribosomal protein L19	14__18
+TCONS_00017852	GLRA3	Glycine receptor alpha	20__24
+TCONS_00017852	GLRA3	Glycine receptor alpha	20__21
+TCONS_00018323	EFHC1	EF-hand domain (C-terminal) containing 1	14__18
+TCONS_00018354	CLCA2	chloride channel	22__24
+TCONS_00018401	NAALAD2	N-acetylated alpha-linked acidic	20__24
+TCONS_00018461	RPL11	ribosomal protein L11	14__18
+TCONS_00018496	ST8SIA5	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 5	21__21
+TCONS_00018532	GLRA2	Neurotransmitter-gated ion-channel ligand binding domain	17__21
+TCONS_00018532	GLRA2	Neurotransmitter-gated ion-channel ligand binding domain	17__22
+TCONS_00018532	GLRA2	Neurotransmitter-gated ion-channel ligand binding domain	17__24
+TCONS_00018542	GLRA2	Neurotransmitter-gated ion-channel ligand binding domain	20__24
+TCONS_00018542	GLRA2	Neurotransmitter-gated ion-channel ligand binding domain	20__21
+TCONS_00018588	ORCT	Sugar (and other) transporter	17__24
+TCONS_00018588	ORCT	Sugar (and other) transporter	17__22
+TCONS_00018588	ORCT	Sugar (and other) transporter	17__21
+TCONS_00018592	ORCT	Sugar (and other) transporter	21__21
+TCONS_00018593	SLC22A5	solute carrier family 22 (organic cation	22__24
+TCONS_00018593	SLC22A5	solute carrier family 22 (organic cation	22__21
+TCONS_00018703	CYP4B1	Cytochrome P450, family 4, subfamily	15__21
+TCONS_00018724	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	15__21
+TCONS_00018823	SLC5A8	solute carrier family 5	17__21
+TCONS_00018823	SLC5A8	solute carrier family 5	17__24
+TCONS_00018920	LINS	lines homolog (Drosophila)	22__21
+TCONS_00018920	LINS	lines homolog (Drosophila)	22__24
+TCONS_00018929	LINS	lines homolog (Drosophila)	17__24
+TCONS_00018929	LINS	lines homolog (Drosophila)	17__22
+TCONS_00018929	LINS	lines homolog (Drosophila)	17__21
+TCONS_00018997	C7ORF31	chromosome 7 open reading frame 31	14__18
+TCONS_00019100	MYL6	myosin, light chain 6, alkali, smooth muscle and non-muscle	15__21
+TCONS_00019156	MYL6B	myosin, light chain 6B, alkali, smooth muscle and non-muscle	20__21
+TCONS_00019166	ST8SIA3	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 3	14__18
+TCONS_00019194	LBP	BPI fold containing family C	17__24
+TCONS_00019197	TUBB	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__24
+TCONS_00019232	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	14__18
+TCONS_00019352	RPL4	Ribosomal protein L4	14__18
+TCONS_00019377	TUBB	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	19__24
+TCONS_00019380	PROM1	prominin 1	14__18
+TCONS_00019381	PROM1	prominin 1	19__24
+TCONS_00019519	NPR2	Natriuretic peptide receptor B guanylate cyclase B (Atrionatriuretic peptide receptor B)	17__21
+TCONS_00019603	SLC5A8	solute carrier family 5	21__21
+TCONS_00019607	SLC5A8	solute carrier family 5	21__21
+TCONS_00019620	IRX4	iroquois homeobox 4	14__18
+TCONS_00019631	AQP12A	Aquaporin	14__18
+TCONS_00019861	MRC1	mannose receptor, C type 1	21__21
+TCONS_00019931	ZNFX1	Zinc finger, NFX1-type containing 1	17__22
+TCONS_00019959	PDE11A	Phosphodiesterase 11a	20__21
+TCONS_00020143	MRC1	mannose receptor, C type 1	19__24
+TCONS_00020281	CTSF	Cathepsin F	17__24
+TCONS_00020321	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	22__21
+TCONS_00020323	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	20__21
+TCONS_00020423	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	20__21
+TCONS_00020496	CYP4B1	Cytochrome P450, family 4, subfamily	19__21
+TCONS_00020496	CYP4B1	Cytochrome P450, family 4, subfamily	19__22
+TCONS_00020514	LBP	BPI fold containing family C	20__24
+TCONS_00020516	ADAMTS18	ADAM metallopeptidase with thrombospondin type 1 motif	15__21
+TCONS_00020906	SLC22A5	solute carrier family 22 (organic cation	17__21
+TCONS_00020906	SLC22A5	solute carrier family 22 (organic cation	17__24
+TCONS_00020906	SLC22A5	solute carrier family 22 (organic cation	17__22
+TCONS_00021113	AADACL2	arylacetamide deacetylase-like	22__21
+TCONS_00021161	BCO2	Beta-carotene	15__21
+TCONS_00021199	NAALAD2	N-acetylated alpha-linked acidic	20__24
+TCONS_00021200	NAALAD2	N-acetylated alpha-linked acidic	17__24
+TCONS_00021208	UGT1A10	UDPGT is of major importance in the conjugation and subsequent elimination of potentially toxic xenobiotics and endogenous compounds	17__21
+TCONS_00021208	UGT1A10	UDPGT is of major importance in the conjugation and subsequent elimination of potentially toxic xenobiotics and endogenous compounds	17__22
+TCONS_00021275	HEBP1	heme binding protein 1	19__21
+TCONS_00021410	CALMODULIN	calmodulin	15__21
+TCONS_00021578	BCHE	Butyrylcholinesterase	17__21
+TCONS_00021578	BCHE	Butyrylcholinesterase	17__22
+TCONS_00021578	BCHE	Butyrylcholinesterase	17__24
+TCONS_00021579	BCHE	Butyrylcholinesterase	17__21
+TCONS_00021579	BCHE	Butyrylcholinesterase	17__24
+TCONS_00021579	BCHE	Butyrylcholinesterase	17__22
+TCONS_00021739	HSD3B7	hydroxy-delta-5-steroid dehydrogenase, 3 beta- and steroid delta-isomerase	22__21
+TCONS_00021924	PNLIP	pancreatic	19__21
+TCONS_00021924	PNLIP	pancreatic	19__24
+TCONS_00021957	AKR7A2	aldo-keto reductase family 7, member A2 (aflatoxin aldehyde reductase)	22__21
+TCONS_00021958	AKR7A2	aldo-keto reductase family 7, member A2 (aflatoxin aldehyde reductase)	21__21
+TCONS_00022000	AIFM2	Apoptosis-inducing factor, mitochondrion-associated, 2	20__21
+TCONS_00022192	BCO2	Beta-carotene	19__21
+TCONS_00022284	SULT1C4	Sulfotransferase	22__21
+TCONS_00022299	ACE	Angiotensin I converting enzyme peptidyl-dipeptidase A	22__24
+TCONS_00022299	ACE	Angiotensin I converting enzyme peptidyl-dipeptidase A	22__21
+TCONS_00022401	PFY1	Binds to actin and affects the structure of the cytoskeleton. At high concentrations, profilin prevents the polymerization of actin, whereas it enhances it at low concentrations (By	20__24
+TCONS_00022474	TRIM2	tripartite motif containing	22__24
+TCONS_00022536	BIRC2	Baculoviral IAP repeat containing	20__24
+TCONS_00022746	NCEH1	neutral cholesterol ester hydrolase 1	15__21
+TCONS_00022788	HPGDS	hematopoietic prostaglandin D synthase	22__24
+TCONS_00022788	HPGDS	hematopoietic prostaglandin D synthase	22__21
+TCONS_00022866	ASAH2	N-acylsphingosine amidohydrolase (non-lysosomal ceramidase)	19__21
+TCONS_00022964	BCO2	Beta-carotene	21__21
+TCONS_00022967	OSI_04770	DOMON domain	15__21
+TCONS_00023061	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	20__21
+TCONS_00023063	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	19__22
+TCONS_00023063	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	19__21
+TCONS_00023068	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	21__21
+TCONS_00023193	PTGR1	prostaglandin reductase 1	17__21
+TCONS_00023562	SUL-3	Arylsulfatase	20__21
+TCONS_00023564	SUL-3	Arylsulfatase	17__21
+TCONS_00023592	ENPP4	ectonucleotide pyrophosphatase phosphodiesterase	15__21
+TCONS_00023644	HPGDS	hematopoietic prostaglandin D synthase	19__22
+TCONS_00023644	HPGDS	hematopoietic prostaglandin D synthase	19__21
+TCONS_00023644	HPGDS	hematopoietic prostaglandin D synthase	19__24
+TCONS_00023867	PTCHD1	patched domain containing 3	20__24
+TCONS_00023871	PTCHD1	patched domain containing 3	17__24
+TCONS_00023882	PTCHD1	patched domain containing 3	20__24
+TCONS_00024025	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	21__21
+TCONS_00024030	CYP27A1	Cytochrome P450 family 27 subfamily	20__21
+TCONS_00024039	CYP27B1	Cytochrome P450 family 27 subfamily	20__21
+TCONS_00024040	CYP27A1	Cytochrome P450 family 27 subfamily	20__21
+TCONS_00024041	CYP27B1	Cytochrome P450 family 27 subfamily	15__21
+TCONS_00024097	CYP3A4	cytochrome P450, family 3, subfamily a, polypeptide	19__24
+TCONS_00024098	CYP3A4	cytochrome P450, family 3, subfamily a, polypeptide	19__24
+TCONS_00024145	OACYL	nose resistant to fluoxetine protein 6-like	19__21
+TCONS_00024145	OACYL	nose resistant to fluoxetine protein 6-like	19__24
+TCONS_00024146	OACYL	nose resistant to fluoxetine protein 6-like	19__21
+TCONS_00024146	OACYL	nose resistant to fluoxetine protein 6-like	19__24
+TCONS_00024150	OACYL	nose resistant to fluoxetine protein 6-like	17__24
+TCONS_00024150	OACYL	nose resistant to fluoxetine protein 6-like	17__21
+TCONS_00024151	OACYL	nose resistant to fluoxetine protein 6-like	21__21
+TCONS_00024154	OACYL	nose resistant to fluoxetine protein 6-like	17__24
+TCONS_00024154	OACYL	nose resistant to fluoxetine protein 6-like	17__21
+TCONS_00024155	OACYL	nose resistant to fluoxetine protein 6-like	22__24
+TCONS_00024155	OACYL	nose resistant to fluoxetine protein 6-like	22__21
+TCONS_00024615	SUL-3	Arylsulfatase	22__21
+TCONS_00024858	RPS16	Ribosomal protein S16	14__18
+TCONS_00025160	CD151	CD151 molecule (Raph blood group)	15__21
+TCONS_00025201	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	15__21
+TCONS_00025249	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	20__21
+TCONS_00025254	ANPEP	Aminopeptidase	20__21
+TCONS_00025281	PTCHD1	patched domain containing 3	20__24
+TCONS_00025299	PTCHD1	patched domain containing	17__22
+TCONS_00025301	PTCHD1	patched domain containing	20__24
+TCONS_00025325	PRRT1	proline-rich transmembrane protein 1	20__21
+TCONS_00025437	RPL27A	ribosomal protein L27A	14__18
+TCONS_00025504	MOXD1	monooxygenase, DBH-like 1	22__21
+TCONS_00025504	MOXD1	monooxygenase, DBH-like 1	22__24
+TCONS_00025613	CYP11A1	Cytochrome P450 family 11 subfamily A polypeptide 1	22__21
+TCONS_00025660	HSD17B2	Hydroxysteroid (17-beta) dehydrogenase 2	17__24
+TCONS_00025661	HSD17B2	hydroxysteroid (17-beta) dehydrogenase 2	17__24
+TCONS_00025663	HSD17B2	Hydroxysteroid (17-beta) dehydrogenase 2	20__24
+TCONS_00025807	CSRP1	Cysteine and glycine-rich protein	20__21
+TCONS_00025880	PROM1	prominin 1	19__24
+TCONS_00025956	HTR4	5-hydroxytryptamine (serotonin) receptor 4, G protein-coupled	19__21
+TCONS_00026035	OVCH1	ovochymase	22__24
+TCONS_00026252	RPL26	ribosomal protein	14__18
+TCONS_00026639	FRMPD4	FERM and PDZ domain containing 4	21__21
+TCONS_00026789	IFIH1	Interferon induced with helicase C domain 1	17__22
+TCONS_00026986	DUOXA2	Dual oxidase maturation factor	17__21
+TCONS_00027142	AKR1A1	aldo-keto reductase family 1, member	15__21
+TCONS_00027217	CHRNA3	cholinergic receptor, nicotinic	19__24
+TCONS_00027217	CHRNA3	cholinergic receptor, nicotinic	19__22
+TCONS_00027217	CHRNA3	cholinergic receptor, nicotinic	19__21
+TCONS_00027325	CPLX2	complexin 1	17__24
+TCONS_00027378	HTR4	5-hydroxytryptamine (serotonin) receptor 4, G protein-coupled	19__22
+TCONS_00027378	HTR4	5-hydroxytryptamine (serotonin) receptor 4, G protein-coupled	19__24
+TCONS_00027378	HTR4	5-hydroxytryptamine (serotonin) receptor 4, G protein-coupled	19__21
+TCONS_00027484	FAXC	failed axon connections homolog (Drosophila)	20__21
+TCONS_00027495	PROM1	Prominin 1	20__24
+TCONS_00027526	FAXC	failed axon connections homolog (Drosophila)	15__21
+TCONS_00027529	FAXC	failed axon connections homolog (Drosophila)	21__21
+TCONS_00027595	ADRB1	adrenoceptor beta	15__21
+TCONS_00027688	STK32A	Serine threonine kinase	14__18
+TCONS_00027698	PGUG_03888	ectonucleotide pyrophosphatase phosphodiesterase	19__21
+TCONS_00027723	CLCA2	chloride channel	22__24
+TCONS_00027793	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	21__21
+TCONS_00027923	NAGA	Galactosidase, alpha	21__21
+TCONS_00028084	ALPL	Alkaline phosphatase	17__22
+TCONS_00028084	ALPL	Alkaline phosphatase	17__24
+TCONS_00028084	ALPL	Alkaline phosphatase	17__21
+TCONS_00028133	FABP3	Lipocalin / cytosolic fatty-acid binding protein family	17__21
+TCONS_00028133	FABP3	Lipocalin / cytosolic fatty-acid binding protein family	17__24
+TCONS_00028205	ALPL	Alkaline phosphatase	19__21
+TCONS_00028205	ALPL	Alkaline phosphatase	19__22
+TCONS_00028205	ALPL	Alkaline phosphatase	19__24
+TCONS_00028210	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00028210	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00028210	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00028215	GLRA3	Glycine receptor alpha	20__21
+TCONS_00028215	GLRA3	Glycine receptor alpha	20__24
+TCONS_00028263	CHRNA9	Cholinergic receptor, nicotinic, alpha	17__21
+TCONS_00028276	CH25H	cholesterol 25-hydroxylase	22__21
+TCONS_00028277	CH25H	cholesterol 25-hydroxylase	22__21
+TCONS_00028299	ARSB	Arylsulfatase family, member	20__21
+TCONS_00028308	CTSH	cathepsin H	17__24
+TCONS_00028397	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00028397	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00028397	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00028399	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00028399	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00028399	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00028462	SCNN1B	sodium channel, non-voltage-gated 1, beta subunit	20__21
+TCONS_00028481	RPL17	ribosomal protein	14__18
+TCONS_00028512	AQP3	Aquaporin	17__21
+TCONS_00028513	AQP3	Aquaporin	17__21
+TCONS_00028691	SLC27A2	Solute carrier family 27 (Fatty acid transporter), member	19__22
+TCONS_00028858	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	17__21
+TCONS_00028862	CHRNA9	Cholinergic receptor, nicotinic, alpha	15__21
+TCONS_00028970	RPS6	40S ribosomal protein S6	14__18
+TCONS_00029000	EEF2	Eukaryotic translation elongation factor 2	17__21
+TCONS_00029023	HEXB	hexosaminidase B (beta polypeptide)	20__24
+TCONS_00029024	HEXB	hexosaminidase B (beta polypeptide)	20__24
+TCONS_00029120	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	15__21
+TCONS_00029158	GBA	Glucosidase, beta, acid	17__22
+TCONS_00029216	ATP5A1	Produces ATP from ADP in the presence of a proton gradient across the membrane (By similarity)	15__21
+TCONS_00029349	CTSH	cathepsin H	20__24
+TCONS_00029416	ALPL	Alkaline phosphatase	21__21
+TCONS_00029437	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00029437	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__22
+TCONS_00029437	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__21
+TCONS_00029447	RPS17	ribosomal protein	14__18
+TCONS_00029474	CHRNA3	cholinergic receptor, nicotinic	17__21
+TCONS_00029475	CHRNA3	cholinergic receptor, nicotinic	17__21
+TCONS_00029503	SORD	Sorbitol dehydrogenase	20__21
+TCONS_00029624	DMGDH	dimethylglycine dehydrogenase	17__24
+TCONS_00029629	SI	alpha-glucosidase	19__21
+TCONS_00029640	SULT3A1	Sulfotransferase	19__22
+TCONS_00029640	SULT3A1	Sulfotransferase	19__24
+TCONS_00029796	RASGRF1	Ras protein-specific guanine nucleotide-releasing factor	17__24
+TCONS_00029834	RPL36	60S ribosomal protein L36	14__18
+TCONS_00030089	ECTC	Catalyzes the circularization of gamma-N-acetyl- alpha,gamma-diaminobutyric acid (ADABA) to ectoine (1,4,5,6- tetrahydro-2-methyl-4-pyrimidine carboxylic acid), which is an excellent osmoprotectant (By similarity)	19__24
+TCONS_00030093	RPGR	retinitis pigmentosa GTPase regulator	14__18
+TCONS_00030132	NNMT	N-methyltransferase	21__21
+TCONS_00030200	GPRTAK2	Serpentine type 7TM GPCR chemoreceptor Srsx	20__24
+TCONS_00030230	ASAH2	N-acylsphingosine amidohydrolase (non-lysosomal ceramidase)	22__21
+TCONS_00030425	ADRB2	adrenoceptor beta	22__21
+TCONS_00030425	ADRB2	adrenoceptor beta	22__24
+TCONS_00030581	HPGDS	hematopoietic prostaglandin D synthase	21__21
+TCONS_00030585	HPGDS	Glutathione S-transferase, N-terminal domain	19__24
+TCONS_00030585	HPGDS	Glutathione S-transferase, N-terminal domain	19__21
+TCONS_00030585	HPGDS	Glutathione S-transferase, N-terminal domain	19__22
+TCONS_00030586	HPGDS	hematopoietic prostaglandin D synthase	19__21
+TCONS_00030586	HPGDS	hematopoietic prostaglandin D synthase	19__24
+TCONS_00030586	HPGDS	hematopoietic prostaglandin D synthase	19__22
+TCONS_00030712	FSTL4	Follistatin-like	20__21
+TCONS_00030765	CES4A	carboxylesterase 4A	19__24
+TCONS_00030767	CES4A	carboxylesterase 4A	19__24
+TCONS_00030767	CES4A	carboxylesterase 4A	19__21
+TCONS_00030767	CES4A	carboxylesterase 4A	19__22
+TCONS_00030768	CES4A	carboxylesterase 4A	19__21
+TCONS_00030768	CES4A	carboxylesterase 4A	19__24
+TCONS_00030768	CES4A	carboxylesterase 4A	19__22
+TCONS_00030867	CPE	carboxypeptidase E	17__21
+TCONS_00030867	CPE	carboxypeptidase E	17__24
+TCONS_00030961	ADAMTS3	with thrombospondin type 1 motif, 3	20__21
+TCONS_00030961	ADAMTS3	with thrombospondin type 1 motif, 3	20__24
+TCONS_00030964	TACR2	Tachykinin receptor	20__24
+TCONS_00031017	FAT4	FAT tumor suppressor homolog 4 (Drosophila)	20__24
+TCONS_00031065	RPS14	Ribosomal protein S14	14__18
+TCONS_00031084	OVCH1	ovochymase	22__24
+TCONS_00031085	OVCH1	ovochymase	22__24
+TCONS_00031133	H2AFY2	H2A histone family, member	17__21
+TCONS_00031164	HPGDS	hematopoietic prostaglandin D synthase	17__22
+TCONS_00031164	HPGDS	hematopoietic prostaglandin D synthase	17__24
+TCONS_00031164	HPGDS	hematopoietic prostaglandin D synthase	17__21
+TCONS_00031165	HPGDS	Glutathione S-transferase, N-terminal domain	19__22
+TCONS_00031165	HPGDS	Glutathione S-transferase, N-terminal domain	19__21
+TCONS_00031165	HPGDS	Glutathione S-transferase, N-terminal domain	19__24
+TCONS_00031253	DDX58	DEAD (Asp-Glu-Ala-Asp) box polypeptide 58	17__22
+TCONS_00031319	HPGDS	hematopoietic prostaglandin D synthase	20__21
+TCONS_00031319	HPGDS	hematopoietic prostaglandin D synthase	20__24
+TCONS_00031323	RPL34	ribosomal protein	14__18
+TCONS_00031446	LIPA	lipase, family member	19__22
+TCONS_00031456	RPS24	40S ribosomal protein S24	14__18
+TCONS_00032441	ST8SIA5	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 5	14__18
+TCONS_00032533	ANPEP	Aminopeptidase	17__21
+TCONS_00032819	NPFFR1	neuropeptide FF receptor 1	14__18
+TCONS_00033170	ABHD2	Abhydrolase domain containing 2	17__21
+TCONS_00033257	GSTO1	Glutathione S-Transferase	20__21
+TCONS_00033258	GSTO1	Glutathione S-Transferase	20__21
+TCONS_00033260	GSTO1	Glutathione S-Transferase	17__21
+TCONS_00033288	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	17__24
+TCONS_00033288	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	17__21
+TCONS_00033923	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	14__18
+TCONS_00033932	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	22__24
+TCONS_00033932	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	22__21
+TCONS_00034295	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	19__21
+TCONS_00034295	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	19__22
+TCONS_00034302	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	15__21
+TCONS_00035495	HPGDS	hematopoietic prostaglandin D synthase	20__24
+TCONS_00035495	HPGDS	hematopoietic prostaglandin D synthase	20__21
+TCONS_00035497	HPGDS	Glutathione S-transferase, N-terminal domain	15__21
+TCONS_00035514	FRMPD4	FERM and PDZ domain containing 4	15__21
+TCONS_00036023	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	17__21
+TCONS_00036137	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	21__21
+TCONS_00036166	ACE	Angiotensin I converting enzyme peptidyl-dipeptidase A	19__21
+TCONS_00036166	ACE	Angiotensin I converting enzyme peptidyl-dipeptidase A	19__22
+TCONS_00036166	ACE	Angiotensin I converting enzyme peptidyl-dipeptidase A	19__24
+TCONS_00036179	LIPA	lipase, family member	17__22
+TCONS_00036295	DDX58	DEAD (Asp-Glu-Ala-Asp) box polypeptide 58	17__22
+TCONS_00036367	UCP1	mitochondrial, proton carrier	17__21
+TCONS_00036889	ARSB	Arylsulfatase family, member	17__21
+TCONS_00036996	CIITA	Class II, major histocompatibility complex, transactivator	17__21
+TCONS_00037088	SLC28A3	Solute carrier family 28 (Sodium-coupled nucleoside transporter), member	20__21
+TCONS_00037136	CHRNA6	cholinergic receptor, nicotinic, alpha 6 (neuronal)	21__21
+TCONS_00037138	CHRNA6	cholinergic receptor, nicotinic, alpha 6 (neuronal)	21__21
+TCONS_00037270	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	15__21
+TCONS_00037393	BCO2	Retinal pigment epithelial membrane protein	15__21
+TCONS_00037487	TUBB	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	17__24
+TCONS_00037499	UCP2	mitochondrial, proton carrier	17__21
+TCONS_00037682	POLR1B	dna-directed rna polymerase	19__21
+TCONS_00037971	CLCA2	chloride channel	20__24
+TCONS_00038087	SPT7	acetyltransferase	22__21
+TCONS_00038473	FMO5	Dimethylaniline monooxygenase (N-oxide-forming)	21__21
+TCONS_00038616	HMCN1	G2F domain	17__24
+TCONS_00038643	MSMO1	Methylsterol monooxygenase 1	19__24
+TCONS_00038935	C1ORF194	chromosome 1 open reading frame 194	14__18
+TCONS_00039048	SLC22A3	Sugar (and other) transporter	19__24
+TCONS_00039048	SLC22A3	Sugar (and other) transporter	19__22
+TCONS_00039048	SLC22A3	Sugar (and other) transporter	19__21
+TCONS_00039050	SLC22A3	Sugar (and other) transporter	17__22
+TCONS_00039050	SLC22A3	Sugar (and other) transporter	17__21
+TCONS_00039050	SLC22A3	Sugar (and other) transporter	17__24
+TCONS_00039411	HSD17B12	hydroxysteroid (17-beta) dehydrogenase 12	21__21
+TCONS_00039413	HSD17B12	hydroxysteroid (17-beta) dehydrogenase 12	21__21
+TCONS_00039503	FADD35	Long-chain-fatty-acid-CoA ligase	20__21
+TCONS_00039503	FADD35	Long-chain-fatty-acid-CoA ligase	20__24
+TCONS_00039793	RPS19	Ribosomal protein S19	14__18
+TCONS_00039929	EST-6	Esterase	17__24
+TCONS_00039929	EST-6	Esterase	17__21
+TCONS_00039988	PARP14	Poly (ADP-ribose) polymerase family, member 14	17__22
+TCONS_00040587	FADD35	Amp-dependent synthetase and ligase	21__21
+TCONS_00040590	FADD35	Amp-dependent synthetase and ligase	17__21
+TCONS_00040590	FADD35	Amp-dependent synthetase and ligase	17__24
+TCONS_00040757	SLC22A2	solute carrier family 22	19__24
+TCONS_00040757	SLC22A2	solute carrier family 22	19__21
+TCONS_00040757	SLC22A2	solute carrier family 22	19__22
+TCONS_00040964	PARP14	Poly (ADP-ribose) polymerase family, member 14	17__22
+TCONS_00040988	NNMT	nicotinamide N-methyltransferase	21__21
+TCONS_00040989	NNMT	nicotinamide N-methyltransferase	22__21
+TCONS_00040997	NNMT	nicotinamide N-methyltransferase	21__21
+TCONS_00041002	NNMT	nicotinamide N-methyltransferase	21__21
+TCONS_00041057	RHAG	glycoprotein	15__21
+TCONS_00041062	CHRNA7	Neuronal acetylcholine receptor subunit	15__21
+TCONS_00041072	RPLP1	60S acidic ribosomal protein	14__18
+TCONS_00041133	C1ORF194	chromosome 1 open reading frame 194	14__18
+TCONS_00041205	CYP4B1	Cytochrome P450, family 4, subfamily	17__21
+TCONS_00041205	CYP4B1	Cytochrome P450, family 4, subfamily	17__22
+TCONS_00041220	CYP4B1	Cytochrome P450, family 4, subfamily	17__21
+TCONS_00041220	CYP4B1	Cytochrome P450, family 4, subfamily	17__22
+TCONS_00041427	EEF1B2	Eukaryotic translation elongation factor 1 beta 2	20__21
+TCONS_00041636	BCO2	Beta-carotene	17__21
+TCONS_00041637	RPE65	retinal pigment epithelium-specific protein 65kDa	20__21
+TCONS_00041660	CES5A	Carboxylesterase	15__21
+TCONS_00041661	ACHE-1	alpha/beta hydrolase fold	20__21
+TCONS_00041661	ACHE-1	alpha/beta hydrolase fold	20__24
+TCONS_00041725	C5ORF4	chromosome 5 open reading frame 4	17__21
+TCONS_00041725	C5ORF4	chromosome 5 open reading frame 4	17__22
+TCONS_00041725	C5ORF4	chromosome 5 open reading frame 4	17__24
+TCONS_00041771	GPR26	G- protein-coupled receptor	17__22
+TCONS_00041771	GPR26	G- protein-coupled receptor	17__21
+TCONS_00041771	GPR26	G- protein-coupled receptor	17__24
+TCONS_00041772	SULT3A1	Sulfotransferase	19__24
+TCONS_00041772	SULT3A1	Sulfotransferase	19__22
+TCONS_00041937	NSUN7	NOP2 Sun domain family, member 7	20__21
+TCONS_00041966	METTL7A	methyltransferase like 7A	19__21
+TCONS_00041979	RPL9	ribosomal protein L9	14__18
+TCONS_00041986	RPL9	ribosomal protein L9	14__18
+TCONS_00042026	TRAF2	Tnf receptor-associated factor 2	22__21
+TCONS_00042026	TRAF2	Tnf receptor-associated factor 2	22__24
+TCONS_00042031	TRAF2	Tnf receptor-associated factor 2	22__21
+TCONS_00042031	TRAF2	Tnf receptor-associated factor 2	22__24
+TCONS_00042198	CYP4B1	Cytochrome P450, family 4, subfamily	17__21
+TCONS_00042198	CYP4B1	Cytochrome P450, family 4, subfamily	17__22
+TCONS_00042261	IGFALS	Insulin-like growth factor binding protein, acid labile subunit	19__24
+TCONS_00042261	IGFALS	Insulin-like growth factor binding protein, acid labile subunit	19__22
+TCONS_00042261	IGFALS	Insulin-like growth factor binding protein, acid labile subunit	19__21
+TCONS_00042314	CPN2	Leucine rich repeat containing 15	14__18
+TCONS_00042349	GABA-B-R3	7 transmembrane sweet-taste receptor of 3 GCPR	17__21
+TCONS_00042349	GABA-B-R3	7 transmembrane sweet-taste receptor of 3 GCPR	17__22
+TCONS_00042395	CTSO	Cathepsin O	14__18
+TCONS_00042476	KDR	Growth factor receptor	20__24
+TCONS_00042677	TRIM2	tripartite motif containing 2	20__21
+TCONS_00042685	ASAH1	N-acylsphingosine amidohydrolase (acid ceramidase) 1	19__21
+TCONS_00042966	SCARB2	scavenger receptor class B, member	19__22
+TCONS_00043031	RPS3A	Ribosomal protein S3a	14__18
+TCONS_00043496	GRIA4	glutamate receptor	17__24
+TCONS_00043688	RPS3	ribosomal protein S3	14__18
+TCONS_00043780	SQSTM1	Sequestosome 1	20__24
+TCONS_00043985	CNGA2	cyclic nucleotide gated channel alpha	14__18
+TCONS_00044095	RPL21	ribosomal protein L21	14__18
+TCONS_00044171	TUB1	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__24
+TCONS_00044257	GPM6B	glycoprotein M6-b	17__21
+TCONS_00044628	FRMPD4	FERM and PDZ domain containing 4	14__18
+TCONS_00044694	TEKT2	tektin 2 (testicular)	14__18
+TCONS_00044980	PPT1	Palmitoyl-protein thioesterase 1	17__22
+TCONS_00045126	CP	hephaestin-like 1	17__22
+TCONS_00045155	TMEM68	transmembrane protein 68	19__21
+TCONS_00045155	TMEM68	transmembrane protein 68	19__24
+TCONS_00045159	CD5L	CD5 molecule-like	17__21
+TCONS_00045192	LCT	Lactase-like	19__21
+TCONS_00045192	LCT	Lactase-like	19__22
+TCONS_00045192	LCT	Lactase-like	19__24
+TCONS_00045509	CYP3A4	cytochrome P450, family 3, subfamily a, polypeptide	17__24
+TCONS_00045510	TBXAS1	thromboxane A synthase 1 (platelet	20__21
+TCONS_00045514	TBXAS1	thromboxane A synthase 1 (platelet	19__24
+TCONS_00045516	CYP3A4	cytochrome P450, family 3, subfamily a, polypeptide	22__24
+TCONS_00045517	CYP3A4	cytochrome P450, family 3, subfamily a, polypeptide	22__24
+TCONS_00045695	TPMT	thiopurine S-methyltransferase	20__21
+TCONS_00045696	TPMT	Thiopurine S-methyltransferase	21__21
+TCONS_00045698	TPMT	Thiopurine S-methyltransferase	20__21
+TCONS_00045819	MOXD1	monooxygenase, DBH-like 1	19__24
+TCONS_00045819	MOXD1	monooxygenase, DBH-like 1	19__22
+TCONS_00045819	MOXD1	monooxygenase, DBH-like 1	19__21
+TCONS_00045820	MOXD1	monooxygenase, DBH-like 1	19__21
+TCONS_00045820	MOXD1	monooxygenase, DBH-like 1	19__22
+TCONS_00045820	MOXD1	monooxygenase, DBH-like 1	19__24
+TCONS_00045825	MOXD1	monooxygenase, DBH-like 1	19__24
+TCONS_00045825	MOXD1	monooxygenase, DBH-like 1	19__21
+TCONS_00045825	MOXD1	monooxygenase, DBH-like 1	19__22
+TCONS_00045862	CIB1	calcium and integrin binding 1 (calmyrin)	19__21
+TCONS_00045863	CIB1	calcium and integrin binding 1 (calmyrin)	20__21
+TCONS_00046038	N	NOTCH protein	19__24
+TCONS_00046054	FAM213B	family with sequence similarity 213, member B	19__22
+TCONS_00046066	SULT1C4	sulfotransferase family, cytosolic, 1C, member 4	20__24
+TCONS_00046204	HPGDS	hematopoietic prostaglandin D synthase	15__21
+TCONS_00046345	PXDN	Peroxidasin homolog	17__22
+TCONS_00046360	PTER	phosphotriesterase related	21__21
+TCONS_00046362	PTER	phosphotriesterase related	20__21
+TCONS_00046362	PTER	phosphotriesterase related	20__24
+TCONS_00046378	ENPP1	ectonucleotide pyrophosphatase phosphodiesterase	22__24
+TCONS_00046380	ENPP1	ectonucleotide pyrophosphatase phosphodiesterase	19__24
+TCONS_00046648	CYP3A4	cytochrome P450, family 3, subfamily A, polypeptide 4	19__24
+TCONS_00046745	TPMT	Thiopurine S-methyltransferase	20__21
+TCONS_00046868	SLC32A1	Solute carrier family 32 (GABA vesicular transporter), member 1	20__21
+TCONS_00047523	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	17__21
+TCONS_00047528	GLRA1	Glycine receptor alpha	17__21
+TCONS_00047528	GLRA1	Glycine receptor alpha	17__24
+TCONS_00047602	SLC22A3	solute carrier family 22	15__21
+TCONS_00047643	SLC22A3	Sugar (and other) transporter	19__22
+TCONS_00047643	SLC22A3	Sugar (and other) transporter	19__24
+TCONS_00047643	SLC22A3	Sugar (and other) transporter	19__21
+TCONS_00047644	ORCT	Sugar (and other) transporter	20__24
+TCONS_00047644	ORCT	Sugar (and other) transporter	20__21
+TCONS_00047791	ACE	angiotensin I converting enzyme (peptidyl-dipeptidase A) 1	22__21
+TCONS_00047791	ACE	angiotensin I converting enzyme (peptidyl-dipeptidase A) 1	22__24
+TCONS_00047869	FG07561.1	amino acid transporter	17__21
+TCONS_00047907	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	17__21
+TCONS_00047982	ANPEP	Aminopeptidase	17__21
+TCONS_00048004	EIF4E3	eukaryotic translation initiation factor 4E family member 3	22__21
+TCONS_00048016	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	22__21
+TCONS_00048072	TLR21	TOLL-like receptor	22__24
+TCONS_00048081	ANPEP	Aminopeptidase	20__21
+TCONS_00048140	CLCA2	chloride channel	19__22
+TCONS_00048140	CLCA2	chloride channel	19__24
+TCONS_00048433	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__24
+TCONS_00048433	TUBA3D	Tubulin is the major constituent of microtubules. It binds two moles of GTP, one at an exchangeable site on the beta chain and one at a non-exchangeable site on the alpha chain (By similarity)	20__21
+TCONS_00048500	CLCA2	chloride channel	22__24
+TCONS_00048525	ORCT	organic cation transmembrane transporter activity	17__24
+TCONS_00048525	ORCT	organic cation transmembrane transporter activity	17__22
+TCONS_00048525	ORCT	organic cation transmembrane transporter activity	17__21
+TCONS_00048544	SLC5A8	solute carrier family 5	21__21
+TCONS_00048603	ANPEP	Aminopeptidase	20__21
+TCONS_00048651	ANPEP	Aminopeptidase	15__21
+TCONS_00048694	CLCA2	chloride channel	20__24
+TCONS_00048697	CLCA2	chloride channel	19__24
+TCONS_00048697	CLCA2	chloride channel	19__22
+TCONS_00048880	CLCA2	chloride channel	17__22
+TCONS_00048880	CLCA2	chloride channel	17__24
+TCONS_00048881	CLCA2	chloride channel	22__24
+TCONS_00048965	ORCT	organic cation transporter	19__22
+TCONS_00048965	ORCT	organic cation transporter	19__21
+TCONS_00048965	ORCT	organic cation transporter	19__24
+TCONS_00049136	LAP-2	Cytosol aminopeptidase family, catalytic domain	22__21
+TCONS_00049263	SLC5A8	solute carrier family 5	21__21
+TCONS_00049292	ANPEP	Aminopeptidase	20__21
+TCONS_00049337	SLC22A3	solute carrier family 22	21__21
+TCONS_00049403	ANPEP	Aminopeptidase	19__21
+TCONS_00049467	ACY1	aminoacylase 1	21__21
+TCONS_00049540	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	20__21
+TCONS_00049542	ABCC9	ATP-binding cassette, sub-family C (CFTR MRP), member	20__21
+TCONS_00049671	F13A1	transglutaminase	17__22
+TCONS_00050124	TRIM2	tripartite motif containing 2	19__24
+TCONS_00050124	TRIM2	tripartite motif containing 2	19__22
+TCONS_00050176	SLC22A13	solute carrier family 22	20__24
+TCONS_00050176	SLC22A13	solute carrier family 22	20__21
+TCONS_00050179	SLC22A13	solute carrier family 22	21__21
+TCONS_00050259	VWA5B1	von Willebrand factor A domain containing	20__21
+TCONS_00050420	CYB5D1	Cytochrome b5 domain containing 1	14__18
+TCONS_00050578	CYP27C1	Cytochrome P450 family 27 subfamily	20__21
+TCONS_00050950	ORCT	Sugar (and other) transporter	19__22
+TCONS_00050950	ORCT	Sugar (and other) transporter	19__24
+TCONS_00050950	ORCT	Sugar (and other) transporter	19__21
+TCONS_00050963	GSTK1	glutathione S-transferase kappa 1	19__21
+TCONS_00051029	NEP1	Peptidase family M13	20__24
+TCONS_00051029	NEP1	Peptidase family M13	20__21
+TCONS_00051058	CYP2U1	Cytochrome P450, family 2, subfamily U, polypeptide 1	19__24
+TCONS_00051091	LTBR	lymphotoxin beta receptor (TNFR superfamily, member 3)	22__24
+TCONS_00051316	APOD	Apolipoprotein D	17__21
+TCONS_00051316	APOD	Apolipoprotein D	17__22
+TCONS_00051316	APOD	Apolipoprotein D	17__24
+TCONS_00051318	APOD	Apolipoprotein D	19__24
+TCONS_00051318	APOD	Apolipoprotein D	19__22
+TCONS_00051318	APOD	Apolipoprotein D	19__21
+TCONS_00051320	APOD	Apolipoprotein D	15__21
+TCONS_00051326	SLC22A13	Sugar (and other) transporter	15__21
+TCONS_00051513	VAMP3	vesicle-associated membrane protein 3	17__21
+TCONS_00051592	MRC1	mannose receptor, C type 1	22__21
+TCONS_00051600	RPE65	Beta-carotene	21__21
+TCONS_00051611	RTP4	Inherit from meNOG: receptor (chemosensory) transporter protein	17__24
+TCONS_00051682	UNC93A	unc-93 homolog A (C. elegans)	20__24
+TCONS_00051878	GLUT1	Sugar (and other) transporter	17__22
+TCONS_00051878	GLUT1	Sugar (and other) transporter	17__24
+TCONS_00051919	ADRB3	adrenoceptor beta	17__21
+TCONS_00051919	ADRB3	adrenoceptor beta	17__24
+TCONS_00051919	ADRB3	adrenoceptor beta	17__22
+TCONS_00052022	ST8SIA1	ST8 alpha-N-acetyl-neuraminide alpha-2,8-sialyltransferase 1	21__21
+TCONS_00052470	SLC7A11	solute carrier family 7 (anionic amino acid transporter light chain, xc- system), member 11	15__21
+TCONS_00052595	HELT	helt bHLH transcription factor	17__21
+TCONS_00052838	DRN-1	DIRAS family, GTP-binding Ras-like	17__24
+TCONS_00052838	DRN-1	DIRAS family, GTP-binding Ras-like	17__21
+TCONS_00052900	TCTEX1D1	Tctex1 domain containing 1	19__21
+TCONS_00052911	NDUFB7	NADH dehydrogenase (ubiquinone) 1 beta subcomplex	14__18
+TCONS_00053043	ASMTL	Maf-like protein	14__18
+TCONS_00053050	VLDLR	low- density lipoprotein	19__22
+TCONS_00053085	ASMT	Acetylserotonin O-methyltransferase	14__18
+TCONS_00053093	VLDLR	Very LOW density lipoprotein receptor	19__22
+TCONS_00053231	CYP4B1	Cytochrome P450, family 4, subfamily	19__21
+TCONS_00053231	CYP4B1	Cytochrome P450, family 4, subfamily	19__22
+TCONS_00053442	ARSB	Arylsulfatase B	17__21
+TCONS_00053844	PNLIP	pancreatic	15__21
+TCONS_00053856	PNLIP	pancreatic	15__21
+TCONS_00054008	SLC16A14	solute carrier family 16, member 14 (monocarboxylic acid transporter 14)	20__24
+TCONS_00054086	AKR1A1	Aldo-keto reductase family 1, member A1 (Aldehyde reductase)	19__21
+TCONS_00054095	AKR1A1	Aldo-keto reductase family 1, member A1 (Aldehyde reductase)	15__21
+TCONS_00054243	SLC1A1	solute carrier family 1 (glial high affinity glutamate transporter), member	20__21
+TCONS_00054325	ADAMTS6	ADAM metallopeptidase with thrombospondin type 1 motif, 6	20__21
+TCONS_00054325	ADAMTS6	ADAM metallopeptidase with thrombospondin type 1 motif, 6	20__24
+TCONS_00054373	CYP4F12	cytochrome P450, family 4, subfamily F, polypeptide	17__21
+TCONS_00054373	CYP4F12	cytochrome P450, family 4, subfamily F, polypeptide	17__22
+TCONS_00054374	CYP4B1	Cytochrome P450, family 4, subfamily	22__21
+TCONS_00054375	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	17__22
+TCONS_00054375	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	17__21
+TCONS_00054377	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	19__22
+TCONS_00054377	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	19__21
+TCONS_00054380	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	22__21
+TCONS_00054381	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	19__21
+TCONS_00054381	CYP4B1	cytochrome P450, family 4, subfamily B, polypeptide 1	19__22
+TCONS_00054475	AADACL3	arylacetamide deacetylase-like	15__21
+TCONS_00054478	AADACL2	arylacetamide deacetylase-like	15__21
+TCONS_00054639	GNBPB4	Glycosyl hydrolases family 16	19__24
+TCONS_00055161	RPL36A	ribosomal protein	14__18
+TCONS_00055165	AMY1C	Aamy_C	19__24
+TCONS_00055259	NAALAD2	N-acetylated alpha-linked acidic dipeptidase 2	22__24
+TCONS_00055260	GLRA3	Glycine receptor alpha	21__21
+TCONS_00055330	RPS11	Ribosomal protein S11	14__18
+TCONS_00055415	MAP1LC3A	microtubule-associated protein 1 light chain 3 alpha	20__21
+TCONS_00055752	GABBR2	gamma-aminobutyric acid (GABA) B receptor, 2	17__22
+TCONS_00055752	GABBR2	gamma-aminobutyric acid (GABA) B receptor, 2	17__21
+TCONS_00055753	GABBR2	gamma-aminobutyric acid (GABA) B receptor, 2	21__21
+TCONS_00055828	SNX9	sorting nexin	22__21
+TCONS_00055873	GSTO2	Glutathione S-transferase omega	15__21
+TCONS_00056106	RPL15	Ribosomal protein L15	14__18
+TCONS_00056380	AMY2A	amylase, alpha	22__24
+TCONS_00056388	EEF1B2	Eukaryotic translation elongation factor 1 beta 2	20__21
+TCONS_00056434	NAALAD2	N-acetylated alpha-linked acidic	19__24
+TCONS_00056436	NAALAD2	N-acetylated alpha-linked acidic dipeptidase 2	20__24
+TCONS_00056554	BBOX1	butyrobetaine (gamma), 2-oxoglutarate dioxygenase (gamma-butyrobetaine hydroxylase) 1	21__21
+TCONS_00056595	PAQR5	Progestin and adipoQ receptor family member	19__24
+TCONS_00056595	PAQR5	Progestin and adipoQ receptor family member	19__21
+TCONS_00056847	ITGA8	Integrin, alpha	20__21
+TCONS_00056856	CRHR2	Corticotropin releasing hormone receptor 2	17__24
+TCONS_00056910	GABA-B-R2	gaba-b receptor	20__21
+TCONS_00057193	GDA	Guanine deaminase	20__21

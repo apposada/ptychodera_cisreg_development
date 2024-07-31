@@ -1,0 +1,1293 @@
+---
+title: "Ptychodera Cisreg Development: Cis-regulatory network Graph Analysis"
+author: "Alberto Perez-Posada"
+date: "4/01/2023"
+output:
+  html_document:
+    keep_md: true
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+
+```{r setup, include=FALSE}
+
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+
+```
+
+
+## About
+
+In this markdown, we will analyse the networks of TF/target gene cis-regulatory interactinos generated using ANANSE.
+
+We will load these networks as tabular data that we will transform into `igraph` graph objects, that we can parse and annotate using our information on TF classes and other similar functional annotation that we have carried out over the course of this project.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(ggplot2)
+library(igraph)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load previous Data
+
+We will need some of the information we have generated in our previous analyses such as stage-specific cluster information and Transcription factor annotation.
+
+```{r}
+# RNA clusters
+load("outputs/rda/stage_specific_clusters.rda")
+
+# Transcription Factor information
+load("outputs/rda/TF_annotation.rda")
+```
+
+## Load and prepare information for graph analysis
+
+Here we will load all the remaining information of our interest and we will transform it into a format compliant to some of the functions we have made to annotate the graphs; basically, tabular data with gene id <--> annotation category.
+
+```{r}
+# Transcription factors
+
+allTFclasses_col <- c(topclasses_col,otherclasses_col)
+
+pfla_tfs_graph_analysis <-
+  merge(
+    pfla_tfs,
+    data.frame(
+      TFclass = 
+        c(names(topclasses_col),names(otherclasses_col)),
+      col = 
+        c(topclasses_col,otherclasses_col)
+      ),
+    by.x = 2,
+    by.y = 1
+  )[,c(2,1,3)]
+
+colnames(pfla_tfs_graph_analysis) <- c("id","TFclass","col")
+
+# Effector genes
+pfla_tfeg <- data.frame(
+  id = allgenes,
+  TFEG = ifelse(allgenes %in% pfla_tfs$id, "TF", "EG")
+)
+
+# Functional categories (COG)
+pfla_funcat <- read.table(
+  "outputs/functional_annotation/COGs/pfla_cogs.tsv",
+  col.names = c("id","funcat")
+)
+
+# Trans-developmental / housekeeping
+pfla_td_nohk <- 
+  unique(
+    read.table(
+      "outputs/functional_annotation/TD_annotation/transdev_expanded_nohk.tsv",
+      header=F,
+      stringsAsFactors = F)[,1]
+    )
+
+pfla_hk_notd <- 
+  unique(
+    read.table(
+      "outputs/functional_annotation/TD_annotation/housekeep_expanded_notd.tsv",
+      header=F,
+      stringsAsFactors=F)[,1]
+    )
+
+pfla_tdhk <- data.frame(
+  id = allgenes,
+  TDHK =  
+    ifelse(allgenes %in% pfla_td_nohk, "td",
+    ifelse(allgenes %in% pfla_hk_notd, "hk", 
+    "none")
+    )
+  )
+
+#Insitu Hybridisation data
+pfla_ISH <- read.delim2(
+  "outputs/functional_annotation/germlayers_ISH/in_situ_data.tsv",
+  header = TRUE
+)[,c(1:4)]
+```
+
+Finally, we add them into a list that our function for annotation will iterate through. We will call this the **list of attributes**
+
+```{r}
+pfla_attributes_list <- 
+  list(
+    pfla_tfeg,
+    pfla_tfs_graph_analysis,
+    pfla_funcat,
+    pfla_tdhk,
+    pfla_ISH
+    )
+```
+
+We will also load the GO annotation of Ptychodera to use it later on in the functions.
+
+```{r}
+#gene universe
+gene_universe <- allgenes
+
+# gene-GO mappings
+pfla_id_GO <-
+  readMappings(
+    "outputs/functional_annotation/go_blast2go/GO_annotation.txt"
+  )
+```
+
+Likewise, we will also load the EggNOG annotation of gene names for more clarity in the plots of the graphs.
+
+```{r}
+pfla_genenames <-
+  read.delim2(
+    file = "outputs/functional_annotation/eggnog/emapper.annotations",
+    skip = 3,
+    header = TRUE
+  )[,c(1,5,13)]
+pfla_genenames <- pfla_genenames[pfla_genenames$predicted_gene_name != "",]
+```
+
+## Load ANANSE outputs
+
+Here we will use the function `LoadNetworkData` that reads the .network file replacing instances of em dash and other ANANSE-related quirks. The resulting dataframe has three columns: "tf" (transcription factor), "tg" (target gene), and "prob" (probability). We manually add back underscores to the gene ids because ANANSE required the gene ids in a different format.
+
+We do this for both the Early Blastula (EB) and Late Gastrula (LG) networks.
+
+```{r, warningss = FALSE, message = FALSE}
+# EARLY BLASTULA
+pfla_EB_nw <- LoadNetworkData("outputs/ananse/pfla_EB.network")
+pfla_EB_nw$tf <- gsub("TCONS", "TCONS_", pfla_EB_nw$tf)
+pfla_EB_nw$tg <- gsub("TCONS", "TCONS_", pfla_EB_nw$tg)
+
+# LATE GASTRULA
+pfla_LG_nw <- LoadNetworkData("outputs/ananse/pfla_LG.network")
+pfla_LG_nw$tf <- gsub("TCONS", "TCONS_", pfla_LG_nw$tf)
+pfla_LG_nw$tg <- gsub("TCONS", "TCONS_", pfla_LG_nw$tg)
+```
+
+Here it is what it looks like.
+
+```{r}
+head(pfla_EB_nw)
+```
+
+## Early Blastula
+
+The first thing we will do is filter the network and keep only those interactions whose values are in the top 5% percentile. We will use this later on to quantify and measure the In- and Out-Degree of each gene, among other things.
+
+```{r}
+pfla_EB_nw2 <- FilterNetwork(pfla_EB_nw,q=0.95)
+```
+
+We generate an `igraph` object using our custom wrapper `GenerateNetwork` that also filter by the same number of interactions, since we provide `q = 0.95`.
+
+```{r}
+pfla_EB_graph <- GenerateNetwork(pfla_EB_nw,q = 0.95)
+```
+
+Using our list of attributes, we add this information to all the pertinent nodes (== genes) of our network using our ParseNetwork function.
+
+```{r}
+pfla_EB_parsenetwork <- ParseNetwork(pfla_EB_graph, pfla_attributes_list)
+```
+
+The resulting object can be subsetted to extract the new network with attributes on one object and the data frame of attributes on the other.
+
+```{r}
+pfla_EB_graph2 <- pfla_EB_parsenetwork[[1]]
+pfla_EB_df_attr <- pfla_EB_parsenetwork[[2]]
+```
+
+The data frame of attributes is a data.frame object sorted in the same order as nodes are indexed in the igraph object. The content of this data frame is, for every node that has an attribute, a row with the id of this node, the index of this node, and a bunch of attributes (color, whether it is a trans-developmental gene, TF class, functional category, etc.)
+
+```{r}
+head(pfla_EB_df_attr)
+```
+
+Finally, we use our wrapper `NetworkStats`.
+
+This wrapper performs a number of calculations using our igraph object and the tabular data frame, including also the gene ontology of target genes, and also reports the top central genes, the centrality of different kinds of genes by attribute (e.g. centrality of genes by TF class).
+
+The inputs of the function are:
+
+  - nw: the network represented as a tabular factor/target/prob
+  - graph: the igraph object representing the network
+  - att: a data frame containing information about the nodes of the network (e.g., the gene class, the gene function category, etc.)
+  - N: the number of top nodes to select
+  - C: a parameter to select the connected component of the graph to analyze
+  - gene_universe: the universe of genes to consider in the gene ontology (GO) analysis
+  - id2go: a mapping between gene IDs and GO IDs
+
+The function outputs a list containing various statistics and metrics of the network, such as the number of genes, the number of active TFs, the top emitters and receivers of the network, the number of self-regulated TFs, the size of the connected components of the graph, the centrality of the TFs and the functional categories, and the gene ontology information.
+
+```{r, message = FALSE}
+pfla_EB_stats <- NetworkStats(pfla_EB_nw2, pfla_EB_graph2, pfla_EB_df_attr, N = 10, gene_universe = gene_universe, id2go = pfla_id_GO)
+```
+
+## Late Gastrula
+
+Next we do the same for the Late Gastrula Network. We start by filtering the Network:
+
+```{r}
+pfla_LG_nw2 <- FilterNetwork(pfla_LG_nw,q=0.95)
+```
+
+Then we also generate an `igraph` network using the same percentile.
+
+```{r}
+pfla_LG_graph <- GenerateNetwork(pfla_LG_nw,q = 0.95)
+```
+
+We parse this graph using our list of attributes
+
+```{r}
+pfla_LG_parsenetwork <- ParseNetwork(pfla_LG_graph, pfla_attributes_list)
+
+pfla_LG_graph2 <- pfla_LG_parsenetwork[[1]]
+pfla_LG_df_attr <- pfla_LG_parsenetwork[[2]]
+```
+
+And finally we calculate the stats and metrics of this network:
+
+```{r, message = FALSE}
+pfla_LG_stats <- NetworkStats(pfla_LG_nw2, pfla_LG_graph2, pfla_LG_df_attr, N = 10, gene_universe = gene_universe, id2go = pfla_id_GO)
+```
+
+## Comparing the networks
+
+We will have a look at the output of these wrappers a bit later. We will now compare these two networks using the NetworkStats and the filtered tab-format networks that we have generated.
+
+Part of this comparison involves defining a subset of genes of interest, which we load here.
+
+```{r}
+genes_postgr <- 
+  rownames(pfla_rna_dev)[
+    pfla_rna_dev$cID > 12
+    ]
+```
+
+And another part is loading the results of running ANANSE influence, which takes into account differential gene expression to infer the responsible factors for changes in the networks of cis-regulatory interactions between two states (in our case, the transition from early blastula to late gastrula).
+
+```{r}
+ananse_EB_to_LG <- 
+  read.table("outputs/ananse/influence_LG_EB.tsv",header=T) #change this path
+
+ananse_EB_to_LG$factor <-
+  sub("TCONS","TCONS_",ananse_EB_to_LG$factor)
+```
+
+The `compareNetworks` wrapper compares two networks, nw_a and nw_b, and their respective graphs, graph_a and graph_b, and outputs various metrics, visualizations, and data frames.
+
+The function requires the following arguments:
+
+  - `nw_a`: A data frame or network object for network A.
+  - `nw_b`: A data frame or network object for network B.
+  - `graph_a`: A graph object for network A.
+  - `graph_b`: A graph object for network B.
+  - `stats_a`: A list of statistics for network A. Generated using NetworkStats() as explained above.
+  - `stats_b`: A list of statistics for network B. Generated using NetworkStats() as explained above.
+  - `influence`: if present, it outputs subgraphs of, and visualisations of, the top factors explaining the transition (as estimated by ANANSE influence).
+  - `name_network_a`: The name of network A. The default is "a".
+  - `name_network_b`: The name of network B. The default is "b".
+  - `col_a`: The color of network A in the Venn diagram. The default is "darkorange".
+  - `col_b`: The color of network B in the Venn diagram. The default is "purple".
+  - `geneset_interest`: if present, it compares the percentage of a set of genes of interest as targets in each of the networks.
+  - `top`: The proportion of top targets in each network to consider. The default is 0.9.
+  - `tfs`: Not used in the function.
+  - `gene_universe`: A vector of all genes.
+  - `id2go`: A data frame containing gene ontology (GO) annotations.
+
+The function performs the following tasks:
+
+  - Identifies the exclusive and common targets in each network, and creates a Venn diagram of the targets.
+  - Determines the GO terms for the exclusive and common targets and returns the topGO Fisher's test (elim method vs the whole set of ptychodera genes)
+  - Calculates various metrics for the two networks, such as the number of genes, active transcription factors (TFs), connections per TF and target gene (TG), and self-regulated TFs, and creates a data frame of the calculated metrics.
+  - Merges the InVsOut (In-degree vs. Out-degree) behavior of genes in both networks.
+  - Calculates the centrality of common genes in both networks, and creates a data frame of the centrality metrics.
+  - Calculates the centrality of TFs in both networks, and creates a data frame of the centrality metrics.
+  - Calculates the centrality of trans-dev (trans-developmental) genes in both networks, and creates a data frame of the centrality metrics.
+  - It generates sub-graphs of each of the networks, with the transcription factors found to have differences in centrality between each network.
+  - Some of the output plots are:
+   - barplots of the metrics,
+   - venn diagram of shared target genes across networks,
+   - scatter plots of centrality of common genes across networks, including TFs, and trans-dev genes,
+   - plots of foldchanges of centrality of genes across networks, including TFs, and trans-dev genes,
+   - plots of foldchanges of in-outdegree gene behavior across networks,
+   - sub-graphs of top central tfs on each network,
+   - scatter plot of top factors from ANANSE influence,
+   - sub graph of the network b factor using the top factors from ANANSE influence.
+
+```{r, message = FALSE}
+pdf(file = "graphics/EB_LG_comparenetworks.pdf",he=8,wi=10)
+EB_vs_LG <- compareNetworks(
+  name_network_a = "EB",
+  name_network_b = "LG",
+  nw_a = pfla_EB_nw2,
+  nw_b = pfla_LG_nw2,
+  top = 0.9,
+  stats_a = pfla_EB_stats,
+  stats_b = pfla_LG_stats,
+  graph_a = pfla_EB_graph2,
+  graph_b = pfla_LG_graph2,
+  influence = ananse_EB_to_LG,
+  tfs = pfla_tfs_graph_analysis,
+  geneset_interest = genes_postgr,
+  id2go = pfla_id_GO,
+  gene_universe = gene_universe,
+  col_a = "#efaa90",
+  col_b = "#fbcf99"
+)
+dev.off()
+```
+
+
+## Network plots
+
+We will now explore the graph analyses by plotting and visualising. We will define the constants of colors.
+
+```{r}
+col_a = "#efaa90"
+col_b = "#fbcf99"
+```
+
+We start by having a look at the number of genes and the number of TFs in each network:
+
+```{r numgenes_network}
+barplot(
+  as.data.frame(t(EB_vs_LG$comparison_table[,2:3]))[,1],
+  main = "Number of Genes per Network",
+  names.arg = c("EB","LG"),
+  col = c(col_a,col_b),
+  )
+```
+
+Despite their similar size, we start to see differences just by checking how many TFs are in each graph.
+
+```{r}
+barplot(
+  c(
+    pfla_EB_stats$num_active_TFs,
+    pfla_LG_stats$num_active_TFs
+    ),
+  main = "Number of TFs in each network",
+  col = c(col_a,col_b),
+  names.arg = c("EB","LG")
+)
+```
+
+
+Then we look at the number of connections per target gene. This is done by counting the number of instances of each gene in the "target" column of the tabular networks.
+
+```{r, fig.height = 5.5, fig.width = 3.2}
+# num connections per target gene
+boxplot(
+  main = "connections per\ntarget gene",
+  list(
+    c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_a),
+    c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_b)
+  ),
+  names = c("\nEarly\nBlastula", "\nLate\nGastrula"),
+  col = c(col_a,col_b),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      x = c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_a),
+      y = c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_b)
+    )$p.value
+  )
+)
+```
+
+We can also have a look at the number of TFs that are self-regulated on each network by counting the number of times a given TF gene appears as a target of itself in the tabular networks.
+
+```{r, fig.width = 3.5, fig.height = 5}
+# Number of self-reg TFs
+barplot(
+  main = "Number of\nself-regulating TFs",
+  height = c(
+    EB_vs_LG$comparison_table$a[EB_vs_LG$comparison_table$metric == "Num Self-Regulated TFs"],
+    EB_vs_LG$comparison_table$b[EB_vs_LG$comparison_table$metric == "Num Self-Regulated TFs"]
+  ),
+  names.arg = c("Early\nBlastula", "Late\nGastrula"),
+  col = c(col_a,col_b),
+)
+```
+
+
+For this we can look at the changes in centrality for different genes across networks.
+
+```{r}
+# plots of correlation changes in centrality tfs and transdev
+par(mfrow = c(1,2))
+plot(
+  main = "Changes in TF centrality across networks",
+  x = EB_vs_LG$tf_centrality_across_networks$a,
+  y = EB_vs_LG$tf_centrality_across_networks$b,
+  xlab = "Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 19,
+  cex = 0.75,
+  col = alpha("#E58745",0.25)
+)
+
+plot(
+  main = "Foldchange in centrality of TFs",
+  sort(
+    EB_vs_LG$tf_centrality_across_networks$b /
+    EB_vs_LG$tf_centrality_across_networks$a
+    ),
+  col = alpha("#E58745",0.5),
+  ylab = "foldchange centrality"
+)
+par(mfrow = c(1,1))
+```
+
+In this case we see a large number of genes tend to acquire higher levels of centrality in LG compared to EB, as shown in the scatter plot and the plot of the foldchange.
+
+And the same about trans-dev genes:
+
+```{r}
+par(mfrow = c(1,2))
+# same in transdev
+plot(
+  main = "Changes in trans-dev centrality across networks",
+  x = EB_vs_LG$transdev_centrality_across_networks$a,
+  y = EB_vs_LG$transdev_centrality_across_networks$b,
+  xlab="Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 19,
+  cex = 0.75,
+  col = alpha("#1A9A83",0.25)
+)
+
+plot(
+  main = "Foldchange in centrality of trans-devs",
+  sort(
+    EB_vs_LG$transdev_centrality_across_networks$b /
+      EB_vs_LG$transdev_centrality_across_networks$a
+  ),
+  col = alpha("#1A9A83",0.5),
+  ylab = "foldchange centrality"
+)
+par(mfrow = c(1,1))
+```
+
+This is also reflected at the relative out-degree of genes, what we call "gene behaviour", and how it changes between networks. This can be visualised as cumulative density functions and/or boxplots.
+
+```{r, fig.width = 4, fig.height = 4}
+eb_inout_ratio <- 
+  pfla_EB_stats$In_Out_per_Gene$ratio[
+    pfla_EB_stats$In_Out_per_Gene$ratio > 0
+    ]
+
+lg_inout_ratio <- 
+  pfla_LG_stats$In_Out_per_Gene$ratio[
+    pfla_LG_stats$In_Out_per_Gene$ratio > 0
+  ]
+
+plot(
+  seq(1:length(eb_inout_ratio)),
+  eb_inout_ratio,
+  main = "Relative outdegree",
+  col = col_a,
+  type = "l",
+  xlab = "",
+  ylab = "% emitting connections",
+  lwd = 2,
+  ylim = c(0,1)
+)
+
+lines(
+  seq(1:79),
+  lg_inout_ratio[1:79],
+  col = col_b,
+  lwd = 2
+)
+```
+
+To have a better idea of what kind are the genes affected by these networks, and since we saw that there is a TF switch at the transcriptional level during development (see previous markdowns), we can showcase the changes in the network structure by looking at the centrality of the different genes by TF class.
+
+In this case we use the function `plot_centrailty_TFclass` that grabs a named list with teh centrality values of TF genes grouped by class and creates a barplot. Colors are assigned based on the named vector with TFclasses and color.
+
+
+```{r , fig.width = 12, fi.height = 8}
+## Centrality per TF class
+
+par(mfrow = c(2,1))
+plot_centrality_TFclass(
+  s = pfla_EB_stats$Centrality_per_TFclass,
+  f = allTFclasses_col,
+  # sub_s = topclasses,
+  main = "Centrality per TF Class - EB",
+  ylim = c(0.00005,0.00012)
+)
+
+plot_centrality_TFclass(
+  s = pfla_LG_stats$Centrality_per_TFclass,
+  f = allTFclasses_col,
+  # sub_s = topclasses,
+  main = "Centrality per TF Class - LG",
+  ylim = c(0.00005,0.00012)
+)
+par(mfrow = c(1,1))
+```
+
+How different are these networks at the target level? We can dig into this by looking at how overlapped these networks are, and at the enriched GO terms in the exclusive and commonly-shared target genes of each network.
+
+```{r}
+# number of shared targets
+x <- 
+  list(
+    EB = c(
+      EB_vs_LG$target_genes$targets_common_ab,
+      EB_vs_LG$target_genes$targets_exclusive_a
+      ), 
+    LG = c(
+      EB_vs_LG$target_genes$targets_common_ab,
+      EB_vs_LG$target_genes$targets_exclusive_b
+      )
+  )
+
+# Helper function to display Venn diagram
+display_venn <- function(x, ...){
+  library(VennDiagram)
+  grid.newpage()
+  venn_object <- venn.diagram(x, filename = NULL, ...)
+  grid.draw(venn_object)
+}
+
+# Display the plot directly in R:
+display_venn(
+  x,
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = c(col_a, col_b),
+  # Numbers
+  cex = .9,
+  fontface = "italic",
+  # Set names
+  category.names = c("EB" , "LG"),
+  cat.cex = 1,
+  cat.pos = 180,
+  cat.fontface = "bold",
+  cat.default.pos = "outer"
+  )
+```
+
+We can see there is a major switch-on of TFs! What are they doing and what genes are they regulating? Here we have the enriched GO terms for the target genes exclusive to EB, the target genes exclusive to LG, and the common ones.
+
+```{r}
+# GO barplots or just the words for them
+plot_grid(
+  EB_vs_LG$GOs_targets$GOplot$targets_exclusive_a,
+  EB_vs_LG$GOs_targets$GOplot$targets_exclusive_b,
+  EB_vs_LG$GOs_targets$GOplot$targets_common_ab
+)
+```
+
+Here the GO terms of the exclusive and common TFs of each network, using the totality of TFs as universe (for reference):
+
+```{r, fig.width = 8, fig.height = 16}
+pfla_nws_TFs_GOs <- getGOs(
+  genelist = 
+    list(
+     TFs_EB = pfla_EB_nw2$tf[!(pfla_EB_nw2$tf %in% pfla_LG_nw2$tf)],
+     TFs_LG = pfla_LG_nw2$tf[!(pfla_LG_nw2$tf %in% pfla_EB_nw2$tf)],
+     TFs_common = pfla_LG_nw2$tf[pfla_LG_nw2$tf %in% pfla_EB_nw2$tf]
+    ),
+  gene2GO = pfla_id_GO,
+  gene_universe = sort(unique(c(pfla_EB_nw2$tf,pfla_LG_nw2$tf))),
+  alg = "elim"
+)
+
+plot_grid(
+  pfla_nws_TFs_GOs$GOplot$TFs_EB,
+  pfla_nws_TFs_GOs$GOplot$TFs_LG,
+  pfla_nws_TFs_GOs$GOplot$TFs_common,
+  ncol = 1
+)
+```
+
+And the same for the exclusive and common TFs of each network, just like previously computed --but again using the totality of TFs as universe for reference/comparison:
+
+```{r, fig.width = 8, fig.height = 16}
+pfla_nws_TGs_GOs <- getGOs(
+  genelist = 
+    list(
+      TGs_EB = pfla_EB_nw2$tg[!(pfla_EB_nw2$tg %in% pfla_LG_nw2$tg)],
+      TGs_LG = pfla_LG_nw2$tg[!(pfla_LG_nw2$tg %in% pfla_EB_nw2$tg)],
+      TGs_common = pfla_LG_nw2$tg[pfla_LG_nw2$tg %in% pfla_EB_nw2$tg]
+    ),
+  gene2GO = pfla_id_GO,
+  gene_universe = sort(unique(c(pfla_EB_nw2$tg,pfla_LG_nw2$tg))),
+  alg = "elim"
+)
+plot_grid(
+  pfla_nws_TGs_GOs$GOplot$TGs_EB,
+  pfla_nws_TGs_GOs$GOplot$TGs_LG,
+  pfla_nws_TGs_GOs$GOplot$TGs_common,
+  ncol = 1
+)
+```
+
+Another way to check for differences between target genes in networks is looking at the presence of certain genes of interest in each. For example, we can check how many genes of larval development are being targeted in each of the networks. We see there is a large different in the proportion of larval genes that are embedded in the LG network compared to the EB network. This is hinting at the aforementioned switch towards larval development already taking place at the cis-regulatory level during gastrulation.
+
+```{r, fig.width = 3.5, fig.height = 4.5}
+# number of post-gastrulation genes in network
+
+barplot(
+  main="Post-gastrulation genes\nin network",
+  height=c(
+    EB_vs_LG[[11]][1]/length(EB_vs_LG$target_genes$targets_exclusive_a)*100,
+    EB_vs_LG[[11]][2]/length(EB_vs_LG$target_genes$targets_exclusive_b)*100
+  ),
+  col = c(
+    col_a,
+    col_b
+  ),
+  names=c("EB", "LG"),
+  ylab="gene percent",
+  ylim = c(0,65),
+  las=1
+)
+```
+
+Here we can see what are the functional categories of the genes whose relative out-degree (number of outgoing vs incoming connections) change between stages. Here we see that signal transduction has a small increase only in gastrulation.
+
+```{r, fig.height = 10, fig.width = 5}
+funcat_EB <- plot_behavior_per_category2(pfla_EB_stats, use_log = TRUE, main = "number of genes with above minimum relative out-degree,\nper functional category (EB)")
+funcat_LG <- plot_behavior_per_category2(pfla_LG_stats, use_log = TRUE, main = "number of genes with above minimum relative out-degree,\nper functional category (LG)")
+
+plot_grid(
+  funcat_EB,
+  funcat_LG,
+  ncol = 1
+)
+```
+
+Finally, to check the differences between the networks of these developmental stages, we can use the output of ANANSE influence to check for the top factors. Below we re-run the code used to generate the influence plot in `compareNetworks()`.
+
+```{r}
+# influence
+influ_tbl <- ananse_EB_to_LG 
+influ_tbl <- merge(influ_tbl,pfla_tfs_graph_analysis,by.x=1,by.y=1,all.x=T)
+influ_tbl$TFclass[is.na(influ_tbl$TFclass)] <- " "
+influ_tbl$col[is.na(influ_tbl$col)] <- "gray"
+influ_tbl <- influ_tbl [rev(order(influ_tbl$sumScaled)),]
+rownames(influ_tbl) <- NULL
+
+# 'translate' the gene ids to known gene names using a small function
+influ_tbl$genename <- 
+  translate_ids(x = influ_tbl$factor,dict = pfla_genenames)
+
+```
+
+Here the plot of ANANSE influence. Colors indicate different TF classes. Where available, gene names have been added.
+
+```{r}
+plot(
+  influ_tbl$factor_fc,
+  influ_tbl$sumScaled,
+  pch=19,
+  col=influ_tbl$col,
+  bg="black",
+  xlab="log2fold change of TF",
+  ylab="ANANSE influence score",
+  main="Main factors",
+  bty="n",
+  xlim=c(0,max(influ_tbl$factor_fc)+1)
+)
+text(
+  influ_tbl$factor_fc[1:25],
+  influ_tbl$sumScaled[1:25]+0.005,
+  influ_tbl$genename[1:25],
+  cex=0.7
+)
+```
+
+And here is the plot of the graph of these TFs:
+
+```{r , fig.width = 12, fig.height = 12}
+
+V(EB_vs_LG$influence_graph)$genename <- 
+  translate_ids(V(EB_vs_LG$influence_graph)$name,pfla_genenames)
+
+E(EB_vs_LG$influence_graph)$width <-
+  category_by_quantile(
+    E(EB_vs_LG$influence_graph)$prob,
+    newvalues = c(0.2,1,2,5)
+    )
+
+set.seed(1234)
+plot(
+  main = "Influence network",
+  EB_vs_LG$influence_graph,
+  vertex.color = V(EB_vs_LG$influence_graph)$col,
+  vertex.label = V(EB_vs_LG$influence_graph)$genename,
+  edge.width = E(EB_vs_LG$influence_graph)$width,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_lgl(EB_vs_LG$influence_graph)
+)
+
+```
+
+## Networks of germ layers
+
+We were interested in knowing whether we can see interactions between genes which are expressed at specific germ layers. For this we crossed our data with in situ hybridisation data, and decided to sub-set the LG graph.
+
+First we generate logicals to retrieve the genes that are expressed in ectodeerm, in mesoderm, and in endoderm respectively.
+
+```{r}
+ecto_genes <- which(
+  V(pfla_LG_graph2)$germlayer== "Ectoderm")
+
+meso_genes <- which(
+  V(pfla_LG_graph2)$germlayer== "Mesoderm" |
+  V(pfla_LG_graph2)$germlayer=="EctoMeso" |
+  V(pfla_LG_graph2)$germlayer=="EndoMeso" |
+  V(pfla_LG_graph2)$germlayer== "All" &
+  V(pfla_LG_graph2)$name != "TCONS_00004384"# this gene is not connected to anything
+)
+
+endo_genes <- which(
+  V(pfla_LG_graph2)$germlayer== "Endoderm" |
+  V(pfla_LG_graph2)$germlayer=="EndoEcto" |
+  V(pfla_LG_graph2)$germlayer=="EndoMeso" |
+  V(pfla_LG_graph2)$germlayer== "All"
+) 
+```
+
+We subsetted the LG graph
+
+```{r}
+#ectoderm
+ecto_graph <- induced_subgraph(
+  pfla_LG_graph2,
+  vids = ecto_genes,
+  impl = "auto"
+)
+
+V(ecto_graph)$genename <- translate_ids(x = V(ecto_graph)$name , dict = pfla_ISH[,c(1,4)])
+ecto_graph$weight <- cut(E(ecto_graph)$width,breaks = quantile(E(ecto_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(ecto_graph)$col[V(ecto_graph)$col == ""] <- "lightgray"
+
+#mesoderm
+meso_graph <- induced_subgraph(
+  pfla_LG_graph2,
+  vids = meso_genes,
+  impl = "auto"
+)
+
+V(meso_graph)$genename <- translate_ids(x = V(meso_graph)$name , dict = pfla_ISH[,c(1,4)])
+meso_graph$weight <- cut(E(meso_graph)$width,breaks = quantile(E(meso_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(meso_graph)$col[V(meso_graph)$col == ""] <- "lightgray"
+
+#endoderm
+endo_graph <- induced_subgraph(
+  pfla_LG_graph2,
+  vids = endo_genes,
+  impl = "auto"
+)
+
+V(endo_graph)$genename <- translate_ids(x = V(endo_graph)$name , dict = pfla_ISH[,c(1,4)])
+endo_graph$weight <- cut(E(endo_graph)$width,breaks = quantile(E(endo_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(endo_graph)$col[V(endo_graph)$col == ""] <- "lightgray"
+```
+
+And finally we plot the graphs
+
+```{r, fig.width = 8, fig.height = 24}
+par(mfrow = c(3,1))
+#ectoderm
+plot(
+  main = "Ectoderm graph",
+  ecto_graph,
+  vertex.color = V(ecto_graph)$germlayer_col,
+  vertex.label = V(ecto_graph)$genename,
+  vertex.size = 8,
+  edge.width = ecto_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(ecto_graph)
+)
+
+#mesoderm
+plot(
+  main = "Mesoderm graph",
+  meso_graph,
+  vertex.color = V(meso_graph)$germlayer_col,
+  vertex.label = V(meso_graph)$genename,
+  vertex.size = 8,
+  edge.width = meso_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(meso_graph)
+)
+
+#endoderm
+plot(
+  main = "Endoderm graph",
+  endo_graph,
+  vertex.color = V(endo_graph)$germlayer_col,
+  vertex.label = V(endo_graph)$genename,
+  vertex.size = 8,
+  edge.width = endo_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(endo_graph)
+)
+par(mfrow = c(1,1))
+```
+
+Since we detected a relationship between centrality in the graph and expression ubiquity, we decided to see if these differences can also be detected at the gene annotation level by having a look at the GO terms of the TFs in LG, sorted and classified by their level of centrality in the graph.
+
+First we retrieve the TFs and their values of centrality, and have a look at their distribution of values. 
+
+```{r}
+
+tfs_centr <- unlist(pfla_LG_stats$Centrality_per_TFclass[-51]) # remove non-TFs
+
+names(tfs_centr) <- sub(".*TCONS_","TCONS_",names(tfs_centr))
+
+plot(density(tfs_centr)) + abline(v=quantile(tfs_centr))
+```
+
+One possible approximation could be, as seen in the plot, by using quantiles. We will classify the TFs based on these quantiles, group them in a list, and do the GO term analysis.
+
+```{r, fig.width = 12, fig.height = 8}
+qs <- cut(tfs_centr, breaks = quantile(tfs_centr), labels = FALSE, include.lowest = TRUE)
+
+grouped_tfs <- split(names(tfs_centr), qs)
+
+names(grouped_tfs) <- c("low_central","low_mid","mid_high","high_central")
+
+gos_by_tfcentr <- getGOs(
+  genelist = grouped_tfs,
+  gene_universe = names(tfs_centr),
+  alg = "elim",
+  gene2GO = pfla_id_GO
+)
+
+plot_grid(
+  gos_by_tfcentr$GOplot$low_central,
+  gos_by_tfcentr$GOplot$low_mid,
+  gos_by_tfcentr$GOplot$mid_high,
+  gos_by_tfcentr$GOplot$high_central,
+  ncol = 2
+)
+```
+
+## Save the Data
+
+We will save the data now:
+
+```{r}
+save(
+  # Attributes
+  pfla_attributes_list,
+  pfla_tfs_graph_analysis,
+  pfla_tdhk,
+  pfla_tfeg,
+  pfla_funcat,
+  # Early Blastula
+  pfla_EB_nw,
+  pfla_EB_nw2,
+  pfla_EB_parsenetwork,
+  pfla_EB_graph,
+  pfla_EB_graph2,
+  pfla_EB_stats,
+  # Late Gastrula
+  pfla_LG_nw,
+  pfla_LG_nw2,
+  pfla_LG_parsenetwork,
+  pfla_LG_graph,
+  pfla_LG_graph2,
+  pfla_LG_stats,
+  # Network comparison
+  EB_vs_LG,
+  file = "outputs/rda/graph_analysis.rda"
+)
+```
+
+
+```{r echo = FALSE}
+pdf(
+  file = "graphics/ananse_suppl_A_to_F.pdf",
+  width = 10,
+  height = 6
+)
+## suppl
+par(mfrow = c(2,4))
+
+# Num Genes Network
+barplot(
+  as.data.frame(t(EB_vs_LG$comparison_table[,2:3]))[,1],
+  main = "Number of Genes per Network",
+  names.arg = c("EB","LG"),
+  col = c(col_a,col_b),
+)
+
+# Num TFs network
+barplot(
+  c(
+    pfla_EB_stats$num_active_TFs,
+    pfla_LG_stats$num_active_TFs
+  ),
+  main = "Number of TFs in each network",
+  col = c(col_a,col_b),
+  names.arg = c("EB","LG")
+)
+
+# Num connections per target gene
+boxplot(
+  main = "connections per\ntarget gene",
+  list(
+    c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_a),
+    c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_b)
+  ),
+  names = c("\nEarly\nBlastula", "\nLate\nGastrula"),
+  col = c(col_a,col_b),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      x = c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_a),
+      y = c(EB_vs_LG$connections_per_tgt_gene$connects_per_tgt_gene_b)
+    )$p.value
+  )
+)
+
+# Number of self-reg TFs
+barplot(
+  main = "Number of\nself-regulating TFs",
+  height = c(
+    EB_vs_LG$comparison_table$a[EB_vs_LG$comparison_table$metric == "Num Self-Regulated TFs"],
+    EB_vs_LG$comparison_table$b[EB_vs_LG$comparison_table$metric == "Num Self-Regulated TFs"]
+  ),
+  names.arg = c("Early\nBlastula", "Late\nGastrula"),
+  col = c(col_a,col_b),
+)
+
+# Changes Centrality in transdev - scatter
+plot(
+  main = "Changes in trans-dev centrality across networks",
+  x = EB_vs_LG$transdev_centrality_across_networks$a,
+  y = EB_vs_LG$transdev_centrality_across_networks$b,
+  xlab="Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 19,
+  cex = 0.75,
+  col = alpha("#1A9A83",0.25)
+)
+
+# Changes Centrality in transdev - foldchange
+plot(
+  main = "Foldchange in centrality of trans-devs",
+  sort(
+    EB_vs_LG$transdev_centrality_across_networks$b /
+      EB_vs_LG$transdev_centrality_across_networks$a
+  ),
+  col = alpha("#1A9A83",0.5),
+  ylab = "foldchange centrality"
+)
+
+#relative outdegree cdf
+plot(
+  seq(1:length(eb_inout_ratio)),
+  eb_inout_ratio,
+  main = "Relative outdegree",
+  col = col_a,
+  type = "l",
+  xlab = "",
+  ylab = "% emitting connections",
+  lwd = 2,
+  ylim = c(0,1)
+)
+
+lines(
+  seq(1:79),
+  lg_inout_ratio[1:79],
+  col = col_b,
+  lwd = 2
+)
+par(mfrow = c(1,1))
+dev.off()
+
+save_plot(
+  file = "graphics/ananse_suppl_G.pdf",
+  plot_grid(
+    pfla_nws_TFs_GOs$GOplot$TFs_EB,
+    pfla_nws_TFs_GOs$GOplot$TFs_LG,
+    pfla_nws_TFs_GOs$GOplot$TFs_common,
+    ncol = 1
+  ),
+  base_width = 8,
+  base_height = 8
+)
+
+pdf(
+  file = "graphics/ananse_suppl_H.pdf",
+  width = 5,
+  height = 5
+)
+# Venn target genes
+display_venn(
+  x,
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = c(col_a, col_b),
+  # Numbers
+  cex = .9,
+  fontface = "italic",
+  # Set names
+  category.names = c("EB" , "LG"),
+  cat.cex = 1,
+  cat.pos = 180,
+  cat.fontface = "bold",
+  cat.default.pos = "outer"
+)
+dev.off()
+
+save_plot(
+  filename = "graphics/ananse_suppl_I.pdf",
+  plot_grid(
+    EB_vs_LG$GOs_targets$GOplot$targets_exclusive_a,
+    EB_vs_LG$GOs_targets$GOplot$targets_exclusive_b,
+    EB_vs_LG$GOs_targets$GOplot$targets_common_ab,
+    ncol = 1
+  ),
+  base_height = 8,
+  base_width = 8
+)
+
+save_plot(
+  filename = "graphics/ananse_suppl_J.pdf",
+  plot_grid(
+    funcat_EB,
+    funcat_LG,
+    ncol = 1
+  ),
+  base_height = 20,
+  base_width = 6
+)
+
+pdf(
+  file = "graphics/ananse_suppl_K.pdf",
+  width = 5,
+  height = 5
+)
+barplot(
+  main="Post-gastrulation genes\nin network",
+  height=c(
+    EB_vs_LG[[11]][1]/length(EB_vs_LG$target_genes$targets_exclusive_a)*100,
+    EB_vs_LG[[11]][2]/length(EB_vs_LG$target_genes$targets_exclusive_b)*100
+  ),
+  col = c(
+    col_a,
+    col_b
+  ),
+  names=c("EB", "LG"),
+  ylab="gene percent",
+  ylim = c(0,65),
+  las=1
+)
+dev.off()
+
+pdf(
+  file = "graphics/ananse_suppl_L_M_N.pdf",
+  width = 8,
+  height = 20
+)
+set.seed(1234)
+par(mfrow = c(3,1))
+#ectoderm
+plot(
+  main = "Ectoderm graph",
+  ecto_graph,
+  vertex.color = V(ecto_graph)$germlayer_col,
+  vertex.label = V(ecto_graph)$genename,
+  vertex.size = 8,
+  edge.width = ecto_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(ecto_graph)
+)
+
+#mesoderm
+plot(
+  main = "Mesoderm graph",
+  meso_graph,
+  vertex.color = V(meso_graph)$germlayer_col,
+  vertex.label = V(meso_graph)$genename,
+  vertex.size = 8,
+  edge.width = meso_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(meso_graph)
+)
+
+#endoderm
+plot(
+  main = "Endoderm graph",
+  endo_graph,
+  vertex.color = V(endo_graph)$germlayer_col,
+  vertex.label = V(endo_graph)$genename,
+  vertex.size = 8,
+  edge.width = endo_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_fr(endo_graph)
+)
+par(mfrow = c(1,1))
+dev.off()
+
+save_plot(
+  file = "graphics/ananse_suppl_Q.pdf",
+  plot_grid(
+    gos_by_tfcentr$GOplot$low_central,
+    gos_by_tfcentr$GOplot$low_mid,
+    gos_by_tfcentr$GOplot$mid_high,
+    gos_by_tfcentr$GOplot$high_central,
+    ncol = 1
+  ),
+  base_width = 8,
+  base_height = 8
+)
+
+pdf(
+  file = "graphics/ananse_suppl_R.pdf",
+  width = 8,
+  height = 8
+)
+set.seed(1234)
+plot(
+  main = "Influence network",
+  EB_vs_LG$influence_graph,
+  vertex.color = V(EB_vs_LG$influence_graph)$col,
+  vertex.label = V(EB_vs_LG$influence_graph)$genename,
+  edge.width = E(EB_vs_LG$influence_graph)$width,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout_with_lgl(EB_vs_LG$influence_graph)
+)
+
+# plots of correlation changes in centrality tfs and transdev
+pdf(
+  file = "graphics/mainfig_E.pdf",
+  width = 4.5,
+  height = 4.5
+)
+plot(
+  main = "Changes in TF centrality across networks",
+  x = EB_vs_LG$tf_centrality_across_networks$a,
+  y = EB_vs_LG$tf_centrality_across_networks$b,
+  xlab = "Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 19,
+  cex = 0.75,
+  col = alpha("#E58745",0.25)
+)
+
+# points(
+#   x = EB_vs_LG$tf_centrality_across_networks$a[EB_vs_LG$tf_centrality_across_networks$id == "TCONS_00009611"],
+#   y = EB_vs_LG$tf_centrality_across_networks$b[EB_vs_LG$tf_centrality_across_networks$id == "TCONS_00009611"],
+#   pch = 21,
+#   col = "black",
+#   bg = "#E58745"
+# )
+# 
+# text(
+#   x = EB_vs_LG$tf_centrality_across_networks$a[EB_vs_LG$tf_centrality_across_networks$id == "TCONS_00009611"],
+#   y = EB_vs_LG$tf_centrality_across_networks$b[EB_vs_LG$tf_centrality_across_networks$id == "TCONS_00009611"],
+#   "FoxA",
+#   pos = 3
+# )
+dev.off()
+
+## Centrality per TF class
+pdf(
+  file = "graphics/mainfig_F.pdf",
+  width = 12,
+  height = 10
+)
+par(mfrow = c(2,1))
+plot_centrality_TFclass(
+  s = pfla_EB_stats$Centrality_per_TFclass,
+  f = allTFclasses_col,
+  # sub_s = topclasses,
+  main = "Centrality per TF Class - EB",
+  ylim = c(0.00005,0.00012),
+  cex = 0.8
+)
+
+plot_centrality_TFclass(
+  s = pfla_LG_stats$Centrality_per_TFclass,
+  f = allTFclasses_col,
+  # sub_s = topclasses,
+  main = "Centrality per TF Class - LG",
+  ylim = c(0.00005,0.00012),
+  cex = 0.8
+)
+par(mfrow = c(1,1))
+dev.off()
+
+
+# ananse influence
+pdf(
+  file = "graphics/mainfig_G.pdf",
+  width = 4.5,
+  height = 4.5
+)
+plot(
+  influ_tbl$factor_fc,
+  influ_tbl$sumScaled,
+  pch=19,
+  col=influ_tbl$col,
+  bg="black",
+  xlab="log2fold change of TF",
+  ylab="ANANSE influence score",
+  main="Main factors",
+  bty="n",
+  xlim=c(0,max(influ_tbl$factor_fc)+1)
+)
+text(
+  influ_tbl$factor_fc[1:25],
+  influ_tbl$sumScaled[1:25]+0.005,
+  influ_tbl$genename[1:25],
+  cex=0.7,
+  pos = 2
+)
+dev.off()
+dev.off()
+```

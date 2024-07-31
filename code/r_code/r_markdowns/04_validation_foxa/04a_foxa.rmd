@@ -1,0 +1,721 @@
+---
+title: "Ptychodera Cisreg Development: comparative and network analyses"
+author: "Alberto Perez-Posada"
+date: "4/30/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will Explore the similarities of several pair of stages between Ptychodera, Amphioxus, and Sea urchin, with an emphasis on the expression of FoxA.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(circlize)
+library(ComplexHeatmap)
+library(cowplot)
+library(dplyr)
+library(EDASeq)
+library(ggplot2)
+library(ggplotify)
+library(ggpubr)
+library(gridExtra)
+library(stringr)
+library(tidyverse)
+require(colorspace)
+require(stringr)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load Data
+
+We will first load the data of our three species:
+
+```{r dataload_spp}
+# Ptychodera analyses
+load("outputs/rda/deseq2.rda")
+# Amphioxus reanalysis
+load("outputs/rda/blan_reanalysis.rda")
+# Purple Sea Urchin reanalysis
+load("outputs/rda/spur_reanalysis.rda")
+```
+
+We will load the TF data as well as the comparative data to explore commonalities across the three species.
+
+```{r}
+# General
+load("outputs/rda/TF_annotation.rda")
+# ptychodera
+load("outputs/rda/tf_analysis.rda")
+# age
+load("outputs/rda/geneage.rda")
+# amphioxus
+load("outputs/rda/tf_analysis_blan.rda")
+# sea urchin
+load("outputs/rda/tf_analysis_spur.rda")
+# comparative
+load("outputs/rda/species_comparison.rda")
+
+pfla_genenames <-
+  read.delim2(
+    file = "outputs/functional_annotation/eggnog/emapper.annotations",
+    skip = 3,
+    header = TRUE
+  )[,c(1,5,13)]
+pfla_genenames <- pfla_genenames[pfla_genenames$predicted_gene_name != "",]
+```
+
+## Comparison of Transcription Factor profiles throughout development
+
+We will plot all the TF barplots together in one grid:
+
+```{r ,fig.width = 12, fig.height = 12, warning = FALSE, message = FALSE}
+ggarrange(
+  pfla_tfs_ngenes_plot,
+  spur_tfs_ngenes_plot,
+  blan_tfs_ngenes_plot,
+  pfla_tfs_expgenes_plot,
+  spur_tfs_expgenes_plot,
+  blan_tfs_expgenes_plot,
+  pfla_tf_EXPNGEN_plot,
+  spur_tf_EXPNGEN_plot,
+  blan_tf_EXPNGEN_plot,
+  ncol=3,
+  nrow=3,
+  common.legend=T
+)
+```
+
+# Comparison of 1-to-1 TFs using blast best RBHs
+
+We will use Blast reciprocal best hits (RBHs or rbhs) as a proxy for orthology between the two pairs of species.
+
+```{r dataload_1to1}
+# orthofinder 1to1 orthologues
+OF_pfla_blan <- read.delim2("outputs/comparative/20240404_orthofinder/one_to_one_orthologues/1to1_pfla_blan.tsv", header = TRUE)
+OF_pfla_spur <- read.delim2("outputs/comparative/20240404_orthofinder/one_to_one_orthologues/1to1_pfla_spur.tsv", header = TRUE)
+
+# blast reciprocal best hits 1to1 orthologues
+rbh_pfla_blan <- read.delim2("outputs/comparative/rbh/pfla_blan_rbh.tsv", header = FALSE)
+rbh_pfla_blan[,2] <- gsub(" ","",rbh_pfla_blan[,2])
+rbh_pfla_blan[,1] <- gsub("\\.p[0-9]+","",rbh_pfla_blan[,1])
+
+rbh_pfla_spur <- read.delim2("outputs/comparative/rbh/pfla_spur_rbh.tsv", header = FALSE)
+rbh_pfla_spur[,2] <- gsub(" ","",rbh_pfla_spur[,2])
+rbh_pfla_spur[,1] <- gsub("\\.p[0-9]+","",rbh_pfla_spur[,1])
+```
+
+## Ptychodera and Sea Urchin
+
+We will subset the datasets to keep only the TFs of each species.
+
+```{r}
+pf_tfs <- pfla_rna_counts[rownames(pfla_rna_counts) %in% pfla_tfs$id,]
+sp_tfs <- spur_vsd[rownames(spur_vsd) %in% spur_tfs$id,]
+
+# Samples for rowmeans_by repl
+pf_samples = levels(condition_x)
+sp_samples = unique(sub("_.$", "", colnames(sp_tfs)))
+
+# Family/orthology data
+pf_sp_o = unique(OF_pfla_spur)
+```
+
+We transform the data:
+
+```{r}
+pf_tfs = qnorm(pf_tfs)
+pf_tfs = tidyup(pf_tfs, highlyvariable = FALSE)
+pf_tfs = rep2means(pf_samples,pf_tfs)
+
+sp_tfs = qnorm(sp_tfs)
+sp_tfs = tidyup(sp_tfs, highlyvariable = FALSE)
+sp_tfs = rep2means(sp_samples,sp_tfs)
+```
+
+And we merge them using the `comparABle` functions, keeping common one-to-one TF orthologues.
+
+```{r}
+# MERGE
+pf_sp_o = pair2id(pf_sp_o)
+pf_sp_merge_ab_tfs <- mergedata(pf_tfs,sp_tfs,pf_sp_o)
+```
+
+We generate here the pairwise correlations:
+
+```{r, fig.width = 3.5, fig.height = 3.5}
+# CORRELATIONS
+pf_sp_rbh_cors_tfs <- rawcorsp(pf_sp_merge_ab_tfs$a_o,pf_sp_merge_ab_tfs$b_o)
+
+pf_sp_tfs_jsd_rel <- relativise(pf_sp_rbh_cors_tfs$js)
+
+pf_sp_tfs_jsd_hm <- 
+  Heatmap(
+    pf_sp_tfs_jsd_rel,
+    name = "JSD\nPf/Sp", 
+    cluster_rows = F, cluster_columns = F, 
+    show_row_names = F, show_column_names = F,
+    col = brewer.pal(10,"RdBu"),
+    column_names_gp = gpar(cex = .8), row_names_gp = gpar(cex = .8),
+    left_annotation = devstages_ha_rows(rownames(pf_sp_tfs_jsd_rel)),
+    top_annotation = quick_ha(colnames(pf_sp_tfs_jsd_rel),"Purple-Orange", rev = TRUE)
+    )
+```
+
+## Ptychodera and Amphioxus
+
+We will subset the datasets to keep only the TFs of each species.
+
+```{r}
+# load tfs
+pf_tfs <- pfla_rna_counts[rownames(pfla_rna_counts) %in% pfla_tfs$id,]
+blan_tfs$id <- translate_ids(sub("_..*","",blan_tfs$id),bl_brala)
+bl_tfs <- blan_counts[rownames(blan_counts) %in% blan_tfs$id,]
+
+# Samples for rowmeans_by repl
+pf_samples = levels(condition_x)
+bl_samples = unique(sub("_.$", "", colnames(bl_tfs)))
+
+# Family/orthology data
+pf_bf_o = unique(rbh_pfla_blan)
+```
+
+We transform the data:
+
+```{r}
+pf_tfs = qnorm(pf_tfs)
+pf_tfs = tidyup(pf_tfs, highlyvariable = FALSE) # remove genes with 0 tpms
+pf_tfs = rep2means(pf_samples,pf_tfs)
+
+bl_tfs = qnorm(bl_tfs)
+bl_tfs = tidyup(bl_tfs, highlyvariable = FALSE)
+bl_tfs = rep2means(bl_samples,bl_tfs) # remove genes with 0 tpms
+```
+
+And we merge them using the `comparABle` functions, keeping common one-to-one TF orthologues.
+
+```{r}
+# MERGE
+pf_bf_o = pair2id(pf_bf_o)
+pf_bl_merge_ab_tfs <- mergedata(pf_tfs,bl_tfs,pf_bf_o)
+```
+
+We generate here the pairwise correlations:
+
+```{r, fig.width = 3.5, fig.height = 3.5}
+# CORRELATIONS
+pf_bl_rbh_cors_tfs <- rawcorsp(pf_bl_merge_ab_tfs$a_o,pf_bl_merge_ab_tfs$b_o)
+pf_bl_tfs_jsd_rel <- relativise(pf_bl_rbh_cors_tfs$js)
+
+pf_bl_tfs_jsd_hm <- 
+  Heatmap(
+    pf_bl_tfs_jsd_rel,
+    name = "JSD\nPf/Bl", 
+    cluster_rows = F, cluster_columns = F, 
+    show_row_names = F, show_column_names = F, 
+    col = brewer.pal(10,"RdBu"),
+    column_names_gp = gpar(cex = .8), row_names_gp = gpar(cex = .8),
+    left_annotation = devstages_ha_rows(rownames(pf_bl_tfs_jsd_rel)),
+    top_annotation = quick_ha(colnames(pf_bl_tfs_jsd_rel),"Purple-Yellow", rev = TRUE)
+    )
+```
+
+```{r, fig.width = 5, fig.height = 2.5}
+draw(pf_sp_tfs_jsd_hm+pf_bl_tfs_jsd_hm)
+```
+
+
+## Comparing gastrulas at the TF level:
+
+### Pfla and Spur
+From here we will compare ptychodera Early Gastrula with Sea Urchin Mesenchyme Blastula.
+
+```{r}
+# COMMON GENES IN CORRELATIONS
+pf_sp_rbh <- pair2id(unique(rbh_pfla_spur))
+pf_sp_merge_abl_tfs_rbh <- mergedata(pf_tfs,sp_tfs,o = pf_sp_rbh)
+pf_sp_rbh_cors_tfs_rbh <- rawcorsp(pf_sp_merge_abl_tfs_rbh$a_o,pf_sp_merge_abl_tfs_rbh$b_o)
+
+pf_sp_stages_tfs = 
+  list(
+    a = c("04_EG","04_EG"),
+    b = c("03_MeBl_24h1","03_MeBl_24h2")
+  )
+
+pf_sp_common_tfs_cor <- get_high_cor_genes(
+  mat = pf_sp_rbh_cors_tfs_rbh$js,
+  a_o = pf_sp_merge_abl_tfs_rbh$a_o,
+  b_o = pf_sp_merge_abl_tfs_rbh$b_o,
+  stages = pf_sp_stages_tfs,
+  o = pf_sp_rbh
+)
+```
+
+And here the plots:
+
+```{r, fig.width = 3.5, fig.height = 3.5}
+pf_sp_hco = pf_sp_common_tfs_cor$hicor_matrices$cor_04_EG__03_MeBl_24h2
+pf_sp_hco_lm_wls = pf_sp_common_tfs_cor$hicor_topgenes$cor_04_EG__03_MeBl_24h2$lm
+pf_sp_filt = which(rownames(pf_sp_hco) %in% pf_sp_common_tfs_cor$hicor_topgenes$cor_04_EG__03_MeBl_24h2$top_genes$one2one )
+
+foxa <- "TCONS_00009611"
+pf_sp_foxa_pair <- pf_sp_rbh$one2one[pf_sp_rbh$a==foxa]
+pf_sp_foxa_idx <- which(row.names(pf_sp_hco) == pf_sp_foxa_pair)
+
+pf_sp_scatter_foxa <- 
+  ggplot(data = pf_sp_hco, aes(x = a, y = b)) +
+  geom_point(pch = 20, col = rgb(0.1,0.1,0.1,0.2)) +
+  geom_abline(slope = pf_sp_hco_lm_wls$coefficients[2], intercept = pf_sp_hco_lm_wls$coefficients[1], col = gb_col[["blue2"]], lwd = 1.25) +
+  geom_point(data = pf_sp_hco[pf_sp_filt,], pch = 21, col = "tomato3", bg = "tan1", size = 3) +
+  geom_point(data = pf_sp_hco[pf_sp_foxa_idx,], pch = 21,  col = gb_col[["blue2"]], bg = gb_col[["blue1"]], size = 3.5) +
+  geom_text(aes(x = pf_sp_hco[pf_sp_foxa_idx,1]+0.05, y = pf_sp_hco[pf_sp_foxa_idx,2]+0.05, label = "FoxA"),
+            col = "black", size = 4, hjust = 0, vjust = 0) +
+  labs(title = "P. flava LG / S. purpuratus MeBl") +
+  theme_classic()+
+  labs(x = "P. flava (log counts)", y = "S. purpuratus (log counts)")
+```
+Some of these TFs are driving similarities between these two stages, and FoxA is found to be highly expressed as well.
+
+### Pfla and Amphi
+
+From here we will compare ptychodera Late Gastrula with amphioxus 18h.
+
+```{r}
+# COMMON GENES IN CORRELATIONS
+pf_bl_rbh <- pair2id(unique(rbh_pfla_blan))
+pf_bl_merge_ab_tfs_rbh <- mergedata(pf_tfs,bl_tfs,o = pf_bl_rbh)
+pf_bl_rbh_cors_tfs_rbh <- rawcorsp(pf_bl_merge_ab_tfs_rbh$a_o,pf_bl_merge_ab_tfs_rbh$b_o)
+
+pf_bl_stages_tfs = 
+ list(
+    a = c("04_EG","05_MG","05_MG","06_MG","07_LG","09_He"),
+    b = c("06_11h","07_15h","08_18h","08_18h","08_18h","14_Premet")
+  )
+
+pf_bl_common_tfs_cor <- get_high_cor_genes(
+  mat = pf_bl_rbh_cors_tfs_rbh$js,
+  a_o = pf_bl_merge_ab_tfs_rbh$a_o,
+  b_o = pf_bl_merge_ab_tfs_rbh$b_o,
+  stages = pf_bl_stages_tfs,
+  o = pf_bl_rbh
+)
+```
+
+```{r, fig.width = 3.5, fig.height = 3.5}
+pf_bl_hco = pf_bl_common_tfs_cor$hicor_matrices$cor_07_LG__08_18h
+pf_bl_hco_lm_wls = pf_bl_common_tfs_cor$hicor_topgenes$cor_07_LG__08_18h$lm
+pf_bl_filt = which(rownames(pf_bl_hco) %in% pf_bl_common_tfs_cor$hicor_topgenes$cor_07_LG__08_18h$top_genes$one2one )
+
+foxa <- "TCONS_00009611"
+pf_bl_foxa_pair <- pf_bl_rbh$one2one[pf_bl_rbh$a==foxa]
+pf_bl_foxa_idx <- which(row.names(pf_bl_hco) == pf_bl_foxa_pair)
+
+pf_bl_scatter_foxa <- 
+  ggplot(data = pf_bl_hco, aes(x = a, y = b)) +
+  geom_point(pch = 20, col = rgb(0.1,0.1,0.1,0.2)) +
+  geom_abline(slope = pf_bl_hco_lm_wls$coefficients[2], intercept = pf_bl_hco_lm_wls$coefficients[1], col = gb_col[["blue2"]], lwd = 1.25) +
+  geom_point(data = pf_bl_hco[pf_bl_filt,], pch = 21, col = "tomato3", bg = "tan1", size = 3) +
+  geom_point(data = pf_bl_hco[pf_bl_foxa_idx,], pch = 21, col = gb_col[["blue2"]], bg = gb_col[["blue1"]], size = 3.5) +
+  geom_text(aes(x = pf_bl_hco[pf_bl_foxa_idx,1]+0.05, y = pf_bl_hco[pf_bl_foxa_idx,2]+0.05, label = "FoxA"),
+            col = "black", size = 4, hjust = 0, vjust = 0) +
+  labs(title = "P. flava LG / B. lanceolatum 18h") +
+  theme_classic()+
+  labs(x = "P. flava (log counts)", y = "B. lanceolatum (log counts)")
+```
+
+Some of these TFs are driving similarities between these two stages, and FoxA is found among them.
+
+```{r, fig.width = 7, fig.height = 3.5}
+plot_grid(
+  pf_sp_scatter_foxa,
+  pf_bl_scatter_foxa,
+  ncol = 2
+  )
+```
+
+## Expression of FoxA in each species:
+
+```{r, fig.width = 7, fig.height = 2}
+# plot 1
+pfla_foxa <- 
+  ggplot(
+    data = data.frame(
+      stages_pfla = 1:16,
+      foxa = relativise(pf_tfs[foxa,]) # as.numeric(scale(as.numeric(pf_tfs[foxa,])))
+    ), 
+    aes(x = stages_pfla, y = foxa)
+  ) +
+  geom_line(lwd = 2, col = gb_col[["blue2"]]) +
+  ylab("relative expression")+
+  scale_x_continuous(breaks = 1:16, labels = rep("",16))+
+  theme_classic()+
+  ggtitle("P. flava")+
+  xlab("Development")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# plot 2
+spur_foxa <-
+  ggplot(
+    data = data.frame(
+      stages_spur = 1:17,
+      foxa = as.numeric(relativise(pf_sp_merge_abl_tfs_rbh$b_o[pf_sp_foxa_pair,]))# t(scale(t(pf_sp_merge_abl_tfs_rbh$b_o)))[rownames(pf_sp_merge_abl_tfs_rbh$b_o) == pf_sp_foxa_pair,]
+    ), 
+    aes(x = stages_spur, y = foxa)
+  ) +
+  geom_line(lwd = 2, col = gb_col[["blue2"]]) +
+  scale_x_continuous(breaks = 1:17, labels = rep("",17))+
+  theme_classic()+
+  ggtitle("S. purpuratus")+
+  xlab("Development")+
+  ylab(NULL)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+# plot 2
+blan_foxa <-
+  ggplot(
+    data = data.frame(
+      stages_blan = 1:12,
+      foxa = as.numeric(relativise(pf_bl_merge_ab_tfs$b_o[pf_bl_foxa_pair,]))# t(scale(t(pf_bl_merge_ab_tfs$b_o)))[rownames(pf_bl_merge_ab_tfs$b_o) == foxa_pair,]
+    ), 
+    aes(x = stages_blan, y = foxa)
+  ) +
+  geom_line(lwd = 2, col = gb_col[["blue2"]]) +
+  scale_x_continuous(breaks = 1:12, labels = rep("",12))+
+  theme_classic()+
+  ggtitle("B. lanceolatum")+
+  xlab("Development")+
+  ylab(NULL)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+plot_grid(
+  pfla_foxa,
+  spur_foxa,
+  blan_foxa,
+  nrow = 1
+)
+```
+
+## FoxA in the P.flava networks
+
+We will load the graph analysis data:
+
+```{r}
+library(igraph)
+load("outputs/rda/graph_analysis.rda")
+```
+
+```{r, fig.width = 3.5, fig.height=3.5}
+foxa_centr <- as_ggplot( as.grob( function(){
+  X = relativise(EB_vs_LG$centrality_changes_TFs$a)
+  Y = relativise(EB_vs_LG$centrality_changes_TFs$b)
+  
+  plot(
+    main = "Changes in centrality of TFs",
+    x = X,
+    y = Y,
+    pch = 19,
+    col = alpha(gb_col[["black1"]],0.25),
+    bty="n",
+    xlab = "Early Gastrula",
+    ylab = "Late Gastrula"
+  )
+  
+  points(
+    x = X[rownames(EB_vs_LG$centrality_changes_TFs) == foxa],
+    y = Y[rownames(EB_vs_LG$centrality_changes_TFs) == foxa],
+    pch = 21, cex = 1.5,
+    col = gb_col[["blue2"]],
+    bg = gb_col[["blue1"]]
+  )
+  
+  text(
+    x = X[rownames(EB_vs_LG$centrality_changes_TFs) == foxa],
+    y = Y[rownames(EB_vs_LG$centrality_changes_TFs) == foxa],
+    "FoxA",
+    pos = 3
+  )
+}))
+```
+
+```{r}
+# influence
+
+inf <- EB_vs_LG$influence_results$influence_table
+
+# 'translate' the gene ids to known gene names using a small function
+inf$genename <- 
+  translate_ids(x = inf$factor,dict = pfla_genenames)
+
+foxa_inf <-
+  as_ggplot( as.grob( function(){
+    
+    plot(
+      inf$factor_fc,
+      inf$influence_score,
+      pch=19,
+      col=alpha(gb_col[["black1"]],0.25),
+      xlab="log2fold change of TF",
+      ylab="ANANSE influence score",
+      main="Main factors",
+      bty="n",
+      xlim=c(0,max(inf$factor_fc)+1)
+    )
+    points(
+      inf$factor_fc[inf$factor == foxa],
+      inf$influence_score[inf$factor == foxa],
+      pch = 21, cex = 1.5,
+      col = gb_col[["blue2"]],
+      bg = gb_col[["blue1"]]
+    )
+    text(
+      inf$factor_fc[inf$factor == foxa],
+      inf$influence_score[inf$factor == foxa],
+      "FoxA",
+      pos = 3
+    )
+  }))
+```
+
+```{r, fig.width = 7, fig.height = 3.5}
+plot_grid(
+  foxa_centr,
+  foxa_inf,
+  ncol = 2
+)
+```
+
+
+## Well-known networks of development from deuterostomes in Ptychodera 
+```{r}
+genes_kernels <- 
+  read.table(
+    "outputs/functional_annotation/grn_homologs/genes_orthologues_grn_kernels.tsv",
+    sep = "\t",
+    header = TRUE
+    )
+```
+### Endomesodermal kernel
+
+The Ptychodera homologs of the endomesodermal kernel described in Sea Urchins, expressed and interacting in the Late Gastrula network:
+
+```{r, fig.width = 5, fig.height = 5}
+# Load orthologs of endomesodermal kernel
+genes_endomesod <-
+  genes_kernels[
+    genes_kernels$kernel == "endomesoderm",
+  ]
+
+# Create induced subgraph
+endomesod_graph <-
+  induced_subgraph(
+    g_LG,
+    vids = V(g_LG)[V(g_LG)$name %in% genes_endomesod$id],
+    impl = "copy_and_delete"
+  )
+endomesod_graph <- subgraph_with_top_edges_per_tg(g = endomesod_graph, top = 3, mode = "both")
+
+V(endomesod_graph)$col[V(endomesod_graph)$col==""] <- "gray"
+V(endomesod_graph)$genename <- translate_ids(x = V(endomesod_graph)$name, dict = genes_endomesod[,c(4,6)])
+
+E(endomesod_graph)$w <- as.numeric(cut(E(endomesod_graph)$weight,c(.7,quantile(E(endomesod_graph)$weight,.5),1), labels = c(1,2)))
+E(endomesod_graph)$col = tail_of(endomesod_graph,E(endomesod_graph))$col
+
+## direct genes involved
+set.seed(14)
+plot(
+  endomesod_graph,
+  vertex.color = V(endomesod_graph)$col,
+  vertex.frame.color = darken(V(endomesod_graph)$col,.5),
+  vertex.label = V(endomesod_graph)$genename,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .8,
+  edge.width = 1.5*E(endomesod_graph)$w,
+  edge.arrow.size = 0.1 * (E(endomesod_graph)$w*2),
+  edge.color = darken(E(endomesod_graph)$col),
+  # edge.color = rgb(0,0,0,0.2),
+  layout = layout_with_graphopt(endomesod_graph),
+  edge.curved = .05,
+  main = "Endomesoderm Kernel Graph"
+)
+```
+
+```{r null_p_endomesod}
+n_genes_endomesod <- length(unique(genes_endomesod$id))
+n_tfs_endomesod <- length(which( unique(genes_endomesod$id) %in% pfla_attributes_list[[2]]$id ))
+
+endomesod_null_p = 
+  ananse_null_distribution_degree(
+    g = g_LG,
+    tfs = pfla_attributes_list[[2]]$id,
+    n_genes = n_genes_endomesod,
+    n_tfs = n_tfs_endomesod
+  )
+```
+
+### Axial mesoderm kernel
+
+The Ptychodera homologs of the axial mesoderm kernel described in Chordates, expressed and interacting in the Late Gastrula network:
+
+```{r, fig.width = 5, fig.height = 5}
+# Load orthologs of axial mesoderm kernel
+genes_axmesod <- 
+  genes_kernels[
+    genes_kernels$kernel == "axial_mesoderm",
+  ]
+
+# Create induced subgraph
+axmesod_graph <-
+  induced_subgraph(
+    g_LG,
+    vids = V(g_LG)[V(g_LG)$name %in% genes_axmesod$id],
+    impl = "copy_and_delete"
+  )
+axmesod_graph <- subgraph_with_top_edges_per_tg(g = axmesod_graph, top = 3, mode = "both")
+
+V(axmesod_graph)$col[V(axmesod_graph)$col==""] <- "gray"
+V(axmesod_graph)$genename <- translate_ids(x = V(axmesod_graph)$name, dict = genes_axmesod[,c(4,6)])
+
+E(axmesod_graph)$w <- as.numeric(cut(E(axmesod_graph)$weight,c(.7,quantile(E(axmesod_graph)$weight,.5),1), labels = c(1,2)))
+E(axmesod_graph)$col = tail_of(axmesod_graph,E(axmesod_graph))$col
+
+set.seed(146)
+plot(
+  axmesod_graph,
+  vertex.color = V(axmesod_graph)$col,
+  vertex.frame.color = darken(V(axmesod_graph)$col,.5),
+  vertex.label = V(axmesod_graph)$genename,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .8,
+  edge.width = 1.5*E(axmesod_graph)$w,
+  edge.arrow.size = 0.1 * (E(axmesod_graph)$w*2),
+  edge.color = alpha(darken(E(axmesod_graph)$col),.75),
+  layout = layout_with_graphopt(axmesod_graph),
+  edge.curved = .05,
+  main = "Axial Mesoderm Kernel Graph"
+)
+```
+
+```{r null_p_axmesod}
+n_genes_axmesod <- length(unique(genes_axmesod$id))
+n_tfs_axmesod <- length(which( unique(genes_axmesod$id) %in% pfla_attributes_list[[2]]$id ))
+
+axmesod_null_p = 
+  ananse_null_distribution_degree(
+    g = g_LG,
+    tfs = pfla_attributes_list[[2]]$id,
+    n_genes = n_genes_axmesod,
+    n_tfs = n_tfs_axmesod
+  )
+```
+
+## Saving PDFs of plots
+
+```{r}
+pdf("graphics/4AB.pdf", width = 7, height = 3.5)
+draw(pf_sp_tfs_jsd_hm+pf_bl_tfs_jsd_hm)
+dev.off()
+
+pdf("graphics/4CD.pdf", width = 7, height = 3.5)
+plot_grid(
+  pf_sp_scatter_foxa,
+  pf_bl_scatter_foxa,
+  ncol = 2
+  )
+dev.off()
+pdf("graphics/4EFG.pdf", width = 7, height = 2)
+plot_grid(
+  pfla_foxa,
+  spur_foxa,
+  blan_foxa,
+  nrow = 1
+)
+dev.off()
+pdf("graphics/4HI.pdf", width = 7, height = 3.5)
+plot_grid(
+  foxa_centr,
+  foxa_inf,
+  ncol = 2
+)
+dev.off()
+
+pdf("graphics/4JK.pdf", width = 5, height = 5)
+set.seed(14)
+plot(
+  endomesod_graph,
+  vertex.color = V(endomesod_graph)$col,
+  vertex.frame.color = darken(V(endomesod_graph)$col,.5),
+  vertex.label = V(endomesod_graph)$genename,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .8,
+  edge.width = 1.5*E(endomesod_graph)$w,
+  edge.arrow.size = 0.1 * (E(endomesod_graph)$w*2),
+  edge.color = darken(E(endomesod_graph)$col),
+  # edge.color = rgb(0,0,0,0.2),
+  layout = layout_with_graphopt(endomesod_graph),
+  edge.curved = .05,
+  main = "Endomesoderm Kernel Graph"
+)
+set.seed(146)
+plot(
+  axmesod_graph,
+  vertex.color = V(axmesod_graph)$col,
+  vertex.frame.color = darken(V(axmesod_graph)$col,.5),
+  vertex.label = V(axmesod_graph)$genename,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .8,
+  edge.width = 1.5*E(axmesod_graph)$w,
+  edge.arrow.size = 0.1 * (E(axmesod_graph)$w*2),
+  edge.color = alpha(darken(E(axmesod_graph)$col),.75),
+  layout = layout_with_graphopt(axmesod_graph),
+  edge.curved = .05,
+  main = "Axial Mesoderm Kernel Graph"
+)
+dev.off()
+
+pdf("graphics/tfs_barplots_supp.pdf",width = 8, height = 8)
+ggarrange(
+  pfla_tfs_ngenes_plot,
+  spur_tfs_ngenes_plot,
+  blan_tfs_ngenes_plot,
+  pfla_tfs_expgenes_plot,
+  spur_tfs_expgenes_plot,
+  blan_tfs_expgenes_plot,
+  pfla_tf_EXPNGEN_plot,
+  spur_tf_EXPNGEN_plot,
+  blan_tf_EXPNGEN_plot,
+  ncol=3,
+  nrow=3,
+  common.legend=T
+)
+dev.off()
+```

@@ -1,1 +1,0 @@
-/home/ska/aperpos/Def_Pfla/outputs/go_blast2go/ptyFlav3_CYi_longest.mrna.fa.transdecoder.pep_clean_35854.faa_mergedWithIPSandEggNOG_annotC50_ISA0.6_ISS0.4_IEA0.2_collapsed.txt

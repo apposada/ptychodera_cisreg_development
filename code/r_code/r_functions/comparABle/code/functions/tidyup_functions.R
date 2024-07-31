@@ -76,3 +76,7 @@ pair2id <- function(x){
 #' gfam_long --> transform a csv/tsv of OF/OMA/... into long gene-gfam
 #' gfam_long(f) --> f:data.frame(gene,gfam)
 #' 
+
+relativise <- function(x) {
+  return( (x - min(x)) / (max(x) - min(x)) )
+}

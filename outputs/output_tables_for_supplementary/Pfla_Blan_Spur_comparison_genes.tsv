@@ -1,0 +1,124 @@
+X.query_name	predicted_gene_name	eggNOG.annot	comparison
+TCONS_00000865	OLIG3	Oligodendrocyte transcription factor 3	Pfla MG/Blan 18h
+TCONS_00011489	GSC	goosecoid homeobox	Pfla MG/Blan 18h
+TCONS_00013750	CACNG5	calcium channel, voltage-dependent, gamma subunit	Pfla MG/Blan 18h
+TCONS_00019856	DNASE1	deoxyribonuclease	Pfla MG/Blan 18h
+TCONS_00020192	FAM187A	family with sequence similarity 187, member A	Pfla MG/Blan 18h
+TCONS_00045168	CD5L	CD5 molecule-like	Pfla MG/Blan 18h
+TCONS_00050259	VWA5B1	von Willebrand factor A domain containing	Pfla MG/Blan 18h
+TCONS_00050627	WNT4	Ligand for members of the frizzled family of seven transmembrane receptors (By similarity)	Pfla MG/Blan 18h
+TCONS_00052595	HELT	helt bHLH transcription factor	Pfla MG/Blan 18h
+TCONS_00002237	NOS1	Produces nitric oxide (NO) (By similarity)	Pfla Metchk/Blan Premet
+TCONS_00003081	MUC12	SEA	Pfla Metchk/Blan Premet
+TCONS_00005399	PRODH2	proline dehydrogenase (oxidase) 2	Pfla Metchk/Blan Premet
+TCONS_00008407	CSMD1	c-type lectin domain family	Pfla Metchk/Blan Premet
+TCONS_00010218	SRSF4	serine arginine-rich splicing factor	Pfla Metchk/Blan Premet
+TCONS_00010599	TGFB2	Transforming growth factor beta	Pfla Metchk/Blan Premet
+TCONS_00011027	FANCL	Fanconi anemia, complementation group L	Pfla Metchk/Blan Premet
+TCONS_00013220	OTOA	Otoancorin	Pfla Metchk/Blan Premet
+TCONS_00015587	FKBPL	FK506 binding protein like	Pfla Metchk/Blan Premet
+TCONS_00016076	MAL-A8	Solute carrier family 3 (Cystine, dibasic and neutral amino acid transporters, activator of cystine, dibasic and neutral amino acid transport), member 1	Pfla Metchk/Blan Premet
+TCONS_00016106	NR5A2	nuclear receptor subfamily 5 group A member	Pfla Metchk/Blan Premet
+TCONS_00019861	MRC1	mannose receptor, C type 1	Pfla Metchk/Blan Premet
+TCONS_00021725	CENPI	Centromere protein I	Pfla Metchk/Blan Premet
+TCONS_00022583	ABCC12	ATP-binding cassette, sub-family C (CFTR MRP), member	Pfla Metchk/Blan Premet
+TCONS_00027448	C10ORF82	chromosome 10 open reading frame 82	Pfla Metchk/Blan Premet
+TCONS_00028086	CCNB2	Cyclin B2	Pfla Metchk/Blan Premet
+TCONS_00028923	INTS3	Integrator complex subunit 3	Pfla Metchk/Blan Premet
+TCONS_00030550	TSPAN5	tetraspanin	Pfla Metchk/Blan Premet
+TCONS_00031190	HGFAC	coagulation factor XII (Hageman factor)	Pfla Metchk/Blan Premet
+TCONS_00032264	HOXA5	homeobox	Pfla Metchk/Blan Premet
+TCONS_00032533	ANPEP	Aminopeptidase	Pfla Metchk/Blan Premet
+TCONS_00034310	TREH	trehalase (brush-border membrane glycoprotein)	Pfla Metchk/Blan Premet
+TCONS_00041057	RHAG	glycoprotein	Pfla Metchk/Blan Premet
+TCONS_00042209	RXFP2	relaxin insulin-like family peptide receptor 2	Pfla Metchk/Blan Premet
+TCONS_00043495	RDL	gaba receptor	Pfla Metchk/Blan Premet
+TCONS_00043496	GRIA4	glutamate receptor	Pfla Metchk/Blan Premet
+TCONS_00043695	CCDC158	coiled-coil domain containing 158	Pfla Metchk/Blan Premet
+TCONS_00044449	TLL1	Astacin (Peptidase family M12A)	Pfla Metchk/Blan Premet
+TCONS_00046868	SLC32A1	Solute carrier family 32 (GABA vesicular transporter), member 1	Pfla Metchk/Blan Premet
+TCONS_00047871	TIMP3	TIMP metallopeptidase inhibitor 3	Pfla Metchk/Blan Premet
+TCONS_00052523	VIT-5	vitellogenin	Pfla Metchk/Blan Premet
+TCONS_00052971	APOB	Apolipoprotein B (Including Ag(X) antigen)	Pfla Metchk/Blan Premet
+TCONS_00053213	CDC20	cell division cycle 20	Pfla Metchk/Blan Premet
+TCONS_00002541	CCDC61	Coiled-coil domain containing 61	Pfla EG/Spur MeBl.1
+TCONS_00006374	APITD1	in the FA core complex. Plays a role in DNA interstrand cross-linking (ICL) repair and in recovery of replication forks stalled by topoisomerase I-DNA cleavage intermediates induced by camptothecin. Component of the heterotetrameric CENP-T-W-S-X complex that binds and supercoils DNA, and plays an important role in kinetochore assembly. Component of the APITD1 CENPS complex that is essential for the stable assembly of the outer kinetochore. Plays an important role in mitotic progression and chromosome segregation. Component of the CENPA-CAD (nucleosome distal) complex, a complex recruited to centromeres which is involved in assembly of kinetochore proteins, mitotic progression and chromosome segregation	Pfla EG/Spur MeBl.1
+TCONS_00006435	ADCY10	adenylate cyclase 10 (soluble)	Pfla EG/Spur MeBl.1
+TCONS_00006565	ULK2	unc51-like kinase	Pfla EG/Spur MeBl.1
+TCONS_00007157	SMPD3	sphingomyelin phosphodiesterase 3, neutral membrane (neutral sphingomyelinase II)	Pfla EG/Spur MeBl.1
+TCONS_00009779	HNRPLL	heterogeneous nuclear ribonucleoprotein	Pfla EG/Spur MeBl.1
+TCONS_00010254	CNTD1	cyclin N-terminal domain containing 1	Pfla EG/Spur MeBl.1
+TCONS_00010516	PYGM	Phosphorylase is an important allosteric enzyme in carbohydrate metabolism. Enzymes from different sources differ in their regulatory mechanisms and in their natural substrates. However, all known phosphorylases share catalytic and structural properties (By similarity)	Pfla EG/Spur MeBl.1
+TCONS_00010753	RSF1	splicing factor	Pfla EG/Spur MeBl.1
+TCONS_00011432	EEF1G	eukaryotic translation elongation factor 1 gamma	Pfla EG/Spur MeBl.1
+TCONS_00014747	ASS1	Argininosuccinate synthase 1	Pfla EG/Spur MeBl.1
+TCONS_00015166	NFKBIL1	Nuclear factor of kappa light polypeptide gene enhancer in B-cells inhibitor-like 1	Pfla EG/Spur MeBl.1
+TCONS_00016209	COL11A2	collagen, type XI, alpha 2	Pfla EG/Spur MeBl.1
+TCONS_00017271	HS1BP3	HCLS1 binding protein 3	Pfla EG/Spur MeBl.1
+TCONS_00019718	MEGF11	multiple EGF-like-domains 11	Pfla EG/Spur MeBl.1
+TCONS_00020243	APOA1BP	Catalyzes the epimerization of the S- and R-forms of NAD(P)HX, a damaged form of NAD(P)H that is a result of enzymatic or heat-dependent hydration. This is a prerequisite for the S- specific NAD(P)H-hydrate dehydratase to allow the repair of both epimers of NAD(P)HX (By similarity)	Pfla EG/Spur MeBl.1
+TCONS_00021624	THAP4	THAP domain containing 4	Pfla EG/Spur MeBl.1
+TCONS_00027328	NAGK	N-acetylglucosamine kinase	Pfla EG/Spur MeBl.1
+TCONS_00028542	BHMT	betaine--homocysteine S-methyltransferase	Pfla EG/Spur MeBl.1
+TCONS_00029628	DMGDH	Dimethylglycine dehydrogenase	Pfla EG/Spur MeBl.1
+TCONS_00029716	FAM154B	family with sequence similarity 154, member	Pfla EG/Spur MeBl.1
+TCONS_00031091	NODAL	nodal homolog (mouse)	Pfla EG/Spur MeBl.1
+TCONS_00039409	C1ORF192	chromosome 1 open reading frame 192	Pfla EG/Spur MeBl.1
+TCONS_00042746	TRIM2	tripartite motif containing	Pfla EG/Spur MeBl.1
+TCONS_00043772	GSX1	GS homeobox 1	Pfla EG/Spur MeBl.1
+TCONS_00043780	SQSTM1	Sequestosome 1	Pfla EG/Spur MeBl.1
+TCONS_00044227	ATP8A1	class I type 8A member	Pfla EG/Spur MeBl.1
+TCONS_00047268	ALDH1L2	Aldehyde dehydrogenase 1 family, member	Pfla EG/Spur MeBl.1
+TCONS_00049010	IKBKE	inhibitor of kappa light polypeptide gene enhancer in B-cells, kinase epsilon	Pfla EG/Spur MeBl.1
+TCONS_00049243	FLNB	Filamin A, alpha	Pfla EG/Spur MeBl.1
+TCONS_00050034	PGD	Catalyzes the oxidative decarboxylation of 6- phosphogluconate to ribulose 5-phosphate and CO(2), with concomitant reduction of NADP to NADPH (By similarity)	Pfla EG/Spur MeBl.1
+TCONS_00050259	VWA5B1	von Willebrand factor A domain containing	Pfla EG/Spur MeBl.1
+TCONS_00052848	DPYD	dihydropyrimidine dehydrogenase	Pfla EG/Spur MeBl.1
+TCONS_00053761	EEF1D	Eukaryotic translation elongation factor 1 delta (Guanine nucleotide exchange protein)	Pfla EG/Spur MeBl.1
+TCONS_00055323	MAMDC4	MAM domain containing 4	Pfla EG/Spur MeBl.1
+TCONS_00055604	FAM134A	Family with sequence similarity 134, member A	Pfla EG/Spur MeBl.1
+TCONS_00056005	CC2D1B	coiled-coil and C2 domain containing	Pfla EG/Spur MeBl.1
+TCONS_00056612	PTGER4	prostaglandin E receptor 4 (subtype EP4)	Pfla EG/Spur MeBl.1
+TCONS_00057167	PTPRN2	protein tyrosine phosphatase, receptor type, N	Pfla EG/Spur MeBl.1
+TCONS_00057182	SLC38A11	Solute carrier family 38, member 11	Pfla EG/Spur MeBl.1
+TCONS_00002049	TNFAIP3	Tumor necrosis factor, alpha-induced protein 3	Pfla EG/Spur MeBl.2
+TCONS_00002541	CCDC61	Coiled-coil domain containing 61	Pfla EG/Spur MeBl.2
+TCONS_00005399	PRODH2	proline dehydrogenase (oxidase) 2	Pfla EG/Spur MeBl.2
+TCONS_00006374	APITD1	in the FA core complex. Plays a role in DNA interstrand cross-linking (ICL) repair and in recovery of replication forks stalled by topoisomerase I-DNA cleavage intermediates induced by camptothecin. Component of the heterotetrameric CENP-T-W-S-X complex that binds and supercoils DNA, and plays an important role in kinetochore assembly. Component of the APITD1 CENPS complex that is essential for the stable assembly of the outer kinetochore. Plays an important role in mitotic progression and chromosome segregation. Component of the CENPA-CAD (nucleosome distal) complex, a complex recruited to centromeres which is involved in assembly of kinetochore proteins, mitotic progression and chromosome segregation	Pfla EG/Spur MeBl.2
+TCONS_00006565	ULK2	unc51-like kinase	Pfla EG/Spur MeBl.2
+TCONS_00007157	SMPD3	sphingomyelin phosphodiesterase 3, neutral membrane (neutral sphingomyelinase II)	Pfla EG/Spur MeBl.2
+TCONS_00007469	PRLHR	Prolactin releasing hormone receptor	Pfla EG/Spur MeBl.2
+TCONS_00009779	HNRPLL	heterogeneous nuclear ribonucleoprotein	Pfla EG/Spur MeBl.2
+TCONS_00010254	CNTD1	cyclin N-terminal domain containing 1	Pfla EG/Spur MeBl.2
+TCONS_00010516	PYGM	Phosphorylase is an important allosteric enzyme in carbohydrate metabolism. Enzymes from different sources differ in their regulatory mechanisms and in their natural substrates. However, all known phosphorylases share catalytic and structural properties (By similarity)	Pfla EG/Spur MeBl.2
+TCONS_00010753	RSF1	splicing factor	Pfla EG/Spur MeBl.2
+TCONS_00011337	EFCAB11	EF-hand calcium binding domain 11	Pfla EG/Spur MeBl.2
+TCONS_00011432	EEF1G	eukaryotic translation elongation factor 1 gamma	Pfla EG/Spur MeBl.2
+TCONS_00014747	ASS1	Argininosuccinate synthase 1	Pfla EG/Spur MeBl.2
+TCONS_00015166	NFKBIL1	Nuclear factor of kappa light polypeptide gene enhancer in B-cells inhibitor-like 1	Pfla EG/Spur MeBl.2
+TCONS_00016209	COL11A2	collagen, type XI, alpha 2	Pfla EG/Spur MeBl.2
+TCONS_00018277	TMPRSS9	Transmembrane protease, serine 9	Pfla EG/Spur MeBl.2
+TCONS_00019718	MEGF11	multiple EGF-like-domains 11	Pfla EG/Spur MeBl.2
+TCONS_00020243	APOA1BP	Catalyzes the epimerization of the S- and R-forms of NAD(P)HX, a damaged form of NAD(P)H that is a result of enzymatic or heat-dependent hydration. This is a prerequisite for the S- specific NAD(P)H-hydrate dehydratase to allow the repair of both epimers of NAD(P)HX (By similarity)	Pfla EG/Spur MeBl.2
+TCONS_00021624	THAP4	THAP domain containing 4	Pfla EG/Spur MeBl.2
+TCONS_00027328	NAGK	N-acetylglucosamine kinase	Pfla EG/Spur MeBl.2
+TCONS_00028542	BHMT	betaine--homocysteine S-methyltransferase	Pfla EG/Spur MeBl.2
+TCONS_00029628	DMGDH	Dimethylglycine dehydrogenase	Pfla EG/Spur MeBl.2
+TCONS_00029716	FAM154B	family with sequence similarity 154, member	Pfla EG/Spur MeBl.2
+TCONS_00029796	RASGRF1	Ras protein-specific guanine nucleotide-releasing factor	Pfla EG/Spur MeBl.2
+TCONS_00031091	NODAL	nodal homolog (mouse)	Pfla EG/Spur MeBl.2
+TCONS_00043780	SQSTM1	Sequestosome 1	Pfla EG/Spur MeBl.2
+TCONS_00044227	ATP8A1	class I type 8A member	Pfla EG/Spur MeBl.2
+TCONS_00045194	SLC16A12	solute carrier family 16, member	Pfla EG/Spur MeBl.2
+TCONS_00047268	ALDH1L2	Aldehyde dehydrogenase 1 family, member	Pfla EG/Spur MeBl.2
+TCONS_00049010	IKBKE	inhibitor of kappa light polypeptide gene enhancer in B-cells, kinase epsilon	Pfla EG/Spur MeBl.2
+TCONS_00049243	FLNB	Filamin A, alpha	Pfla EG/Spur MeBl.2
+TCONS_00050034	PGD	Catalyzes the oxidative decarboxylation of 6- phosphogluconate to ribulose 5-phosphate and CO(2), with concomitant reduction of NADP to NADPH (By similarity)	Pfla EG/Spur MeBl.2
+TCONS_00052037	TPRG1L	Tumor protein p63 regulated	Pfla EG/Spur MeBl.2
+TCONS_00052848	DPYD	dihydropyrimidine dehydrogenase	Pfla EG/Spur MeBl.2
+TCONS_00053761	EEF1D	Eukaryotic translation elongation factor 1 delta (Guanine nucleotide exchange protein)	Pfla EG/Spur MeBl.2
+TCONS_00055323	MAMDC4	MAM domain containing 4	Pfla EG/Spur MeBl.2
+TCONS_00055604	FAM134A	Family with sequence similarity 134, member A	Pfla EG/Spur MeBl.2
+TCONS_00056005	CC2D1B	coiled-coil and C2 domain containing	Pfla EG/Spur MeBl.2
+TCONS_00056612	PTGER4	prostaglandin E receptor 4 (subtype EP4)	Pfla EG/Spur MeBl.2
+TCONS_00057167	PTPRN2	protein tyrosine phosphatase, receptor type, N	Pfla EG/Spur MeBl.2

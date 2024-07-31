@@ -1,0 +1,19 @@
+#Name (cmd = mergePeaks /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_13_promoters/bg.clean.pos /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_13_promoters/target.clean..pos -d 200 -cobound 1 -prefix /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_13_promoters/0.932073306133137.2.tmp)	chr	start	end	strand	stat	stat2	/home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/homer/stage_specific_gene_clusters/motif_enrichments_promoters/homer_outputs//homer_output_clu_13_promoters/target.clean..pos
+BGpeak3267	Scaffold_106_1_contigs	137166	137467	+	0.000	0.000	TCONS_00000064
+BGpeak3287	Scaffold_11_1_contigs	119113	119327	+	0.000	0.000	TCONS_00003534
+BGpeak7727	Scaffold_1_1_contigs	22776420	22776632	+	0.000	0.000	TCONS_00023536
+BGpeak7858	Scaffold_1_1_contigs	27902003	27902264	+	0.000	0.000	TCONS_00025036
+BGpeak79706	Scaffold_9_1_contigs	13815619	13816130	+	0.000	0.000	TCONS_00056383
+BGpeak28493	Scaffold_16_1_contigs	23384808	23385070	+	0.000	0.000	TCONS_00016339
+BGpeak63408	Scaffold_4_1_contigs	46551393	46551594	+	0.000	0.000	TCONS_00044150
+BGpeak11525	Scaffold_12_1_contigs	17424533	17425078	+	0.000	0.000	TCONS_00005133
+BGpeak12440	Scaffold_12_1_contigs	26003105	26003374	+	0.000	0.000	TCONS_00005445
+BGpeak14585	Scaffold_13_1_contigs	12416646	12416973	+	0.000	0.000	TCONS_00008634
+BGpeak15885	Scaffold_13_1_contigs	25779930	25780174	+	0.000	0.000	TCONS_00007790
+BGpeak55550	Scaffold_24_1_contigs	16143693	16144065	+	0.000	0.000	TCONS_00033554
+BGpeak40288	Scaffold_20_1_contigs	2981103	2981436	+	0.000	0.000	TCONS_00027007
+BGpeak80489	Scaffold_9_1_contigs	23106045	23106223	+	0.000	0.000	TCONS_00056623
+BGpeak81740	Scaffold_9_1_contigs	36209639	36210244	+	0.000	0.000	TCONS_00055841
+BGpeak32685	Scaffold_17_1_contigs	35642318	35642514	+	0.000	0.000	TCONS_00018785
+BGpeak36816	Scaffold_19_1_contigs	2912352	2912623	+	0.000	0.000	TCONS_00021934
+BGpeak1676	Scaffold_10_1_contigs	25098721	25099125	+	0.000	0.000	TCONS_00000754

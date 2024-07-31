@@ -1,0 +1,332 @@
+---
+title: "Pfla VS Owenia fusiformis"
+author: "Alberto Perez-Posada"
+date: "20/4/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+setwd(dir)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will do a comparison of the transcriptomes during development of Ptychodera and Branchiostoma floridae.
+
+For this, we will use a solution of custom R functions and wrappers that we have named "comparABle".
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+require(data.table)
+require(stringr)
+require(tidytree)
+require(ggtree)
+require(rvcheck)
+require(treeio)
+require(dendextend)
+require(phangorn)
+require(phytools)
+require(ComplexHeatmap)
+require(foreach)
+require(doParallel)
+require(colorspace)
+library(topGO)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load Data
+
+We will first load the data of our species:
+
+```{r dataload_spp}
+# Ptychodera analyses
+load("outputs/rda/deseq2.rda")
+# Owenia:
+ofus_counts <- read.delim2(
+  "outputs/comparative/reanalysis/ofus/counts/Owenia_fusiformis_all_transcripts_RNAseq_TPM_average.txt"
+)
+ofus_counts <- data.frame(sapply(ofus_counts,as.numeric), row.names = rownames(ofus_counts))
+ofus_cl <- read.delim2(
+  "outputs/comparative/reanalysis/ofus/clustering_and_GOs/06-Owenia_fusiformis_clusters_annotation_corrected.txt"
+)
+colnames(ofus_cl) <- c("id","module")
+
+
+gene_gfam <- read.delim2("outputs/comparative/20240404_oma/oma_omaid_gfam.tsv", header = TRUE)
+colnames(gene_gfam) <- c("id","gfam")
+```
+
+For more functional annotation, we will use the gene age, COG functional categories, and the GO terms of Ptychodera.
+
+```{r geneage gos and cogs prep}
+load("outputs/rda/geneage.rda")
+
+pfla_cogs <- read.table(
+  "outputs/functional_annotation/COGs/pfla_cogs.tsv",
+  col.names = c("id","cog")
+)
+
+# GO terms
+pfla_id2go <- 
+  readMappings(
+    "outputs/functional_annotation/go_blast2go/GO_annotation.txt"
+  )
+```
+
+## Alternative method for 1-to-1 orthologs: Blast best reciprocal hits
+
+# Comparison of 1-to-1 TFs using blast best RBHs
+
+```{r dataload_1to1}
+rbh_pfla_ofus <- read.delim2("outputs/comparative/rbh/pfla_ofus_rbh.tsv", header = FALSE)
+rbh_pfla_ofus[,2] <- gsub("\\.p[0-9]+","",rbh_pfla_ofus[,2])
+rbh_pfla_ofus[,1] <- gsub("\\.p[0-9]+","",rbh_pfla_ofus[,1])
+```
+
+## Ptychodera and Owenia
+
+```{r pfla_ofus dataprep}
+# Expression data, using all genes. No need for transformation
+a = pfla_rna_counts
+b = ofus_counts
+a_samples = levels(condition_x)
+b_samples = unique(sub("_.$", "", colnames(b)))
+
+# Family/orthology data
+o = unique(rbh_pfla_ofus)
+f = gene_gfam[grep("TCONS|OFUSG",gene_gfam$id),]
+f$id = gsub("\\.p[0-9]+","",f$id)
+# Module/Cluster information
+ma = data.frame(
+  id = rownames(pfla_rna_dev),
+  module = pfla_rna_dev$cID
+)
+
+mb = ofus_cl
+colnames(mb) <- c("id","module")
+
+# Gene Age
+ga = pfla_age[,c(1,3)]
+colnames(ga) = c("id","age")
+
+# COG
+cog_a <- pfla_cogs
+
+# GOs
+a_universe = rownames(vsd_allgen)
+a_id2go = pfla_id2go
+
+# Common Evo Nodes
+common_evo_nodes = unique(ga$age)[!(unique(ga$age) %in% c("5_deuterostomia","6_ambulacraria","7_hemichordata","8_Pfla"))]
+```
+
+```{r rawcorsp, fig.width = 10, fig.height = 3.5}
+# Tidy up
+samples_a = a_samples
+a = qnorm(a)
+a = tidyup(a, highlyvariable = FALSE) # remove genes with 0 tpms
+a = rep2means(samples_a,a)
+
+samples_b = b_samples
+b = qnorm(b)
+b = tidyup(b, highlyvariable = FALSE)
+b = rep2means(samples_b,b) # remove genes with 0 tpms
+
+o = pair2id(o)
+
+# MERGE
+merge_ab <- mergedata(a,b,o)
+
+# CORRELATIONS
+cors <- rawcorsp(merge_ab$a_o,merge_ab$b_o) # FIX JSD
+
+# CORRELATIONS
+plot_cors(cors)
+```
+## Highly correlated genes
+
+```{r hi-cor genes, message = FALSE, warning = FALSE}
+#Common genes in cors
+ab_common_genes_cor <- get_high_cor_genes(
+  mat = cors$js,
+  a_o = merge_ab$a_o,
+  b_o = merge_ab$b_o,
+  o = o
+)
+
+#Common genes in Correlations (GO)
+ab_common_genes_cor_GOs <- 
+  getGOs(
+    genelist = 
+      lapply(
+        ab_common_genes_cor$hicor_topgenes, 
+        function(sub_list) {
+          setNames(sub_list$top_genes$a, names(sub_list))
+          }),
+    gene_universe = a_universe,
+    gene2GO = a_id2go
+  )
+```
+
+```{r, fig.width = 4.5, fig.height = 4.5}
+pf_of_js <- 
+  Heatmap(
+    cors$js,
+    cluster_rows = F,
+    cluster_columns = F, 
+    show_row_names = TRUE, 
+    name = "JSD", 
+    col = brewer.pal(10,"RdBu"),
+    left_annotation = devstages_ha_rows(),
+    top_annotation = quick_ha(colnames(cors$js), rev = TRUE)
+    )
+pdf(
+  file = "graphics/pfla_ofus_jsd.pdf",
+  height = 4.5,
+  width = 4.5
+)
+draw(pf_of_js)
+dev.off()
+draw(pf_of_js)
+```
+
+```{r, fig.width = 12,fig.height = 30}
+plot_grid(
+  ab_common_genes_cor$hicor_topgenes[[1]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[1]],
+  ab_common_genes_cor$hicor_topgenes[[2]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[2]],
+  ab_common_genes_cor$hicor_topgenes[[3]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[3]],
+  ab_common_genes_cor$hicor_topgenes[[4]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[4]],
+  ab_common_genes_cor$hicor_topgenes[[5]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[5]],
+  ncol = 2
+  )
+```
+
+
+```{r}
+pdf(
+  file = "graphics/pfla_ofus_hi_cor_genes.pdf",
+  width = 8,
+  height = 25
+)
+plot_grid(
+  ab_common_genes_cor$hicor_topgenes[[1]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[1]],
+  ab_common_genes_cor$hicor_topgenes[[2]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[2]],
+  ab_common_genes_cor$hicor_topgenes[[3]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[3]],
+  ab_common_genes_cor$hicor_topgenes[[4]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[4]],
+  ab_common_genes_cor$hicor_topgenes[[5]]$plot_topgenes,
+  ab_common_genes_cor_GOs$GOplot[[5]],
+  ncol = 2
+  )
+dev.off()
+```
+
+## Whole comparABle
+
+```{r}
+# Expression data, using all genes. No need for transformation
+a = pfla_rna_counts
+b = ofus_counts
+```
+
+
+```{r pfla_ofus comparABle, fig.width = 7, fig.height = 6, warning = FALSE, message = FALSE}
+PFLA_OFUS_COMPARISON <- comparABle(
+  a_name = "P.flava",
+  b_name = "O.fusiformis",
+  a = a,
+  b = b,
+  o = o,
+  f = f,
+  ma = ma,
+  mb = mb,
+  ga = ga,
+  gb = gb,
+  cog_a = cog_a,
+  cog_b = cog_b,
+  a_samples = a_samples,
+  b_samples = b_samples,
+  highlyvariable = FALSE,
+  cooc_p = 0.05,
+  cooc_h = c(0.70,0.95),
+  cooc_cor_method = "pearson",
+  a_universe = a_universe,
+  a_id2go = a_id2go,
+  common_evo_nodes = common_evo_nodes,
+  sep = ",\ "
+)
+```
+
+
+
+```{r, fig.width = 6.5, fig.height = 6.5}
+PFLA_OFUS_COMPARISON$plots$orthology_overlap_hypgeom_hm
+```
+
+```{r, fig.width = 10, fig.height = 10}
+PFLA_OFUS_COMPARISON$orthology_overlap_modules$genes_in_common_fams$commonfams$go_a_common$GOplot$`06__5`
+```
+
+
+
+```{r}
+save(
+  PFLA_OFUS_COMPARISON,
+  file = "outputs/rda/species_comparison_pfla_ofus.rda"
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,10 +1,11 @@
 #' Params
 #' @param genelist must be a object of type list() containing an undetermined number of character vectors. Each component of the list is a char vector of gene names. This function will perform gene ontology enrichment using the char vector as test sample and the totality of your organism's genes as population (Universe). 
-#' @param gene_universe is a vector of characters containing the genes you want to use as universe. This is normally the totality of genes in your species, or the totality of genes with recollected expression in your dataset.
-#' @param alg is the algorithm of choice, default is 'Classic', but 'elim' is advised
-#' @param cols is a char vector of the colors used in the barplots
+#' @gene_universe is a vector of characters containing the genes you want to use as universe. This is normally the totality of genes in your species, or the totality of genes with recollected expression in your dataset.
+#' @alg is the algorithm of choice, default is 'Classic', but 'elim' is advised
+#' @cols is a char vector of the colors used in the barplots
 #' 
 require(topGO)
+require(colorspace)
 # getGOs(list(tfs,egs,active_tfs,target_genes,V(graph)$name),toy_universe)
 getGOs <- function(
   genelist,
@@ -12,15 +13,27 @@ getGOs <- function(
   gene2GO,
   alg = "Classic",
   stat = "fisher",
-  cols = hcl.colors(length(genelist), palette = "spectral")
+  category = "BP",
+  cols = sequential_hcl(7,"PinkYl")[1:6],
+  max_terms = NULL#,
+  # silence = FALSE
 ) {
+  
   res <- list(
     GOtable = list(),
     GOplot = list()
   )
+  
   geneID2GO <- gene2GO
+  
   for (j in 1:length(genelist)){
     print(paste0("Starting analysis ",j," of ",length(genelist)))
+    
+    # if (silence){
+    #   tmp_file = file(".getGOs.messages.tmp", open = "wt")
+    #   sink(file = tmp_file, type = "message")
+    # }
+    
     x <- genelist[[j]]
     numgenes <- length(x)
     allgenes <- data.frame(
@@ -35,10 +48,10 @@ getGOs <- function(
     #load data
     #' This is by far the longest and most computationally expensive step.
     #' Can this step be outside the loop and just keep inside the loop 
-    #' the bit of which ones to keep?
+    #' the bit of which genes to keep as interesting?
     GOdata_x <- new( 
       "topGOdata",
-      ontology = "BP",
+      ontology = category,
       allGenes = genelist_x,
       geneSelectionFun = signif,
       annot = annFUN.gene2GO,
@@ -46,7 +59,7 @@ getGOs <- function(
     )
     
     #test
-    res_x <- runTest(GOdata_x, algorithm = alg, statistic = "fisher")
+    res_x <- runTest(GOdata_x, algorithm = alg, statistic = stat)
     
     #table
     allres_x <- GenTable(
@@ -59,32 +72,49 @@ getGOs <- function(
     )
     allres_x <- allres_x[allres_x$Annotated > 5,]
     allres_x$classicFisher[allres_x$classicFisher=="< 1e-30"] <- 1e-30
+    allres_x$classicFisher <-
+      parse_number(allres_x$classicFisher)
+    allres_x$classicFisher <-
+      as.numeric(allres_x$classicFisher)
     
-    maxgenesplot <- ifelse(nrow(allres_x) > 10, 10, nrow(allres_x))
+    if(!is.null(max_terms)){
+      maxgenesplot <- ifelse(nrow(allres_x) > max_terms, max_terms, nrow(allres_x))
+    } else {
+      maxgenesplot <- nrow(allres_x)
+    }
+    
     res$GOtable[[j]] <- allres_x
     
     #plot
-    res$GOplot[[j]] <- list(
-      height = as.vector(
-        rev(
-          -log(
-            as.numeric(allres_x$classicFisher[1:maxgenesplot]) * 
-              length(x)
-          )
+    res$GOplot[[j]] <- 
+      ggplot(
+        allres_x[1:maxgenesplot,], 
+        aes(
+          x = reorder(Term, -log10(classicFisher)),
+          y = Significant/Expected,
+          fill = -log10(classicFisher)
         )
-      ),
-      horiz=T,
-      border=F,
-      names.arg=rev(allres_x$Term[1:maxgenesplot]),
-      sub="-log10 p-value",
-      main="GOs (elim,\n> 5 annot genes)",
-      las=1,
-      col=cols[j],
-      space=c(0.5),
-      cex.names=.7,
-      plot=FALSE
-    )
+      )+
+      geom_bar(stat = "identity") +
+      scale_fill_gradientn(colors =  sequential_hcl(7,"PinkYl")[1:6], name = "-log10(pvalue)") +
+      coord_flip() +
+      theme_classic() +
+      labs(x = "GO term", y = "Significant/Expected ratio",
+           title = names(genelist)[j])+
+      geom_text(aes(label=Term, y = max(Significant/Expected)/2))+
+      theme(axis.title.y=element_blank(),
+            axis.text.y=element_blank(),
+            axis.ticks.y=element_blank()
+      )
+    
+    # if (silence){
+    #   sink(file = NULL, type = "message")
+    # }
+    
   }
+  # if(file.exists(tmp_file)){ file.remove(tmp_file) }
+  # sink(file = NULL, type = "message")
   names(res$GOtable) <- names(genelist)
+  names(res$GOplot) <- names(genelist)
   return(res)
 }

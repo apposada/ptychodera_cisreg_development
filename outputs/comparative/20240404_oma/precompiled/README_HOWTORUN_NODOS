@@ -1,0 +1,1 @@
+we ran this: sbatch --array=1-24 -N1 oma_for_array_jobs.sh

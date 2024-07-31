@@ -1,0 +1,1025 @@
+---
+title: "Ptychodera Cisreg Development: Graph Analysis Figures"
+author: "Alberto Perez-Posada"
+date: "5/1/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will plot all the figures related to the figures of graph analysis.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(igraph)
+library(ComplexHeatmap)
+library(circlize)
+library(ggplot2)
+library(ggpubr)
+library(gridExtra)
+library(ggplotify)
+library(colorspace)
+library(eulerr)
+library(cowplot)
+library(ggrepel)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+
+## Load data 
+
+
+```{r}
+# RNA clusters
+load("outputs/rda/stage_specific_clusters.rda")
+
+# Transcription Factor information
+load("outputs/rda/TF_annotation.rda")
+
+insitu_data <- read.delim2("outputs/functional_annotation/germlayers_ISH/in_situ_data.tsv")
+
+load("outputs/rda/graph_analysis.rda")
+
+pfla_genenames <-
+  read.delim2(
+    file = "outputs/functional_annotation/eggnog/emapper.annotations",
+    skip = 3,
+    header = TRUE
+  )[,c(1,5,13)]
+pfla_genenames <- pfla_genenames[pfla_genenames$predicted_gene_name != "",]
+```
+
+
+
+
+```{r}
+col_a = "#efaa90"
+col_b = "#fbcf99"
+```
+
+## MAIN FIGURES
+
+```{r, fig.width = 3.5, fig.height = 3.8}
+col_fun <- 
+  colorRamp2(
+    colors = c(col_a,"#eeeeee",col_b),
+    breaks = c(.75,1,1.25)
+  )
+lgd = Legend(col_fun = col_fun, title = "FC", at = c(.75, 1.25), labels = c("EB", "LG"))
+
+par(mar = c(5,4,4,3)+.1)
+plot(
+  main = "Changes in\nTF centrality",
+  x = relativise(EB_vs_LG$centrality_changes_TFs$a),
+  y = relativise(EB_vs_LG$centrality_changes_TFs$b),
+  pch = 21,
+  col = darken(col_fun(EB_vs_LG$centrality_changes_TFs$b/EB_vs_LG$centrality_changes_TFs$a),.5),
+  bg = alpha(col_fun(EB_vs_LG$centrality_changes_TFs$b/EB_vs_LG$centrality_changes_TFs$a),.8),
+  xlab = "Early Blastula",
+  ylab = "Late Gastrula",
+  bty = "n"
+)
+abline(a = 0, b = 1, col = "#4c4c4c", lty = 2)
+draw(lgd, x = unit(.92, "npc"), y = unit(.5, "npc"))
+par(mar = c(5,4,4,2)+.1)
+```
+
+PDF:
+
+```{r, fig.width = 3.5, fig.height = 3.8}
+pdf("graphics/3D.pdf", wi = 3.5, he = 3.8)
+par(mar = c(5,4,4,3)+.1)
+plot(
+  main = "Changes in\nTF centrality",
+  x = relativise(EB_vs_LG$centrality_changes_TFs$a),
+  y = relativise(EB_vs_LG$centrality_changes_TFs$b),
+  pch = 21,
+  col = darken(col_fun(EB_vs_LG$centrality_changes_TFs$b/EB_vs_LG$centrality_changes_TFs$a),.5),
+  bg = alpha(col_fun(EB_vs_LG$centrality_changes_TFs$b/EB_vs_LG$centrality_changes_TFs$a),.8),
+  xlab = "Early Blastula",
+  ylab = "Late Gastrula",
+  bty = "n"
+)
+abline(a = 0, b = 1, col = "#4c4c4c", lty = 2)
+draw(lgd, x = unit(.92, "npc"), y = unit(.5, "npc"))
+par(mar = c(5,4,4,2)+.1)
+dev.off()
+```
+
+Centrality per TF class:
+
+```{r, fig.width = 12, fig.height = 8}
+pfla_tfs_graph_analysis <- pfla_attributes_list[[2]]
+allTFclasses_col <- c(topclasses_col,otherclasses_col)
+
+## Centrality per TF class
+pfla_tfs_graph_analysis$TFclass <- factor(pfla_tfs_graph_analysis$TFclass, levels = unique(sort(pfla_tfs_graph_analysis$TFclass)))
+
+EB_vs_LG$centrality_TFclass_a$class <- factor(EB_vs_LG$centrality_TFclass_a$class, levels = levels(pfla_tfs_graph_analysis$TFclass))
+EB_vs_LG$centrality_TFclass_b$class <- factor(EB_vs_LG$centrality_TFclass_b$class, levels = levels(pfla_tfs_graph_analysis$TFclass))
+
+allTFclasses_col <- allTFclasses_col[match(levels(pfla_tfs_graph_analysis$TFclass), names(allTFclasses_col))]
+
+class_cent_plot <- as_ggplot( as.grob( function(){
+par(mfrow = c(2,1))
+set.seed(4344)
+graphics::boxplot(
+  main = "Early Blastula",
+  relativise(EB_vs_LG$centrality_TFclass_a$centr)~EB_vs_LG$centrality_TFclass_a$class,
+  ylab = "relative centrality",
+  xlab = "",
+  col = allTFclasses_col, border = colorspace::darken(allTFclasses_col, .5),
+  las = 2,
+  cex.axis = .8,
+  outline = F
+)
+stripchart(
+  relativise(EB_vs_LG$centrality_TFclass_a$centr)~EB_vs_LG$centrality_TFclass_a$class,
+  col = colorspace::darken(allTFclasses_col, .6),
+  method = "jitter",
+  jitter=0.15,
+  vertical = TRUE,
+  pch = 20,
+  cex=0.8,
+  add = TRUE
+)
+set.seed(4344)
+graphics::boxplot(
+  main = "Late Gastrula",
+  relativise(EB_vs_LG$centrality_TFclass_b$centr)~EB_vs_LG$centrality_TFclass_b$class,
+  ylab = "relative centrality",
+  xlab = "",
+  col = allTFclasses_col, border = colorspace::darken(allTFclasses_col, .5),
+  las = 2,
+  cex.axis = .8,
+  outline = F
+)
+stripchart(
+  relativise(EB_vs_LG$centrality_TFclass_b$centr)~EB_vs_LG$centrality_TFclass_b$class,
+  col = colorspace::darken(allTFclasses_col, .6),
+  method = "jitter",
+  jitter=0.15,
+  vertical = TRUE,
+  pch = 20,
+  cex=0.8,
+  add = TRUE
+)
+par(mfrow = c(1,1))
+}))
+
+grid.draw(class_cent_plot)
+```
+
+```{r}
+pdf("graphics/3F.pdf", he = 8, wi = 12)
+grid.draw(class_cent_plot)
+dev.off()
+```
+
+Influence plot:
+
+```{r influence plot, fig.width = 5, fig.height = 5}
+contains <- function(x,a){
+  y = unlist(sapply(x,function(x)length(grep(a,x)) != 0))
+  
+  return(y)
+}
+
+x <- EB_vs_LG$influence_results$influence_table
+
+x$genename <-
+  translate_ids(
+    x = x$factor,
+    dict = insitu_data[,c(1,4)]
+  )
+
+x$genename[contains(x$genename,"TCONS")] <-
+  paste0(
+    translate_ids(
+      x$factor[contains(x$genename,"TCONS")],
+      pfla_genenames[,c(1,2)]
+    ),
+    "-like"
+  )
+
+x$genename[contains(x$genename,"TCONS")] <- 
+  x$TFclass[contains(x$genename,"TCONS")]
+write.table(x,"outputs/ananse/influence_parsed.tsv", row.names = FALSE, quote = FALSE, sep = "\t")
+```
+
+```{r, fig.width = 6, fig.height = 5}
+par(mar = c(5,4,4,8)+.1, xpd = T)
+plot(
+  main="Main factors",
+  x$factor_fc, x$influence_score,
+  pch = 21, bg = x$col, col = darken(x$col,.5),
+  xlab="log2fold change of TF",
+  ylab="ANANSE influence score",
+  bty="n",
+  cex = 1.1,
+  xlim= c(0,max(x$factor_fc) + 1)
+)
+text(
+  x = x$factor_fc[1:20],
+  y = x$influence_score[1:20],
+  labels = x$genename[1:20],
+  pos = 4,
+  cex = .7
+  )
+legend(
+  "bottomright",
+  legend = unique(x$TFclass),
+  pch = 21,
+  inset=c(-0.3, 0),
+  col = darken(unique(x$col),.5),
+  pt.bg = unique(x$col,.5),
+  cex = .7,
+  ncol = 1
+)
+par(mar = c(5,4,4,2)+.1)
+```
+
+PDF:
+
+```{r}
+pdf("graphics/3E.pdf", he = 5, wi = 6)
+par(mar = c(5,4,4,8)+.1, xpd = T)
+plot(
+  main="Main factors",
+  x$factor_fc, x$influence_score,
+  pch = 21, bg = x$col, col = darken(x$col,.5),
+  xlab="log2fold change of TF",
+  ylab="ANANSE influence score",
+  bty="n",
+  cex = 1.1,
+  xlim= c(0,max(x$factor_fc) + 1)
+)
+text(
+  x = x$factor_fc[1:20],
+  y = x$influence_score[1:20],
+  labels = x$genename[1:20],
+  pos = 4,
+  cex = .7
+  )
+legend(
+  "bottomright",
+  legend = unique(x$TFclass),
+  pch = 21,
+  inset=c(-0.3, 0),
+  col = darken(unique(x$col),.5),
+  pt.bg = unique(x$col,.5),
+  cex = .7,
+  ncol = 1
+)
+par(mar = c(5,4,4,2)+.1)
+dev.off()
+```
+
+## SUPPLEMENTARY FIGURES
+
+### S14
+
+```{r, fig.width = 8, fig.height = 3}
+par(mfrow = c(1,5))
+barplot(
+ c(
+    EB_vs_LG$comparative$a[1],
+    EB_vs_LG$comparative$b[1]
+    ),
+  main = EB_vs_LG$comparative$metric[1],
+  names.arg = c("EB","LG"),
+  col = c(col_a,col_b),
+ border = darken(c(col_a,col_b),.5),
+  ylim = c(0,15000)
+  )
+barplot(
+  c(
+    EB_vs_LG$comparative$a[2],
+    EB_vs_LG$comparative$b[2]
+    ),
+  main = EB_vs_LG$comparative$metric[2],
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  ylim = c(0,350),
+  names.arg = c("EB","LG")
+)
+boxplot(
+  main = "connections per\ntarget gene",
+  list(
+    V(g_EB)$indegree[V(g_EB)],
+    V(g_LG)$indegree[V(g_LG)]
+  ),
+  names = c("EB", "LG"),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      x = V(g_EB)$indegree[V(g_EB)],
+      y = V(g_LG)$indegree[V(g_LG)]
+    )$p.value
+  )
+)
+boxplot(
+  main = "relative outdegree",
+  list(
+    V(g_EB)$rel_outdegree[V(g_EB)$is_TF],
+    V(g_LG)$rel_outdegree[V(g_LG)$is_TF]
+  ),
+  names = c("EB", "LG"),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      V(g_EB)$rel_outdegree[V(g_EB)$is_TF],
+      V(g_LG)$rel_outdegree[V(g_LG)$is_TF]
+    )$p.value
+  )
+)
+# Number of self-reg TFs
+barplot(
+ c(
+    EB_vs_LG$comparative$a[5],
+    EB_vs_LG$comparative$b[5]
+    ),
+  main = EB_vs_LG$comparative$metric[5],
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  names.arg = c("EB","LG")
+)
+par(mfrow = c(1,1))
+
+pdf("graphics/S14_1.pdf", he = 3, wi = 8)
+{
+  par(mfrow = c(1,5))
+barplot(
+ c(
+    EB_vs_LG$comparative$a[1],
+    EB_vs_LG$comparative$b[1]
+    ),
+  main = EB_vs_LG$comparative$metric[1],
+  names.arg = c("EB","LG"),
+  col = c(col_a,col_b),
+ border = darken(c(col_a,col_b),.5),
+  ylim = c(0,15000)
+  )
+barplot(
+  c(
+    EB_vs_LG$comparative$a[2],
+    EB_vs_LG$comparative$b[2]
+    ),
+  main = EB_vs_LG$comparative$metric[2],
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  ylim = c(0,350),
+  names.arg = c("EB","LG")
+)
+boxplot(
+  main = "connections per\ntarget gene",
+  list(
+    V(g_EB)$indegree[V(g_EB)],
+    V(g_LG)$indegree[V(g_LG)]
+  ),
+  names = c("EB", "LG"),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      x = V(g_EB)$indegree[V(g_EB)],
+      y = V(g_LG)$indegree[V(g_LG)]
+    )$p.value
+  )
+)
+boxplot(
+  main = "relative outdegree",
+  list(
+    V(g_EB)$rel_outdegree[V(g_EB)$is_TF],
+    V(g_LG)$rel_outdegree[V(g_LG)$is_TF]
+  ),
+  names = c("EB", "LG"),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  sub = paste0(
+    "Wilcox p.value ",
+    wilcox.test(
+      V(g_EB)$rel_outdegree[V(g_EB)$is_TF],
+      V(g_LG)$rel_outdegree[V(g_LG)$is_TF]
+    )$p.value
+  )
+)
+# Number of self-reg TFs
+barplot(
+ c(
+    EB_vs_LG$comparative$a[5],
+    EB_vs_LG$comparative$b[5]
+    ),
+  main = EB_vs_LG$comparative$metric[5],
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.5),
+  names.arg = c("EB","LG")
+)
+par(mfrow = c(1,1))
+}
+dev.off()
+```
+
+
+
+```{r, fig.width = 3.5, fig.height = 3.8}
+col_fun <- 
+  colorRamp2(
+    colors = c(col_a,"#eeeeee",col_b),
+    breaks = c(.8,1,1.2)
+  )
+lgd = Legend(col_fun = col_fun, title = "FC", at = c(.8, 1.2), labels = c("EB", "LG"))
+par(mar = c(5,4,4,3)+.1)
+plot(
+  main = "Changes in\ntrans-dev centrality",
+  x = relativise(EB_vs_LG$centrality_changes_transdev$a),
+  y = relativise(EB_vs_LG$centrality_changes_transdev$b),
+  col = darken(col_fun(EB_vs_LG$centrality_changes_transdev$b/EB_vs_LG$centrality_changes_transdev$a),.5),
+  bg = alpha(col_fun(EB_vs_LG$centrality_changes_transdev$b/EB_vs_LG$centrality_changes_transdev$a),.8),
+  xlab="Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 21,
+  bty = "n"
+)
+abline(a = 0, b = 1, col = "#4c4c4c", lty = 2)
+draw(lgd, x = unit(.92, "npc"), y = unit(.5, "npc"))
+par(mar = c(5,4,4,2)+.1)
+
+pdf("graphics/S14_2.pdf", wi = 3.5, he = 3.8)
+{
+  par(mar = c(5,4,4,3)+.1)
+plot(
+  main = "Changes in\ntrans-dev centrality",
+  x = relativise(EB_vs_LG$centrality_changes_transdev$a),
+  y = relativise(EB_vs_LG$centrality_changes_transdev$b),
+  col = darken(col_fun(EB_vs_LG$centrality_changes_transdev$b/EB_vs_LG$centrality_changes_transdev$a),.5),
+  bg = alpha(col_fun(EB_vs_LG$centrality_changes_transdev$b/EB_vs_LG$centrality_changes_transdev$a),.8),
+  xlab="Early Blastula",
+  ylab = "Late Gastrula",
+  pch = 21,
+  bty = "n"
+)
+abline(a = 0, b = 1, col = "#4c4c4c", lty = 2)
+draw(lgd, x = unit(.92, "npc"), y = unit(.5, "npc"))
+par(mar = c(5,4,4,2)+.1)
+
+}
+dev.off()
+```
+### S15
+
+```{r, fig.width = 5, fig.height = 12}
+GO_TFs <-
+  plot_grid(
+    EB_vs_LG$GOs_TFs$GOplot$TFs_exclusive_a,
+    EB_vs_LG$GOs_TFs$GOplot$TFs_common_ab,
+    EB_vs_LG$GOs_TFs$GOplot$TFs_exclusive_b,
+    ncol = 1
+  )
+
+GO_TFs
+
+pdf("graphics/S15_1.pdf", wi = 5, he = 12)
+GO_TFs
+dev.off
+```
+
+
+
+```{r, fig.width = 5, fig.height = 12}
+GO_TGs <-
+  plot_grid(
+    EB_vs_LG$GOs_targets$GOplot$tgs_exclusive_a_top,
+    EB_vs_LG$GOs_targets$GOplot$tgs_common_ab_top,
+    EB_vs_LG$GOs_targets$GOplot$tgs_exclusive_b_top,
+    ncol = 1
+  )
+
+GO_TGs
+
+pdf("graphics/S15_2.pdf", wi = 5, he = 12)
+GO_TGs
+dev.off()
+```
+
+
+```{r Euler TGs, fig.width = 4, fig.height = 2}
+fit_tg <- euler(calc_overlaps(EB_vs_LG$tg_overlap_top))
+cols_venn <- c(col_a,col_b)
+plot(
+  fit_tg,
+  fills = alpha(cols_venn,0.45),
+  edges = darken(cols_venn,.5),
+  quantities = list(type = c("counts", "percent"))
+)
+
+pdf("graphics/S15_3.pdf", wi = 4, he = 2)
+plot(
+  fit_tg,
+  fills = alpha(cols_venn,0.45),
+  edges = darken(cols_venn,.5),
+  quantities = list(type = c("counts", "percent"))
+)
+dev.off()
+```
+
+```{r Euler TFs, fig.width = 4, fig.height = 2}
+fit_tf <- euler(calc_overlaps(EB_vs_LG$TF_overlap))
+cols_venn <- c(col_a,col_b)
+plot(
+  fit_tf,
+  fills = alpha(cols_venn,0.45),
+  edges = darken(cols_venn,.5),
+  quantities = list(type = c("counts", "percent"))
+)
+
+pdf("graphics/S15_4.pdf", wi = 4, he = 2)
+plot(
+  fit_tf,
+  fills = alpha(cols_venn,0.45),
+  edges = darken(cols_venn,.5),
+  quantities = list(type = c("counts", "percent"))
+)
+dev.off()
+```
+
+```{r funcat barplot, fig.height = 7, fig.width = 10}
+pfla_funcat <- pfla_attributes_list[[3]]
+funcat_lgd = 
+  Legend(
+    labels = paste0(LETTERS,") ",funcat_lookup$functional_category[match(LETTERS,funcat_lookup$cog)]),
+    title = "Functional Categories",
+    legend_gp = gpar(
+      fill = colorspace::lighten(desaturate(rainbow(26),.3))
+    ),
+    border = colorspace::darken(desaturate(rainbow(26),.3),.5)
+  )
+
+
+funcat <- as_ggplot( as.grob( function(){
+  par(mfrow = c(2,1))
+  par(mar = c(5,4,4,16)+.1)
+  barplot(
+    main = "EB",
+    log1p(table(factor(pfla_funcat$funcat, levels = LETTERS)[
+      pfla_funcat$id %in% V(g_EB)$name[V(g_EB)$rel_outdegree > 0.5]
+    ] )),
+    ylab = "log1p(no. TFs)",
+    col = colorspace::lighten(desaturate(rainbow(26),.3)),
+    border = colorspace::darken(desaturate(rainbow(26),.3),.5)
+  )
+  barplot(
+    main = "LG",
+    log1p(table(factor(pfla_funcat$funcat, levels = LETTERS)[
+      pfla_funcat$id %in% V(g_LG)$name[V(g_LG)$rel_outdegree > 0.5]
+    ] )),
+    ylab = "log1p(no. TFs)",
+    col = colorspace::lighten(desaturate(rainbow(26),.3)),
+    border = colorspace::darken(desaturate(rainbow(26),.3),.5)
+  )
+  # draw(funcat_lgd, x = unit(.9, "npc"), y = unit(.5, "npc"))
+  par(mar = c(5,4,4,2)+.1)
+  par(mfrow = c(1,1))
+  } ))
+
+grid.draw(funcat)
+draw(funcat_lgd, x = unit(.8, "npc"), y = unit(.5, "npc"))
+
+pdf("graphics/S15_5.pdf", he = 7, wi = 10)
+grid.draw(funcat)
+draw(funcat_lgd, x = unit(.8, "npc"), y = unit(.5, "npc"))
+dev.off()
+```
+
+```{r chisquare funcat, fig.width = 8, fig.height = 4.5, warning = FALSE, message = FALSE}
+# in EB
+chisq_cog_EB_tgs <- 
+  make_chisq_heatmap(chisq_and_posthoc(
+    table(
+      pfla_funcat$funcat,
+      ifelse(pfla_funcat$id %in% EB_vs_LG$tg_overlap$tgs_exclusive_a, "EB_tg", "non_EB_tg")
+      )
+    ))
+
+# in LG
+chisq_cog_LG_tgs <- 
+  make_chisq_heatmap(chisq_and_posthoc(
+    table(
+      pfla_funcat$funcat,
+      ifelse(pfla_funcat$id %in% EB_vs_LG$tg_overlap$tgs_exclusive_b, "LG_tg", "non_LG_tg")
+      )
+    ))
+
+# common
+chisq_cog_common_tgs <- 
+  make_chisq_heatmap(chisq_and_posthoc(
+    table(
+      pfla_funcat$funcat,
+      ifelse(pfla_funcat$id %in% EB_vs_LG$tg_overlap$tgs_common_ab, "common_tg", "non_common_tg")
+      )
+    ))
+
+# Internal comparison between themselves
+pfla_cogs_tg_internal <-
+  merge(
+    pfla_funcat,
+    data.frame(
+      id = unlist(EB_vs_LG$tg_overlap),
+      tg =rep(names(EB_vs_LG$tg_overlap), times = sapply(EB_vs_LG$tg_overlap,length))
+    ),
+    by.x = 1, by.y = 1
+  )
+
+chisq_cog_EB_tgs_internal <- 
+  make_chisq_heatmap(chisq_and_posthoc(
+    table(
+      pfla_cogs_tg_internal$funcat,
+      pfla_cogs_tg_internal$tg
+    )
+  ))
+
+# plots
+draw(
+  chisq_cog_EB_tgs$heatmap %v%
+  chisq_cog_common_tgs$heatmap %v%
+  chisq_cog_LG_tgs$heatmap %v%
+  chisq_cog_EB_tgs_internal$heatmap
+)
+
+pdf("graphics/S15_6.pdf", he = 4.5, wi = 8)
+draw(
+  chisq_cog_EB_tgs$heatmap %v%
+  chisq_cog_common_tgs$heatmap %v%
+  chisq_cog_LG_tgs$heatmap %v%
+  chisq_cog_EB_tgs_internal$heatmap
+)
+dev.off()
+```
+
+
+```{r postGR genes in network, fig.width = 2, fig.height = 3.5}
+# number of post-gastrulation genes in network
+barplot(
+  main="network-specific targets\nin post-gastrulation clusters",
+  height=c(
+    EB_vs_LG$comparative$a[15]/length(EB_vs_LG$tg_overlap$tgs_exclusive_a)*100,
+    EB_vs_LG$comparative$b[15]/length(EB_vs_LG$tg_overlap$tgs_exclusive_b)*100
+  ),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.4),
+  names=c("EB", "LG"),
+  ylab="gene percent",
+  ylim = c(0,100),
+  cex.main = .7,
+  las=1
+)
+
+pdf("graphics/S15_6.pdf", wi = 2, he = 3.5)
+barplot(
+  main="network-specific targets\nin post-gastrulation clusters",
+  height=c(
+    EB_vs_LG$comparative$a[15]/length(EB_vs_LG$tg_overlap$tgs_exclusive_a)*100,
+    EB_vs_LG$comparative$b[15]/length(EB_vs_LG$tg_overlap$tgs_exclusive_b)*100
+  ),
+  col = c(col_a,col_b),
+  border = darken(c(col_a,col_b),.4),
+  names=c("EB", "LG"),
+  ylab="gene percent",
+  ylim = c(0,100),
+  cex.main = .7,
+  las=1
+)
+dev.off()
+```
+
+### S16
+
+
+
+```{r}
+ecto_genes <- which(
+  V(g_LG)$germlayer== "Ectoderm")
+
+meso_genes <- which(
+  V(g_LG)$germlayer== "Mesoderm" |
+  V(g_LG)$germlayer=="EctoMeso" |
+  V(g_LG)$germlayer=="EndoMeso" |
+  V(g_LG)$germlayer== "All"
+)
+
+endo_genes <- which(
+  V(g_LG)$germlayer== "Endoderm" |
+  V(g_LG)$germlayer=="EndoEcto" |
+  V(g_LG)$germlayer=="EndoMeso" |
+  V(g_LG)$germlayer== "All"
+) 
+```
+
+```{r germlayers_plot}
+#ectoderm
+ecto_graph <- induced_subgraph(
+  g_LG,
+  vids = ecto_genes,
+  impl = "auto"
+)
+ecto_graph <- subgraph_with_top_edges_per_tg(ecto_graph,top = 2,mode="both")
+V(ecto_graph)$genename <- translate_ids(x = V(ecto_graph)$name , dict = insitu_data[,c(1,4)])
+ecto_graph$weight <- cut(E(ecto_graph)$width,breaks = quantile(E(ecto_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(ecto_graph)$col[V(ecto_graph)$col == ""] <- "#dddddd"
+
+#mesoderm
+meso_graph <- induced_subgraph(
+  g_LG,
+  vids = meso_genes,
+  impl = "auto"
+)
+meso_graph <- subgraph_with_top_edges_per_tg(meso_graph, top = 2,mode="both")
+V(meso_graph)$genename <- translate_ids(x = V(meso_graph)$name , dict = insitu_data[,c(1,4)])
+meso_graph$weight <- cut(E(meso_graph)$width,breaks = quantile(E(meso_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(meso_graph)$col[V(meso_graph)$col == ""] <- "#dddddd"
+
+#endoderm
+endo_graph <- induced_subgraph(
+  g_LG,
+  vids = endo_genes,
+  impl = "auto"
+)
+endo_graph <- subgraph_with_top_edges_per_tg(endo_graph,top = 2,mode="both")
+V(endo_graph)$genename <- translate_ids(x = V(endo_graph)$name , dict = insitu_data[,c(1,4)])
+endo_graph$weight <- cut(E(endo_graph)$width,breaks = quantile(E(endo_graph)$width), include.lowest = TRUE, labels = FALSE)
+V(endo_graph)$col[V(endo_graph)$col == ""] <- "#dddddd"
+```
+
+```{r}
+germlayer_graphs <- as_ggplot( as_grob( function(){
+par(mfrow = c(3,1))
+#ectoderm
+set.seed(1234)
+plot(
+  main = "Ectoderm graph",
+  ecto_graph,
+  vertex.color = V(ecto_graph)$germlayer_col,
+  vertex.frame.color = darken(V(ecto_graph)$germlayer_col,.5),
+  vertex.label = V(ecto_graph)$genename,
+  vertex.size = 8,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  edge.width = ecto_graph$weight,
+  vertex.label.cex = .9,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout.graphopt(ecto_graph)
+)
+
+#mesoderm
+set.seed(1234)
+plot(
+  main = "Mesoderm graph",
+  meso_graph,
+  vertex.color = V(meso_graph)$germlayer_col,
+  vertex.frame.color = darken(V(meso_graph)$germlayer_col,.5),
+  vertex.label = V(meso_graph)$genename,
+  vertex.size = 8,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .9,
+  edge.width = meso_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout.graphopt(meso_graph)
+)
+
+#endoderm
+set.seed(1234)
+plot(
+  main = "Endoderm graph",
+  endo_graph,
+  vertex.color = V(endo_graph)$germlayer_col,
+  vertex.frame.color = darken(V(endo_graph)$germlayer_col,.5),
+  vertex.label = V(endo_graph)$genename,
+  vertex.size = 8,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .9,
+  edge.width = endo_graph$weight,
+  edge.arrow.size = 0.2,
+  edge.color = rgb(0,0,0,0.1),
+  layout = layout.graphopt(endo_graph)
+)
+par(mfrow = c(1,1))
+}))
+```
+
+
+
+```{r, fig.width = 5, fig.height = 15}
+grid.draw(germlayer_graphs)
+
+pdf("graphics/S16_1.pdf", wi = 5, he = 15)
+grid.draw(germlayer_graphs)
+dev.off()
+```
+
+
+
+```{r, fig.width = 6, fig.height = 4.5, warning = FALSE}
+cent_germlyr <- 
+  as.data.frame(vertex_attr(g_LG, index = V(g_LG)[[which(V(g_LG)$germlayer != "")]]))
+cent_germlyr$eggNOG.annot <- NULL
+cent_germlyr$layer <- cent_germlyr$germlayer
+cent_germlyr$layer[cent_germlyr$germlayer == "EctoMeso"] = "Mesoderm" # anything that is in mesoderm
+cent_germlyr$layer[cent_germlyr$germlayer == "EndoMeso"] = "Endoderm" # anything that is in endoderm
+cent_germlyr$layer[cent_germlyr$germlayer == "EndoEcto"] = "Endoderm" # anything that is in endoderm
+cent_germlyr$layer =
+  factor(cent_germlyr$layer, levels = c("Ectoderm","Mesoderm","Endoderm", "All"))
+
+cent_germlyr <- cent_germlyr[cent_germlyr$layer != "All", ]
+cent_germlyr$layer <- droplevels(cent_germlyr$layer)
+
+insitu_genes <- c( "gsx", "foxQ2", "gbx", "otx", "soxb2",
+   "msx", "six1/2", "soxE", "foxf", "foxg",
+   "hox9/10", "cdx", "irx", "foxa/HNF3", "soxb1a"
+)
+
+lyr_cols = 
+  c(
+    Ectoderm = "#3d85c6",
+    Mesoderm = "#e26767",
+    Endoderm = "#fcd086"
+  )
+
+cent_germlyr <- cent_germlyr %>% group_by(layer) %>% 
+  mutate(rel_centr = relativise(centr))
+
+set.seed(1234)
+p_cent_germlyr <-
+  cent_germlyr %>%
+  ggplot(aes(
+    y = layer, x = rel_centr,
+    colour = layer, fill = layer, label = gene
+  ))+
+  geom_jitter(height = 0.2, size = 3, shape = 21)+
+  scale_y_discrete(limits = rev(levels(cent_germlyr$layer)))+
+  scale_fill_manual(values = lyr_cols)+
+  scale_colour_manual(values = darken(lyr_cols,.4))+
+  theme_classic()+
+  xlab("Relative centrality")+
+  ylab("Germ Layer")+
+  geom_text_repel(data = cent_germlyr[cent_germlyr$gene %in% insitu_genes,], show.legend = FALSE,box.padding = .5)
+
+print(p_cent_germlyr)
+
+pdf("graphics/S16_2.pdf", wi = 6, he = 4)
+print(p_cent_germlyr)
+dev.off()
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+tfs_centr <- EB_vs_LG$centrality_TFclass_b
+
+plot(density(tfs_centr$centr))
+abline(v=quantile(tfs_centr$centr, c(0, .33, .67, 1)), col = desaturate(lighten(rainbow(4),.4),.4), lwd = 2)
+
+qs <- cut(tfs_centr$centr, breaks = quantile(tfs_centr$centr, c(0, 0.33, 0.67, 1)), labels = FALSE, include.lowest = TRUE)
+
+grouped_tfs <- split(tfs_centr$id, qs)
+
+names(grouped_tfs) <- c("low_central","mid_central","high_central")
+
+gos_by_tfcentr <- getGOs(
+  genelist = grouped_tfs,
+  gene_universe = tfs_centr$id,
+  alg = "elim",
+  gene2GO = topGO::readMappings("outputs/functional_annotation/go_blast2go/GO_annotation.txt")
+)
+```
+
+```{r, fig.width = 6, fig.height = 12, warning = FALSE, message = FALSE}
+plot_grid(
+  gos_by_tfcentr$GOplot$low_central,
+  gos_by_tfcentr$GOplot$mid_central,
+  gos_by_tfcentr$GOplot$high_central,
+  ncol = 1
+)
+
+pdf("graphics/S16_3.pdf", he = 12, wi = 6)
+plot_grid(
+  gos_by_tfcentr$GOplot$low_central,
+  gos_by_tfcentr$GOplot$mid_central,
+  gos_by_tfcentr$GOplot$high_central,
+  ncol = 1
+)
+dev.off()
+```
+
+```{r}
+library(beeswarm)
+pdf("graphics/tf_centr_swarm.pdf", wi = 8, he = 4)
+par(mar = c(0.5,0,0,0))
+set.seed(123456789)
+beeswarm(
+  relativise(tfs_centr$centr),
+  method = "square",
+  vertical = FALSE, side = 1, ylim = c(0,100),
+  pwcol = c("#ffaf5c","#cc0000","#7f2454")[qs],
+  pch = 20, bty = "n", cex = .5
+)
+par(mar = c(5,4,2,2)+0.1)
+dev.off()
+```
+
+
+```{r influence graph plot, fig.width = 6.5, fig.height = 6.5}
+g_inf <- EB_vs_LG$influence_results$influence_subgraph
+V(g_inf)$genename <- 
+  translate_ids(V(g_inf)$name,pfla_genenames)
+
+E(g_inf)$width <-
+  category_by_quantile(
+    E(g_inf)$prob,
+    newvalues = c(0.2,1,2,3.5)
+    )
+
+V(g_inf)$col[V(g_inf)$col == ""] <- "gray"
+V(g_inf)$genename <- gsub("TCONS_","", V(g_inf)$genename)
+V(g_inf)$genename[V(g_inf)$genename == "T"] <- "BRA"
+V(g_inf)$genename[V(g_inf)$name %in% insitu_data$id] <-
+  translate_ids(
+    x = V(g_inf)$name[V(g_inf)$name %in% insitu_data$id],
+    dict = insitu_data[,c(1,4)]
+  )
+
+V(g_inf)$cex <- as.numeric(cut(V(g_inf)$size, breaks = quantile(V(g_inf)$size,c(0,.5,1)), labels = c(1,1.75), include.lowest = TRUE))
+
+E(g_inf)$color <- tail_of(g_inf,E(g_inf))$col
+
+set.seed(1234)
+plot(
+  main = "Influence network",
+  g_inf,
+  vertex.size = 5*V(g_inf)$cex,
+  vertex.color = V(g_inf)$col,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .75,
+  vertex.label.dist = 1,
+  vertex.label = V(g_inf)$genename,
+  edge.width = E(g_inf)$width,
+  edge.arrow.size = 0.3,
+  edge.color = alpha(E(g_inf)$color, .6),
+  layout = layout_with_dh(g_inf),
+  edge.curved = .1
+)
+
+pdf("graphics/S16_4.pdf",he = 6.5, wi = 6.5)
+set.seed(1234)
+plot(
+  main = "Influence network",
+  g_inf,
+  vertex.size = 5*V(g_inf)$cex,
+  vertex.color = V(g_inf)$col,
+  vertex.label.family = "Helvetica",
+  vertex.label.color = "black",
+  vertex.label.cex = .75,
+  vertex.label.dist = 1,
+  vertex.label = V(g_inf)$genename,
+  edge.width = E(g_inf)$width,
+  edge.arrow.size = 0.3,
+  edge.color = alpha(E(g_inf)$color, .6),
+  layout = layout_with_fr(g_inf),
+  edge.curved = .1
+)
+dev.off()
+```

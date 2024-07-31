@@ -1,0 +1,436 @@
+---
+title: "Ptychodera Cisreg Development: ALGs and gene expression"
+author: "Alberto Perez-Posada"
+date: "10/04/2023"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will explore the gene expression trends for different ALGs.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(RColorBrewer)
+library(ComplexHeatmap)
+library(circlize)
+require(colorspace)
+library(cluster)
+library(mclust)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+)
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+)
+```
+
+## Load Data
+
+We will first load the data of our three species:
+  
+```{r dataload_spp}
+# Ptychodera analyses
+load("outputs/rda/deseq2.rda")
+# Amphioxus reanalysis
+load("outputs/rda/bflo_reanalysis.rda")
+# Purple Sea Urchin reanalysis
+load("outputs/rda/spur_reanalysis.rda")
+```
+
+
+```{r load_dicts}
+# ALG GENES
+xloc_tcons <- read.table("data/refs/genome/xloc_tcons_longestIso.tsv",header=F,col.names=c("id","gene"))
+bflo_loc <- read.delim2(
+  file = "outputs/comparative/reanalysis/bflo/dict_genomepaper/BFL_transctiptID2geneID.tsv",
+  header = TRUE
+)
+bf_bflo <- read.table("outputs/comparative/oma/dicts/BRAFL.dct", col.names = c("key","value"))
+
+bflo_loc <- bflo_loc[bflo_loc$transcript_id %in% bf_bflo$key,]
+bflo_loc$id <- translate_ids(x = bflo_loc$transcript_id,dict = bf_bflo)
+
+spur_loc <- read.delim2(
+  file = "outputs/comparative/reanalysis/spur/dict_genomepaper/SPU_transctiptID2geneID.tsv",
+  header = TRUE
+)
+sp_strpu <- read.table("outputs/comparative/oma/dicts/STRPU.dct", col.names = c("key","value"))
+spur_loc <- spur_loc[spur_loc$protein_ID %in% sp_strpu$key,]
+spur_loc$id <- translate_ids(x = spur_loc$protein_ID,dict = sp_strpu)
+```
+
+We load the ALG data and add the respective columns for the identifiers that we used in the expression analyses:
+
+```{r translate_ids}
+ALGs <- 
+  read.delim2(
+    file = "outputs/functional_annotation/ALG_genes/all_ALGs.tsv",
+    header = TRUE
+    )
+
+ALGs$id_pfla <- translate_ids(ALGs$PFL, dict = xloc_tcons[,c(2,1)])
+ALGs$id_bflo <- translate_ids(ALGs$BFL, dict = bflo_loc[,c(2,3)])
+ALGs$id_spur <- translate_ids(ALGs$SPU,dict = spur_loc[,c(3,4)])
+
+rownames(ALGs) <- ALGs$id_pfla
+```
+
+We will expand the classification of S.purpuratus genes into developmental clusters that we did in a previous analysis, by assigning every gene the cluster membership of the cluster with which it has the highest correlation.
+
+```{r Associate_to_cluster_Spur}
+associate_to_cluster <- function(x,profiles){
+  s = c(scale(c(x)))
+  cors = setNames(
+    apply(profiles,1,function(x)cor(s,x)),
+    rownames(profiles)
+  )
+  best = cors[cors==max(cors)]
+  if(best > 0.7){
+    best_name = names(best)
+  } else{
+    best_name = 0
+  }
+  return(best_name)
+}
+
+spur_cl_expanded <-
+  data.frame(
+    id_spur = rownames(spur_vsd),
+    clu_spur = apply(spur_vsd,1,associate_to_cluster,profiles = spur_cl_avgs)
+  )
+spur_cl_expanded$clu <- as.numeric(spur_cl_expanded$clu)
+```
+
+Using the translated IDs, we will now merge the ALG data with the developmental cluster data of each species:
+
+```{r merge_cID_data}
+ALGs <-
+  merge(
+    ALGs,
+    data.frame(
+      id_pfla = rownames(pfla_rna_dev),
+      clu_pfla = pfla_rna_dev$cID
+    ),
+    by.x = "id_pfla", by.y = 1, all.x = TRUE
+  )
+
+ALGs <-
+  merge(
+    ALGs,
+    data.frame(
+      id_bflo = bflo_cl[,1],
+      clu_bflo = bflo_cl[,2]
+    ),
+    by.x = "id_bflo", by.y = 1, all.x = TRUE
+  )
+
+ALGs <-
+  merge(
+    ALGs,
+    data.frame(
+      id_spur = spur_cl_expanded[,1],
+      clu_spur = spur_cl_expanded[,2]
+    ),
+    by.x = "id_spur", by.y = 1, all.x = TRUE
+  )
+```
+
+Since we know the profile of gene expression, we can classify the genes as expressed *at some point* before gastrulation or after gastrulation, depending on the profile of expression of the cluster they were assigned to.
+
+ - In the case of Ptychodera, if the cluster ID is between 1 and 13 we consider them before gastrulation, and clusters 14 to 22 are considered after gastrulation.
+ - In the case of Amphioxus, if the cluster ID is between 1 and 7, we consider them before gastrulation, and cluster 7 to 22 are considered after gastrulation.
+ - In the case of Sea Urching, if the cluster ID is between 1 and 13, we consider them before gastrulation, and clusters 14 to 26 are considered after gastrulation. Genes that were assigned cluster "0" (i.e. they did not correlate well to any of the clusters) will be given NA.
+ 
+With this we will have three new columns in the ALG dataset, one for each species, indicating if that gene has a pattern of expression before or after gastrulation.
+
+```{r preG_postG}
+ALGs$time_pf <- cut(as.numeric(ALGs$clu_pfla), breaks = c(0,14,23),labels = c("Pre-G","Post-G"))
+ALGs$time_bf <- cut(as.numeric(ALGs$clu_bflo), breaks = c(0,7,22), labels = c("Pre-G","Post-G"))
+ALGs$time_sp <- cut(as.numeric(ALGs$clu_spur), breaks = c(0,14,26),labels = c("Pre-G","Post-G"))
+ALGs$time_sp[ALGs$clu.y == 0] <- NA
+ALGs$time_sp <- factor(ALGs$time_sp, levels = c("Pre-G","Post-G"))
+```
+
+We will now subset this data to keep genes from the ALGs that were present in the last common ancestor of deuterostomes.
+
+```{r parse_ALGs}
+Deut_LCA_ALGs <- c("J2","C1","A2","A1","I","O1","R","B1","O2","B3","J1","E","B2","C2","Q")
+ALGs <- ALGs[ALGs$ALG %in% Deut_LCA_ALGs,]
+ALGs$ALG <- factor(ALGs$ALG, Deut_LCA_ALGs)
+ALGs <- ALGs[order(ALGs$ALG),]
+```
+
+We will do the heatmaps now of each ALG. This big wrapper takes one ALG as input and:
+
+ 1. Parses and pre-processes the different expression matrices of the genes to keep the genes with orthologues expressed in the three species.
+ 2. Using the expression timing that we calculated above, it calculates the Gower distance and the Adjusted Rand Index between pairs of species.
+    - Gower distance allows us to cluster the species based on the similarities (==overlapping) of expression patterns of the genes in the three species. 
+    - Adjusted Rand Index is a metric to measure the level of agreement between to classification systems; in essence, for a given classification system X, how likely it is that you will find one observation of category "A" classified in the same category of another system Y as other observations also from category "A". In our case, these categorisation systems X and Y are the categorisations of the genes as pre-G or post-G in pairs of species. Thus we can calculate the Adjusted Rand Index for the three combination of species (P.flava/S.purpuratus, P.flava/B.floridae, and S.purpuratus/B.floridae). The data is sparse and binarised, but it still can give us a hint of the trends when comparing them with the rest of adjusted rand indexes. For this we calculate the foldchange of every Rand Index relative to the mean of Rand Indexes.
+ 3. Using the clustering of genes (and species) based on Gower distance using this binarisation of pre- and post-gastrula expression, we generate heatmaps that can help us explore similarities and differences between species.
+ 
+Below are the execution of the code for the four ALGs and their results:
+
+```{r ALG_wrapper}
+alg_expression <- function(alg, plot_res = TRUE){
+  require(cluster)
+  require(mclust)
+  require(ComplexHeatmap)
+  
+  f <- ALGs$ALG %in% alg
+  df = ALGs[f,c("PFL","time_pf","time_sp","time_bf")]
+  
+  rownames(df) <- df$PFL
+  
+  alg_m_pf <- pfla_rna_all[rownames(pfla_rna_all) %in% ALGs$id_pfla[f],]
+  rownames(alg_m_pf) <- translate_ids(x=rownames(alg_m_pf), dict = ALGs[,c("id_pfla","PFL")])
+  alg_m_pf <- alg_m_pf[order(rownames(alg_m_pf)),]
+  
+  alg_m_sp <- spur_vsd[rownames(spur_vsd) %in% ALGs$id_spur[f],]
+  rownames(alg_m_sp) <- translate_ids(x=rownames(alg_m_sp), dict = ALGs[,c("id_spur","PFL")])
+  alg_m_sp <- alg_m_sp[order(rownames(alg_m_sp)),]
+  
+  alg_m_bf <-RNA_bflo[rownames(RNA_bflo) %in% ALGs$id_bflo[f], 1:12]
+  rownames(alg_m_bf) <- translate_ids(x=rownames(alg_m_bf), dict = ALGs[,c("id_bflo","PFL")])
+  alg_m_bf <- alg_m_bf[order(rownames(alg_m_bf)),]
+  
+  common_genes <- intersect(rownames(alg_m_pf),intersect(rownames(alg_m_bf),rownames(alg_m_sp)))
+  
+  alg_m_pf <- alg_m_pf[common_genes,]
+  alg_m_sp <- alg_m_sp[common_genes,]
+  alg_m_bf <- alg_m_bf[common_genes,]
+  df <- df[df$PFL %in% common_genes,]
+  df <- df[order(rownames(df)),]
+  
+  # Gower Distance: cluster species
+  d_t <- as.data.frame(t(df[,-1]))
+  for (i in 1:ncol(d_t)){d_t[,i] <- factor(d_t[,i], levels = c("Pre-G","Post-G"))}
+  d_col <- daisy(d_t,metric = "gower")
+  hc_col <- hclust(d_col, method = "complete")
+  
+  gower_matrix <- as.matrix(d_col)
+  gower_matrix[lower.tri(gower_matrix, diag = TRUE)] <- NA
+  
+  # Gower Distance: cluster genes
+  d <- daisy(df[,-1], metric = "gower")
+  hc <- hclust(d, method = "complete")
+  
+  # Adj Rand Index
+  rand_matrix <- matrix(0,nrow = ncol(df[,-1]),ncol = ncol(df[,-1]))
+  dimnames(rand_matrix) = list(colnames(df[,-1]),colnames(df[,-1]))
+  for (i in 1:ncol(df[,-1])){
+    for (j in 1:ncol(df[,-1])){
+      rand_matrix[i,j] <- adjustedRandIndex(df[,-1][,i],df[,-1][,j])
+    }
+  }
+  
+  rand_matrix <- as.dist(rand_matrix)
+  fc_matrix <- as.matrix(rand_matrix/mean(rand_matrix))
+  rand_matrix <- as.matrix(rand_matrix)
+  
+  rand_matrix[lower.tri(rand_matrix, diag = TRUE)] <- NA
+  fc_matrix[lower.tri(fc_matrix, diag = TRUE)] <- NA
+  
+  res <-
+    list(
+      gower = gower_matrix,
+      rand = rand_matrix,
+      fc = fc_matrix,
+      species_tree = hc_col
+    )
+  
+  # Heatmaps
+  if(plot_res == TRUE){
+    ccc <- colorRampPalette(c("#4b70a0","#ffffff","#b92d23"))(10)
+    df_hm <- Heatmap(df[,-1], cluster_columns = hc_col, cluster_rows = hc, col = setNames(c("#ff8080", "#458E8B"),c("Pre-G","Post-G")), name = "time", show_row_names = FALSE)
+    sp_hm <- Heatmap(t(scale(t(alg_m_sp))),column_title = paste(alg), cluster_rows = hc, name = "sp",cluster_columns = FALSE, col = ccc, show_row_names = FALSE, top_annotation = quick_ha(colnames(alg_m_sp),"Purple-Orange", rev = TRUE))#, left_annotation = ha)
+    pf_hm <- Heatmap(t(scale(t(alg_m_pf))), name = "pf", cluster_columns = FALSE, col = ccc, show_row_names = FALSE, top_annotation = devstages_ha_columns(colnames(alg_m_pf)))
+    bf_hm <- Heatmap(t(scale(t(qnorm(alg_m_bf)))), name = "bf",cluster_columns = FALSE, col = ccc, show_row_names = FALSE, top_annotation = quick_ha(colnames(alg_m_bf),"Purple-Yellow", rev = TRUE))
+    hm_all <- df_hm+sp_hm+pf_hm+bf_hm
+    res <- append(res, list(heatmap = df_hm, heatmap_all = hm_all))
+  }
+    return(res)
+}
+```
+
+## ALG R
+
+```{r}
+alg_R <- alg_expression("R")
+
+alg_R$gower
+```
+
+```{r}
+alg_R$rand
+```
+
+```{r}
+alg_R$fc
+```
+
+```{r}
+alg_R$heatmap_all
+```
+
+## ALG B1
+
+```{r}
+alg_B1 <- alg_expression("B1")
+
+alg_B1$gower
+```
+
+```{r}
+alg_B1$rand
+```
+
+```{r}
+alg_B1$fc
+```
+
+```{r}
+alg_B1$heatmap_all
+```
+
+## ALG B2
+
+```{r}
+alg_B2 <- alg_expression("B2")
+
+alg_B2$gower
+```
+
+```{r}
+alg_B2$rand
+```
+
+```{r}
+alg_B2$fc
+```
+
+```{r}
+alg_B2$heatmap_all
+```
+
+## ALG C2
+
+```{r}
+alg_C2 <- alg_expression("C2")
+
+alg_C2$gower
+```
+
+```{r}
+alg_C2$rand
+```
+
+```{r}
+alg_C2$fc
+```
+
+```{r}
+alg_C2$heatmap_all
+```
+
+We quickly run this for all the Deuterostome ALGs (except J1 which gave us an error)
+
+```{r}
+l_alg_exp <- list()
+deut_lca_algs_plotting <- c("J2","C1","A2","A1","I","O1","R","B1","O2","B3","E","B2","C2","Q")
+
+for(i in Deut_LCA_ALGs){
+  l_alg_exp[[i]] <- alg_expression(i)
+}
+```
+
+## Chi-Squared of the ALGs in Ptychodera
+
+Including here just as a proof that it was tried. There were no significant enrichments of any timing of expression in any ALG.
+
+```{r}
+tbl <- table(ALGs$ALG,ALGs$time_pf)
+
+alg_chisq <- chisq_and_posthoc(tbl)
+alg_chisq_hm <- make_chisq_heatmap(alg_chisq)
+
+mat <- alg_chisq_hm$residuals_matrix
+
+Heatmap(
+  name = "residuals",
+  t(mat),
+  cluster_rows = TRUE,
+  # clustering_method_rows = "ward.D2",
+  cluster_columns = FALSE,
+  col = make_enr_pal(values = t(mat))
+)
+```
+```{r}
+ALGs$time_pf <- cut(as.numeric(ALGs$clu_pfla), breaks = c(0,14,23),labels = c("Pre-G","Post-G"))
+tbl <- table(ALGs$time_pf,ALGs$ALG)
+alg_chisq <- chisq_and_posthoc(tbl)
+
+alg_fractions_for_ggplot <-
+  melt(apply(tbl,2,function(x)x/sum(x)))
+colnames(alg_fractions_for_ggplot) <- c("Timing","ALG","value")
+
+
+p_chisq <- ggplot(alg_fractions_for_ggplot, aes(x = ALG, y = value, fill = Timing)) +
+  geom_bar(stat = "identity", position = position_stack(reverse = TRUE)) +
+  scale_fill_manual(values = c("#ff8080", "#458E8B")) +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  labs(
+    x = paste0("Chi-Squared p = ",alg_chisq$chi_squared_test$p),
+    y = "Fraction"
+  )
+
+print(p_chisq)
+
+pdf("graphics/chisq_all_algs.pdf", wi = 6, he = 2)
+print(p_chisq)
+dev.off()
+```
+## Saving everything
+
+```{r}
+save(
+  alg_R,
+  alg_B1,
+  alg_B2,
+  alg_C2,
+  l_alg_exp,
+  file = "outputs/rda/ALGs.rda"
+)
+```
+## Saving the figures
+
+```{r heatmaps}
+pdf("graphics/heatmaps_ALG_genes.pdf", height = 7, width = 10)
+alg_R$heatmap_all
+alg_B1$heatmap_all
+alg_B2$heatmap_all
+alg_C2$heatmap_all
+dev.off()
+```

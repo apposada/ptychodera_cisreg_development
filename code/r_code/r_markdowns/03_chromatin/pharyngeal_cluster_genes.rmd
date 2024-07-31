@@ -1,0 +1,142 @@
+---
+title: "Ptychodera Cisreg Development: pharyngeal cluster networks"
+author: "Alberto Perez-Posada"
+date: "7/10/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+dir <- '/home/ska/aperpos/projects/ptychodera_cisreg_development/'
+fcha <- function(){ gsub("-","",Sys.Date()) }
+
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = dir)
+options(scipen=999)
+Sys.setenv(VROOM_CONNECTION_SIZE=5000072)
+```
+
+## About
+
+In this markdown, we will Explore the similarities of several pair of stages between Ptychodera, Amphioxus, and Sea urchin, with an emphasis on the expression of FoxA.
+
+## Load libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(stringr)
+library(BiocGenerics)
+library(EDASeq)
+library(DESeq2)
+library(tximport)
+library(limma)
+library(ComplexHeatmap)
+library(circlize)
+library(RColorBrewer)
+require(data.table)
+require(stringr)
+require(colorspace)
+library(ggpubr)
+library(ggplot2)
+library(dplyr)
+```
+
+## Load functions
+
+```{r load_functions, message = FALSE}
+source("code/r_code/r_functions/sourcefolder.R")
+
+sourceFolder(
+  "code/r_code/r_functions",
+  recursive = TRUE
+  )
+
+sourceFolder(
+  "code/r_code/r_general",
+  recursive = TRUE
+  )
+```
+
+## Load Data
+
+We will load the graph analysis data to plot the networks of different deuterostomes:
+
+```{r}
+library(igraph)
+load("outputs/rda/graph_analysis.rda")
+```
+
+## Network of Pharyngeal Cluster genes
+
+The Ptychodera homologs of the pharyngeal cluster, expressed and interacting in the Late Gastrula network:
+
+```{r}
+# Load orthologs of pharyngealermal kernel
+genes_pharyngeal <- 
+  unique(read.table(
+    "outputs/functional_annotation/grn_homologs/genes_pharyngeal_cluster.tsv",
+    header = TRUE
+    )[,c(2,1)])
+
+colnames(genes_pharyngeal) <- c("id","gene")
+
+# Create induced subgraph EB
+pharyngeal_graph_EB <-
+  induced_subgraph(
+    pfla_EB_graph2,
+    vids = V(pfla_EB_graph2)[V(pfla_EB_graph2)$name %in% genes_pharyngeal$id],
+    impl = "copy_and_delete"
+  )
+
+V(pharyngeal_graph_EB)$col[V(pharyngeal_graph_EB)$col==""] <- "gray"
+V(pharyngeal_graph_EB)$genename <- translate_ids(x = V(pharyngeal_graph_EB)$name, dict = genes_pharyngeal)
+
+# Create induced subgraph LG
+pharyngeal_graph_LG <-
+  induced_subgraph(
+    pfla_LG_graph2,
+    vids = V(pfla_LG_graph2)[V(pfla_LG_graph2)$name %in% genes_pharyngeal$id],
+    impl = "copy_and_delete"
+  )
+
+V(pharyngeal_graph_LG)$col[V(pharyngeal_graph_LG)$col==""] <- "gray"
+V(pharyngeal_graph_LG)$genename <- translate_ids(x = V(pharyngeal_graph_LG)$name, dict = genes_pharyngeal)
+
+## plots
+par(mfrow = c(1,2))
+set.seed(123)
+plot(
+  pharyngeal_graph_EB,
+  vertex.color = V(pharyngeal_graph_EB)$col,
+  vertex.label = V(pharyngeal_graph_EB)$genename,
+  edge.width = (E(pharyngeal_graph_EB)$width*2)^3,
+  edge.arrow.size = 0.5,
+  edge.color = rgb(0,0,0,0.2),
+  layout = layout_with_fr(pharyngeal_graph_EB),
+  main = "pharyngeal cluster (EB)"
+  )
+
+set.seed(123)
+plot(
+  pharyngeal_graph_LG,
+  vertex.color = V(pharyngeal_graph_LG)$col,
+  vertex.label = V(pharyngeal_graph_LG)$genename,
+  edge.width = (E(pharyngeal_graph_LG)$width*2)^3,
+  edge.arrow.size = 0.5,
+  edge.color = rgb(0,0,0,0.2),
+  layout = layout_with_fr(pharyngeal_graph_LG),
+  main = "pharyngeal cluster (LG)"
+  )
+par(mfrow = c(1,1))
+
+# pdf(
+#   file = "graphics/5C.pdf",
+#   height = 4.5,
+#   width = 4.5
+# )
+# set.seed(123)
+
+# dev.off()
+
+```
+
+

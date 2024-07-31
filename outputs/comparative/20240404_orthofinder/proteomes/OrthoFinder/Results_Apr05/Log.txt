@@ -1,0 +1,34 @@
+2024-04-05 13:02:30 : Started OrthoFinder version 2.5.5
+Command Line: /home/ska/aperpos/programs/miniconda3/envs/orthofinder_venv/bin/orthofinder -t 12 -a 12 -s species_tree.nwk -I 1.6 -f proteomes/
+
+WorkingDirectory_Base: /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/comparative/20240404_orthofinder/proteomes/OrthoFinder/Results_Apr05/WorkingDirectory/
+
+Species used: 
+0: AENJA_ok.fa
+1: AMPFI_ok.fa
+2: APOSC_ok.fa
+3: APOSJ_ok.fa
+4: ASTMX.fa
+5: BRAFL.fa
+6: BRALA.fa
+7: CAEEL.fa
+8: CAPO3.fa
+9: DANRE.fa
+10: DROME.fa
+11: HELIO_ok.fa
+12: HUMAN.fa
+13: LYTVA_ok.fa
+14: MOUSE.fa
+15: NEMVE.fa
+16: ORYLA.fa
+17: OWEFU.fa
+18: PFLAV.fa
+19: SACKO_ok.fa
+20: SCHMD.fa
+21: STRPU_ok.fa
+22: XENTR.fa
+23: YEAST.fa
+
+FN_Orthogroups: /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/comparative/20240404_orthofinder/proteomes/OrthoFinder/Results_Apr05/WorkingDirectory/clusters_OrthoFinder_I1.6.txt_id_pairs.txt
+WorkingDirectory_Trees: /home/ska/aperpos/projects/ptychodera_cisreg_development/outputs/comparative/20240404_orthofinder/proteomes/OrthoFinder/Results_Apr05/WorkingDirectory/
+2024-04-05 15:45:22 : OrthoFinder run completed
