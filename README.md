@@ -1,11 +1,14 @@
 # ptychodera_cisreg_development
 **Analyses of the Ptychodera flava RNASeq+ATACSeq project**
 
-![logo](graphics/pfla.png?raw=true)
+<p align="center">
+<img src="./graphics/pfla.png?raw=true" width="300" class="center" />
+</p>
 
 ## About
 
-This repository contains the code and most of the data for the analyses of the manuscript **Perez-Posada A, Lin CY, Lin ChingY, Chen YC, Gómez-Skarmeta JL, Yu JK, Su YH, Tena JJ: Insights into deuterostome evolution from the biphasic transcriptional programmes of hemichordates. bioRxiv 2022: https://doi.org/10.1101/2022.06.10.495707**.
+This repository contains the code and most of the data for the analyses of the manuscript **Perez-Posada A, Lin CY, Lin Ching-Y, Chen YC, Gómez-Skarmeta JL, Yu JK, Su YH, Tena JJ (2024)
+Hemichordate cis-regulatory genomics and the gene expression dynamics of deuterostomes. Nature Ecology and Evolution.** DOI:[10.1038/s41559-024-02562-x](https://www.nature.com/articles/s41559-024-02562-x)
 
 
 ## Organisation
