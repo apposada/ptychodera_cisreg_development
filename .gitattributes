@@ -1,1 +1,2 @@
 *.html linguist-detectable=false  
+*.pep8 linguist-detectable=false  
