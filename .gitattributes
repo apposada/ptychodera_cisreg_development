@@ -1,2 +1,6 @@
 *.html linguist-detectable=false  
-*.pep linguist-detectable=false  
+*.pep linguist-detectable=false
+*.Pep8 linguist-detectable=false
+*.pep8 linguist-detectable=false
+*.Pep linguist-detectable=false
+*.fa linguist-detectable=false
